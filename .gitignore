@@ -20,7 +20,8 @@
 *.lo
 *.obj
 *.pyc
-*.so*
+*.so
+*.so.*
 *.[oa]
 *.dylib
 *grammar.out
@@ -28,7 +29,6 @@
 *scanner.c
 *_dict.c
 *_lex.h
-init.lua
 epan/dissectors/dcerpc/idl2wrs
 epan/dissectors/dcerpc/*/packet-dcerpc-*.[hc]
 epan/dissectors/mesa
@@ -102,7 +102,6 @@ wsar_html.zip
 /ui/qt/i18n.qrc
 /ui/qt/qrc_*.cpp
 /ui/qt/ui_*.h
-/ui/qt/console.lua
 *.ui.autosave
 
 # Windows Stuff #
@@ -160,7 +159,7 @@ CMakeLists.txt.user*
 .vagrant
 .vscode
 .idea
-*.swp
+*.sw?
 *~
 cscope.*
 tags

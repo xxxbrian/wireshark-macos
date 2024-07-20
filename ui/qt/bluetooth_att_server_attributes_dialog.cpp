@@ -98,9 +98,9 @@ BluetoothAttServerAttributesDialog::~BluetoothAttServerAttributesDialog()
 
 void BluetoothAttServerAttributesDialog::captureFileClosed()
 {
-    ui->interfaceComboBox->setEnabled(FALSE);
-    ui->deviceComboBox->setEnabled(FALSE);
-    ui->removeDuplicatesCheckBox->setEnabled(FALSE);
+    ui->interfaceComboBox->setEnabled(false);
+    ui->deviceComboBox->setEnabled(false);
+    ui->removeDuplicatesCheckBox->setEnabled(false);
 
     WiresharkDialog::captureFileClosed();
 }
@@ -170,11 +170,11 @@ void BluetoothAttServerAttributesDialog::on_actionMark_Unmark_Row_triggered()
 
     QBrush fg;
     QBrush bg;
-    bool   is_marked = TRUE;
+    bool   is_marked = true;
 
     for (int i = 0; i < ui->tableTreeWidget->columnCount(); i += 1) {
         if (current_item->background(i) != QBrush(ColorUtils::fromColorT(&prefs.gui_marked_bg)))
-            is_marked = FALSE;
+            is_marked = false;
     }
 
     if (is_marked) {
@@ -245,7 +245,7 @@ tap_packet_status BluetoothAttServerAttributesDialog::tapPacket(void *tapinfo_pt
     QString                              handle;
     QString                              uuid;
     QString                              uuid_name;
-    gchar                               *addr = NULL;
+    char                                *addr = NULL;
 
     if (dialog->file_closed_)
         return TAP_PACKET_DONT_REDRAW;
@@ -254,10 +254,11 @@ tap_packet_status BluetoothAttServerAttributesDialog::tapPacket(void *tapinfo_pt
         return TAP_PACKET_DONT_REDRAW;
 
     if (pinfo->rec->presence_flags & WTAP_HAS_INTERFACE_ID) {
-        gchar       *interface;
+        char        *interface;
         const char  *interface_name;
 
-        interface_name = epan_get_interface_name(pinfo->epan, pinfo->rec->rec_header.packet_header.interface_id);
+        unsigned     section_number = pinfo->rec->presence_flags & WTAP_HAS_SECTION_NUMBER ? pinfo->rec->section_number : 0;
+        interface_name = epan_get_interface_name(pinfo->epan, pinfo->rec->rec_header.packet_header.interface_id, section_number);
         interface = wmem_strdup_printf(pinfo->pool, "%u: %s", pinfo->rec->rec_header.packet_header.interface_id, interface_name);
 
         if (dialog->ui->interfaceComboBox->findText(interface) == -1)
@@ -336,7 +337,7 @@ void BluetoothAttServerAttributesDialog::on_tableTreeWidget_itemActivated(QTreeW
     if (file_closed_)
         return;
 
-    guint32 frame_number = item->data(0, Qt::UserRole).value<guint32>();
+    uint32_t frame_number = item->data(0, Qt::UserRole).value<uint32_t>();
 
     emit goToPacket(frame_number);
 }

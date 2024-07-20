@@ -146,8 +146,6 @@ set(WSUG_GRAPHICS
 	wsug_src/images/ws-follow-stream.png
 	wsug_src/images/ws-go-menu.png
 	wsug_src/images/ws-goto-packet.png
-	wsug_src/images/ws-gui-preferences-advanced.png
-	wsug_src/images/ws-gui-preferences.png
 	wsug_src/images/ws-help-menu.png
 	wsug_src/images/ws-list-pane.png # Outdated
 	wsug_src/images/ws-main-toolbar.png
@@ -173,6 +171,18 @@ set(WSUG_GRAPHICS
 	wsug_src/images/ws-packet-range.png
 	wsug_src/images/ws-packet-selected.png
 	wsug_src/images/ws-packet-sep-win.png
+	wsug_src/images/ws-pref-advanced.png
+	wsug_src/images/ws-pref-appearance-columns.png
+	wsug_src/images/ws-pref-appearance-fonts-and-colors.png
+	wsug_src/images/ws-pref-appearance-layout.png
+	wsug_src/images/ws-pref-appearance.png
+	wsug_src/images/ws-pref-capture.png
+	wsug_src/images/ws-pref-expert.png
+	wsug_src/images/ws-pref-filter-buttons.png
+	wsug_src/images/ws-pref-name-resolution.png
+	wsug_src/images/ws-pref-protocols.png
+	wsug_src/images/ws-pref-rsa-keys.png
+	wsug_src/images/ws-pref-statistics.png
 	wsug_src/images/ws-print.png
 	wsug_src/images/ws-save-as-qt5.png
 	wsug_src/images/ws-save-as-win32.png
@@ -243,7 +253,7 @@ set(WSDG_GRAPHICS
 	wsdg_src/images/ws-capture-sync.png
 	wsdg_src/images/ws-capture-sync.png
 	wsdg_src/images/ws-function-blocks.dia
-	wsdg_src/images/ws-function-blocks.png
+	wsdg_src/images/ws-function-blocks.svg
 	wsdg_src/images/ws-logo.png
 )
 
@@ -257,10 +267,10 @@ if(NOT CMAKE_SOURCE_DIR STREQUAL CMAKE_BINARY_DIR)
 	add_custom_command(
 		OUTPUT ws.css
 		COMMAND ${CMAKE_COMMAND} -E copy_if_different
-			${CMAKE_CURRENT_SOURCE_DIR}/ws.css
+			${CMAKE_SOURCE_DIR}/doc/ws.css
 			${CMAKE_CURRENT_BINARY_DIR}/ws.css
 		DEPENDS
-			${CMAKE_CURRENT_SOURCE_DIR}/ws.css
+			${CMAKE_SOURCE_DIR}/doc/ws.css
 	)
 	add_custom_target(copy_ws.css DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/ws.css)
 else()
@@ -324,7 +334,7 @@ ADD_CUSTOM_COMMAND(
 set( WSDG_BUILT_DEPS copy_ws.css wsluarm )
 
 set( ASCIIDOC_CONF_FILES
-	attributes.adoc
+	${CMAKE_SOURCE_DIR}/doc/attributes.adoc
 	# XXX Add macros
 )
 
@@ -376,6 +386,21 @@ if(ASCIIDOCTOR_FOUND AND XSLTPROC_EXECUTABLE)
 	)
 	set_docbook_target_properties(user_guide_html)
 	add_dependencies(user_guides user_guide_html)
+	# Copy the WSUG to the build directory so that when running
+	# from the build directory ui/help_url.c will find the local file.
+	# It expects the WSUG in a different directory on Windows.
+	if(WIN32)
+		set(WSUG_DIR "${DATAFILE_DIR}/${WSUG_TITLE}")
+	else()
+		set(WSUG_DIR "${DATAFILE_DIR}/wsug_html_chunked")
+	endif()
+	# CMake 3.26 has copy_directory_if_different
+	add_custom_command(
+		TARGET user_guide_html
+		COMMAND ${CMAKE_COMMAND} -E copy_directory
+			"${CMAKE_CURRENT_BINARY_DIR}/wsug_html_chunked" "${WSUG_DIR}"
+		VERBATIM
+	)
 endif()
 
 if(ASCIIDOCTOR_FOUND AND ASCIIDOCTOR_PDF_EXECUTABLE)
@@ -451,49 +476,6 @@ if(ASCIIDOCTOR_FOUND AND ASCIIDOCTOR_EPUB_EXECUTABLE)
 	)
 	set_docbook_target_properties(developer_guide_epub)
 	add_dependencies(developer_guides developer_guide_epub)
-endif()
-
-# release_notes: release-notes.html release-notes.txt
-
-add_custom_target( release_notes_html DEPENDS release-notes.html )
-set_docbook_target_properties(release_notes_html)
-add_custom_target( release_notes_txt DEPENDS release-notes.txt )
-set_docbook_target_properties(release_notes_txt)
-
-# Force serial execution so that separate asciidoctor instances don't
-# trip on each other
-# add_dependencies ( release_notes_txt release_notes_html )
-
-add_custom_target( release_notes )
-set_docbook_target_properties(release_notes)
-add_dependencies ( release_notes release_notes_txt release_notes_html )
-
-add_custom_target(
-	news
-	COMMAND ${CMAKE_COMMAND} -E copy_if_different
-		${CMAKE_CURRENT_BINARY_DIR}/release-notes.txt
-		${CMAKE_SOURCE_DIR}/NEWS
-	DEPENDS
-		${CMAKE_CURRENT_BINARY_DIR}/release-notes.txt
-)
-set_docbook_target_properties(news)
-
-if( ASCIIDOCTOR_FOUND )
-	ASCIIDOCTOR2HTML( release-notes.adoc )
-	ASCIIDOCTOR2TXT( release-notes.adoc )
-endif()
-
-# FAQ
-
-add_custom_target( faq_html DEPENDS faq.html )
-set_docbook_target_properties(faq_html)
-
-add_custom_target( faq )
-set_docbook_target_properties(faq)
-add_dependencies ( faq faq_html )
-
-if( ASCIIDOCTOR_FOUND )
-	ASCIIDOCTOR2HTML( faq.adoc )
 endif()
 
 #

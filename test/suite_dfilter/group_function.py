@@ -67,10 +67,9 @@ class TestFunctionMaxMin:
         dfilter = 'max(5060, udp.dstport) == udp.srcport'
         checkDFilterCount(dfilter, 2)
 
-    def test_max_5(self, checkDFilterFail):
-        error = 'Constant expression is invalid on the LHS'
+    def test_max_5(self, checkDFilterCount):
         dfilter = 'max(5060, 5070) == udp.srcport'
-        checkDFilterFail(dfilter, error)
+        checkDFilterCount(dfilter, 1)
 
 class TestFunctionAbs:
     trace_file = "dhcp.pcapng"
@@ -78,3 +77,47 @@ class TestFunctionAbs:
     def test_function_abs_1(self, checkDFilterCount):
         dfilter = 'udp.dstport == abs(-67)'
         checkDFilterCount(dfilter, 2)
+
+class TestFunctionLen:
+    trace_file = "http.pcap"
+
+    def test_function_len_1(self, checkDFilterCount):
+        dfilter = 'len(http.host) == 27'
+        checkDFilterCount(dfilter, 1)
+
+    def test_function_len_2(self, checkDFilterCount):
+        dfilter = 'len(http.host) != 0'
+        checkDFilterCount(dfilter, 1)
+
+    def test_function_len_3(self, checkDFilterCount):
+        dfilter = 'len(http.host) == 0'
+        checkDFilterCount(dfilter, 0)
+
+    def test_function_len_4(self, checkDFilterCount):
+        dfilter = 'len(http.host)'
+        checkDFilterCount(dfilter, 1)
+
+    def test_function_len_5(self, checkDFilterCount):
+        dfilter = '!len(http.host)'
+        checkDFilterCount(dfilter, 0)
+
+class TestFunctionNested:
+    trace_file = 'http.pcap'
+
+    def test_function_nested_1(self, checkDFilterCount):
+        dfilter = 'abs(min(tcp.srcport, tcp.dstport)) == 80'
+        checkDFilterCount(dfilter, 1)
+
+    def test_function_nested_2(self, checkDFilterCount):
+        dfilter = 'min(tcp.srcport * 10, tcp.dstport * 10, udp.srcport * 10, udp.dstport * 10) == 800'
+        checkDFilterCount(dfilter, 1)
+
+    def test_function_nested_3(self, checkDFilterCount):
+        dfilter = 'min(len(tcp.payload), len(udp.payload)) == 153'
+        checkDFilterCount(dfilter, 1)
+
+    def test_function_nested_4(self, checkDFilterCount):
+        # udp.payload does not exist. Check that len(udp.payload) + 2
+        # resolves to NULL, not to 2.
+        dfilter = 'min(len(tcp.payload[2:]) + 2, len(udp.payload[2:]) + 2) == 153'
+        checkDFilterCount(dfilter, 1)

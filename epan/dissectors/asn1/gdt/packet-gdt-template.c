@@ -28,13 +28,13 @@
 #define PFNAME "gdt"
 
 /* Initialize the protocol and registered fields */
-static int proto_gdt = -1;
-static dissector_handle_t gdt_handle = NULL;
+static int proto_gdt;
+static dissector_handle_t gdt_handle;
 
 #include "packet-gdt-hf.c"
 
 /* Initialize the subtree pointers */
-static int ett_gdt = -1;
+static int ett_gdt;
 #include "packet-gdt-ett.c"
 
 #include "packet-gdt-fn.c"
@@ -66,7 +66,7 @@ void proto_register_gdt(void) {
     };
 
     /* List of subtrees */
-    static gint *ett[] = {
+    static int *ett[] = {
         &ett_gdt,
 #include "packet-gdt-ettarr.c"
     };
@@ -84,11 +84,11 @@ void proto_register_gdt(void) {
 
 /*--- proto_reg_handoff_gdt -------------------------------------------*/
 void proto_reg_handoff_gdt(void) {
-    static gboolean initialized = FALSE;
+    static bool initialized = false;
 
     if (!initialized) {
         dissector_add_for_decode_as("sctp.ppi", gdt_handle);
         dissector_add_uint("sctp.ppi", GDT_PROTOCOL_ID, gdt_handle);
-        initialized = TRUE;
+        initialized = true;
     }
 }

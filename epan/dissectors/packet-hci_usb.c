@@ -17,33 +17,34 @@
 #include <epan/reassemble.h>
 
 #include "packet-bluetooth.h"
+#include "packet-usb.h"
 
-static int proto_hci_usb = -1;
-static int hf_bthci_usb_data = -1;
-static int hf_bthci_usb_packet_fragment = -1;
-static int hf_bthci_usb_packet_complete = -1;
-static int hf_bthci_usb_packet_unknown_fragment = -1;
-static int hf_bthci_usb_setup_request = -1;
-static int hf_bthci_usb_setup_value = -1;
-static int hf_bthci_usb_setup_adapter_id = -1;
-static int hf_bthci_usb_setup_length = -1;
+static int proto_hci_usb;
+static int hf_bthci_usb_data;
+static int hf_bthci_usb_packet_fragment;
+static int hf_bthci_usb_packet_complete;
+static int hf_bthci_usb_packet_unknown_fragment;
+static int hf_bthci_usb_setup_request;
+static int hf_bthci_usb_setup_value;
+static int hf_bthci_usb_setup_adapter_id;
+static int hf_bthci_usb_setup_length;
 
-static gint ett_hci_usb = -1;
-static gint ett_hci_usb_msg_fragment = -1;
-static gint ett_hci_usb_msg_fragments = -1;
+static int ett_hci_usb;
+static int ett_hci_usb_msg_fragment;
+static int ett_hci_usb_msg_fragments;
 
-static int hf_msg_fragments = -1;
-static int hf_msg_fragment = -1;
-static int hf_msg_fragment_overlap = -1;
-static int hf_msg_fragment_overlap_conflicts = -1;
-static int hf_msg_fragment_multiple_tails = -1;
-static int hf_msg_fragment_too_long_fragment = -1;
-static int hf_msg_fragment_error = -1;
-static int hf_msg_fragment_count = -1;
-static int hf_msg_reassembled_in = -1;
-static int hf_msg_reassembled_length = -1;
+static int hf_msg_fragments;
+static int hf_msg_fragment;
+static int hf_msg_fragment_overlap;
+static int hf_msg_fragment_overlap_conflicts;
+static int hf_msg_fragment_multiple_tails;
+static int hf_msg_fragment_too_long_fragment;
+static int hf_msg_fragment_error;
+static int hf_msg_fragment_count;
+static int hf_msg_reassembled_in;
+static int hf_msg_reassembled_length;
 
-static wmem_tree_t *fragment_info_table = NULL;
+static wmem_tree_t *fragment_info_table;
 
 static reassembly_table hci_usb_reassembly_table;
 
@@ -54,8 +55,8 @@ static dissector_handle_t bthci_acl_handle;
 static dissector_handle_t bthci_sco_handle;
 
 typedef struct _fragment_info_t {
-    gint remaining_length;
-    gint fragment_id;
+    int remaining_length;
+    int fragment_id;
 } fragment_info_t;
 
 static const fragment_items hci_usb_msg_frag_items = {
@@ -93,18 +94,18 @@ static value_string_ext(request_vals_ext) = VALUE_STRING_EXT_INIT(request_vals);
 void proto_register_hci_usb(void);
 void proto_reg_handoff_hci_usb(void);
 
-static gint
+static int
 dissect_hci_usb(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree, void *data)
 {
     proto_item        *ttree = NULL;
     proto_tree        *titem = NULL;
     proto_item        *pitem = NULL;
-    gint               offset = 0;
+    int                offset = 0;
     usb_conv_info_t   *usb_conv_info;
     tvbuff_t          *next_tvb = NULL;
     bluetooth_data_t  *bluetooth_data;
-    gint               p2p_dir_save;
-    guint32            session_id;
+    int                p2p_dir_save;
+    uint32_t           session_id;
     fragment_head     *reassembled;
 
     bluetooth_data = (bluetooth_data_t *) data;
@@ -160,7 +161,7 @@ dissect_hci_usb(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree, void *data)
     bluetooth_data->adapter_disconnect_in_frame = &bluetooth_max_disconnect_in_frame;
 
     next_tvb = tvb_new_subset_remaining(tvb, offset);
-    if (!pinfo->fd->visited && usb_conv_info->endpoint <= 0x02 &&
+    if (!pinfo->fd->visited && usb_conv_info->transfer_type != URB_ISOCHRONOUS &&
             tvb_captured_length(tvb) == tvb_reported_length(tvb)) {
         fragment_info_t  *fragment_info;
 
@@ -174,15 +175,15 @@ dissect_hci_usb(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree, void *data)
         }
 
         if (fragment_info->fragment_id == 0) {
-            switch(usb_conv_info->endpoint)
+            switch(usb_conv_info->transfer_type)
             {
-            case 0:
-                fragment_info->remaining_length = tvb_get_guint8(tvb, offset + 2) + 3;
+            case URB_CONTROL:
+                fragment_info->remaining_length = tvb_get_uint8(tvb, offset + 2) + 3;
                 break;
-            case 1:
-                fragment_info->remaining_length = tvb_get_guint8(tvb, offset + 1) + 2;
+            case URB_INTERRUPT:
+                fragment_info->remaining_length = tvb_get_uint8(tvb, offset + 1) + 2;
                 break;
-            case 2:
+            case URB_BULK:
                 fragment_info->remaining_length = tvb_get_letohs(tvb, offset + 2) + 4;
                 break;
             }
@@ -192,7 +193,7 @@ dissect_hci_usb(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree, void *data)
 
         fragment_add_seq_check(&hci_usb_reassembly_table,
                                tvb, offset, pinfo, session_id, NULL,
-                               fragment_info->fragment_id, tvb_reported_length_remaining(tvb, offset), (fragment_info->remaining_length == 0) ? FALSE : TRUE);
+                               fragment_info->fragment_id, tvb_reported_length_remaining(tvb, offset), (fragment_info->remaining_length == 0) ? false : true);
         if (fragment_info->remaining_length > 0)
             fragment_info->fragment_id += 1;
         else
@@ -209,22 +210,22 @@ dissect_hci_usb(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree, void *data)
         pitem = proto_tree_add_item(ttree, hf_bthci_usb_packet_complete, tvb, offset, -1, ENC_NA);
         proto_item_set_generated(pitem);
 
-        if (reassembled->len > (guint) tvb_reported_length_remaining(tvb, offset)) {
+        if (reassembled->len > (unsigned) tvb_reported_length_remaining(tvb, offset)) {
             next_tvb = process_reassembled_data(tvb, 0, pinfo,
                     "Reassembled HCI_USB",
                     reassembled, &hci_usb_msg_frag_items,
                     NULL, ttree);
         }
 
-        switch(usb_conv_info->endpoint)
+        switch(usb_conv_info->transfer_type)
         {
-        case 0:
+        case URB_CONTROL:
             call_dissector_with_data(bthci_cmd_handle, next_tvb, pinfo, tree, bluetooth_data);
             break;
-        case 1:
+        case URB_INTERRUPT:
             call_dissector_with_data(bthci_evt_handle, next_tvb, pinfo, tree, bluetooth_data);
             break;
-        case 2:
+        case URB_BULK:
             call_dissector_with_data(bthci_acl_handle, next_tvb, pinfo, tree, bluetooth_data);
             break;
         }
@@ -233,9 +234,9 @@ dissect_hci_usb(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree, void *data)
         proto_item_set_generated(pitem);
     }
 
-    if (usb_conv_info->endpoint == 0x03) {
+    if (usb_conv_info->transfer_type == URB_ISOCHRONOUS) {
         call_dissector_with_data(bthci_sco_handle, next_tvb, pinfo, tree, bluetooth_data);
-    } else if (usb_conv_info->endpoint > 0x03) {
+    } else if (usb_conv_info->transfer_type == URB_UNKNOWN) {
         proto_tree_add_item(ttree, hf_bthci_usb_data, tvb, offset, -1, ENC_NA);
     }
 
@@ -343,7 +344,7 @@ proto_register_hci_usb(void)
         }
     };
 
-    static gint *ett[] = {
+    static int *ett[] = {
         &ett_hci_usb,
         &ett_hci_usb_msg_fragment,
         &ett_hci_usb_msg_fragments,

@@ -9,8 +9,6 @@
 
 #include "config.h"
 
-#include <glib.h>
-
 #include <epan/packet.h>
 
 #include <wsutil/utf8_entities.h>
@@ -38,6 +36,15 @@ DissectorSyntaxLineEdit::DissectorSyntaxLineEdit(QWidget *parent) :
     setCompleter(new QCompleter(completion_model_, this));
     setCompletionTokenChars(fld_abbrev_chars_);
 
+    updateDissectorNames();
+    setDefaultPlaceholderText();
+
+    connect(this, &DissectorSyntaxLineEdit::textChanged, this,
+            static_cast<void (DissectorSyntaxLineEdit::*)(const QString &)>(&DissectorSyntaxLineEdit::checkDissectorName));
+}
+
+void DissectorSyntaxLineEdit::updateDissectorNames()
+{
     GList *dissector_names = get_dissector_names();
     QStringList dissector_list;
     for (GList* l = dissector_names; l != NULL; l = l->next) {
@@ -46,10 +53,6 @@ DissectorSyntaxLineEdit::DissectorSyntaxLineEdit(QWidget *parent) :
     g_list_free(dissector_names);
     dissector_list.sort();
     completion_model_->setStringList(dissector_list);
-    setDefaultPlaceholderText();
-
-    connect(this, &DissectorSyntaxLineEdit::textChanged, this,
-            static_cast<void (DissectorSyntaxLineEdit::*)(const QString &)>(&DissectorSyntaxLineEdit::checkDissectorName));
 }
 
 void DissectorSyntaxLineEdit::setDefaultPlaceholderText()

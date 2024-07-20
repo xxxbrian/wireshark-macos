@@ -1,4 +1,4 @@
-Dumpcap (Wireshark) 4.1.0 (v4.1.0rc0-1991-g04aed725ef4c)
+Dumpcap (Wireshark) 4.3.0 (v4.3.0rc1-389-gd7eefd41a2b0)
 Capture network packets and dump them into a pcapng or pcap file.
 See https://www.wireshark.org for more information.
 
@@ -7,8 +7,7 @@ Usage: dumpcap [options] ...
 Capture interface:
   -i <interface>, --interface <interface>
                            name or idx of interface (def: first non-loopback),
-                           or for remote capturing, use one of these formats:
-                               rpcap://<host>/<interface>
+                           or for remote capturing, use this format:
                                TCP@<host>:<port>
   --ifname <name>          name to use in the capture file for a pipe from which
                            we're capturing

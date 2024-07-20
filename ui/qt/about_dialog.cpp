@@ -29,16 +29,12 @@
 #include <epan/wslua/init_wslua.h>
 #endif
 
-#include "ui/alert_box.h"
-#include "ui/last_open_dir.h"
-#include "ui/help_url.h"
-#include <wsutil/utf8_entities.h>
+#include "ui/util.h"
 
-#include "file.h"
-#include "wsutil/file_util.h"
-#include "wsutil/tempfile.h"
+#include "wsutil/filesystem.h"
 #include "wsutil/plugins.h"
 #include "wsutil/version_info.h"
+
 #include "ui/capture_globals.h"
 
 #include "extcap.h"
@@ -100,7 +96,33 @@ QStringList AuthorListModel::headerColumns() const
     return QStringList() << tr("Name") << tr("Email");
 }
 
+#ifdef HAVE_PLUGINS
 static void plugins_add_description(const char *name, const char *version,
+                                    uint32_t flags, const char *filename,
+                                    void *user_data)
+{
+    QList<QStringList> *plugin_data = (QList<QStringList> *)user_data;
+    QStringList plugin_types;
+    if (flags & WS_PLUGIN_DESC_DISSECTOR)
+        plugin_types << "dissector";
+    if (flags & WS_PLUGIN_DESC_FILE_TYPE)
+        plugin_types << "file type";
+    if (flags & WS_PLUGIN_DESC_CODEC)
+        plugin_types << "codec";
+    if (flags & WS_PLUGIN_DESC_EPAN)
+        plugin_types << "epan";
+    if (flags & WS_PLUGIN_DESC_TAP_LISTENER)
+        plugin_types << "tap listener";
+    if (flags & WS_PLUGIN_DESC_DFILTER)
+        plugin_types << "dfilter";
+    if (plugin_types.empty())
+        plugin_types << "unknown";
+    QStringList plugin_row = QStringList() << name << version << plugin_types.join(", ") << filename;
+    *plugin_data << plugin_row;
+}
+#endif
+
+static void other_plugins_add_description(const char *name, const char *version,
                                     const char *types, const char *filename,
                                     void *user_data)
 {
@@ -109,7 +131,7 @@ static void plugins_add_description(const char *name, const char *version,
     *plugin_data << plugin_row;
 }
 
-PluginListModel::PluginListModel(QObject * parent) : AStringListListModel(parent)
+PluginListModel::PluginListModel(QObject *parent) : AStringListListModel(parent)
 {
     QList<QStringList> plugin_data;
 #ifdef HAVE_PLUGINS
@@ -117,10 +139,10 @@ PluginListModel::PluginListModel(QObject * parent) : AStringListListModel(parent
 #endif
 
 #ifdef HAVE_LUA
-    wslua_plugins_get_descriptions(plugins_add_description, &plugin_data);
+    wslua_plugins_get_descriptions(other_plugins_add_description, &plugin_data);
 #endif
 
-    extcap_get_descriptions(plugins_add_description, &plugin_data);
+    extcap_get_descriptions(other_plugins_add_description, &plugin_data);
 
     typeNames_ << QString("");
     foreach(QStringList row, plugin_data)
@@ -179,35 +201,36 @@ FolderListModel::FolderListModel(QObject * parent):
         AStringListListModel(parent)
 {
     /* "file open" */
-    appendRow(QStringList() << tr("\"File\" dialogs") << get_last_open_dir() << tr("capture files"));
+    appendRow(QStringList() << tr("\"File\" dialog location") << get_open_dialog_initial_dir() << tr("Capture files"));
 
     /* temp */
-    appendRow(QStringList() << tr("Temp") << (global_capture_opts.temp_dir && global_capture_opts.temp_dir[0] ? global_capture_opts.temp_dir : g_get_tmp_dir()) << tr("untitled capture files"));
+    appendRow(QStringList() << tr("Temp") << (global_capture_opts.temp_dir && global_capture_opts.temp_dir[0] ? global_capture_opts.temp_dir : g_get_tmp_dir())
+                            << tr("Untitled capture files"));
 
     /* pers conf */
     appendRow(QStringList() << tr("Personal configuration")
-            << gchar_free_to_qstring(get_persconffile_path("", FALSE))
-            << tr("dfilters, preferences, ethers, …"));
+            << gchar_free_to_qstring(get_persconffile_path("", false))
+            << tr("Preferences, profiles, manuf, …"));
 
     /* global conf */
     QString dirPath = get_datafile_dir();
     if (! dirPath.isEmpty()) {
         appendRow (QStringList() << tr("Global configuration") << dirPath
-                << tr("dfilters, preferences, manuf, …"));
+                << tr("Preferences, profiles, manuf, …"));
     }
 
     /* system */
     appendRow(QStringList() << tr("System") << get_systemfile_dir() << tr("ethers, ipxnets"));
 
     /* program */
-    appendRow(QStringList() << tr("Program") << get_progfile_dir() << tr("program files"));
+    appendRow(QStringList() << tr("Program") << get_progfile_dir() << tr("Program files"));
 
 #ifdef HAVE_PLUGINS
     /* pers plugins */
-    appendRow(QStringList() << tr("Personal Plugins") << get_plugins_pers_dir_with_version() << tr("binary plugins"));
+    appendRow(QStringList() << tr("Personal Plugins") << get_plugins_pers_dir_with_version() << tr("Binary plugins"));
 
     /* global plugins */
-    appendRow(QStringList() << tr("Global Plugins") << get_plugins_dir_with_version() << tr("binary plugins"));
+    appendRow(QStringList() << tr("Global Plugins") << get_plugins_dir_with_version() << tr("Binary plugins"));
 #endif
 
 #ifdef HAVE_LUA
@@ -219,12 +242,12 @@ FolderListModel::FolderListModel(QObject * parent):
 #endif
 
     /* Extcap */
-    appendRow(QStringList() << tr("Personal Extcap path") << QString(get_extcap_pers_dir()) << tr("external capture (extcap) plugins"));
-    appendRow(QStringList() << tr("Global Extcap path") << QString(get_extcap_dir()) << tr("external capture (extcap) plugins"));
+    appendRow(QStringList() << tr("Personal Extcap path") << QString(get_extcap_pers_dir()) << tr("External capture (extcap) plugins"));
+    appendRow(QStringList() << tr("Global Extcap path") << QString(get_extcap_dir()) << tr("External capture (extcap) plugins"));
 
 #ifdef HAVE_MAXMINDDB
     /* MaxMind DB */
-    QStringList maxMindDbPaths = QString(maxmind_db_get_paths()).split(G_SEARCHPATH_SEPARATOR_S);
+    QStringList maxMindDbPaths = gchar_free_to_qstring(maxmind_db_get_paths()).split(G_SEARCHPATH_SEPARATOR_S);
     foreach(QString path, maxMindDbPaths)
         appendRow(QStringList() << tr("MaxMind DB path") << path.trimmed() << tr("MaxMind DB database search path"));
 #endif
@@ -274,6 +297,11 @@ AboutDialog::AboutDialog(QWidget *parent) :
     ui->tblAuthors->setContextMenuPolicy(Qt::CustomContextMenu);
     connect(ui->tblAuthors, &QTreeView::customContextMenuRequested, this, &AboutDialog::handleCopyMenu);
     connect(ui->searchAuthors, &QLineEdit::textChanged, proxyAuthorModel, &AStringListListSortFilterProxyModel::setFilter);
+
+    if (!is_packet_configuration_namespace()) {
+        setWindowTitle(tr("About Logray"));
+        ui->tabWidget->setTabText(ui->tabWidget->indexOf(ui->tab_wireshark), tr("Logray"));
+    }
 
     /* Wireshark tab */
     updateWiresharkText();
@@ -438,7 +466,7 @@ void AboutDialog::showEvent(QShowEvent * event)
 
 void AboutDialog::updateWiresharkText()
 {
-    QString vcs_version_info_str = get_ws_vcs_version_info();
+    QString vcs_version_info_str = is_packet_configuration_namespace() ? get_ws_vcs_version_info() : get_lr_vcs_version_info();
     QString copyright_info_str = get_copyright_info();
     QString license_info_str = get_license_info();
     QString comp_info_str = gstring_free_to_qbytearray(get_compiled_version_info(gather_wireshark_qt_compiled_info));

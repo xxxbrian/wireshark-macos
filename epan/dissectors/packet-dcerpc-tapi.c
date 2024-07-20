@@ -23,15 +23,15 @@
 void proto_register_dcerpc_tapi(void);
 void proto_reg_handoff_dcerpc_tapi(void);
 
-static int proto_dcerpc_tapi = -1;
-static int hf_tapi_opnum = -1;
-static int hf_tapi_rc = -1;
-static int hf_tapi_hnd = -1;
-static int hf_tapi_unknown_long = -1;
-static int hf_tapi_unknown_string = -1;
-static int hf_tapi_unknown_bytes = -1;
+static int proto_dcerpc_tapi;
+static int hf_tapi_opnum;
+static int hf_tapi_rc;
+static int hf_tapi_hnd;
+static int hf_tapi_unknown_long;
+static int hf_tapi_unknown_string;
+static int hf_tapi_unknown_bytes;
 
-static gint ett_dcerpc_tapi = -1;
+static gint ett_dcerpc_tapi;
 
 /*
   IDL [ uuid(2f5f6520-ca46-1067-b319-00dd010662da),
@@ -169,7 +169,7 @@ dissect_tapi_client_detach_reply(tvbuff_t *tvb _U_, int offset,
 /*
   IDL }
 */
-static dcerpc_sub_dissector dcerpc_tapi_dissectors[] = {
+static const dcerpc_sub_dissector dcerpc_tapi_dissectors[] = {
 	{ TAPI_CLIENT_ATTACH, "ClientAttach",
 		dissect_tapi_client_attach_rqst,
 		dissect_tapi_client_attach_reply },
@@ -211,8 +211,7 @@ static hf_register_info hf[] = {
 		&ett_dcerpc_tapi
 	};
 
-	proto_dcerpc_tapi = proto_register_protocol(
-		"Microsoft Telephony API Service", "TAPI", "tapi");
+	proto_dcerpc_tapi = proto_register_protocol("Microsoft Telephony API Service", "TAPI", "tapi");
 
 	proto_register_field_array(proto_dcerpc_tapi, hf,
 				   array_length(hf));

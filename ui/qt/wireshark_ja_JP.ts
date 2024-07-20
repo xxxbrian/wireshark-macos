@@ -80,6 +80,14 @@
         <translation>ライセンス</translation>
     </message>
     <message>
+        <source>About Logray</source>
+        <translation>Lograyについて</translation>
+    </message>
+    <message>
+        <source>Logray</source>
+        <translation>Logray</translation>
+    </message>
+    <message>
         <source>The directory does not exist</source>
         <translation>ディレクトリがありません</translation>
     </message>
@@ -730,11 +738,11 @@
     </message>
     <message>
         <source>…as decimal</source>
-        <translation type="unfinished"></translation>
+        <translation>10進数として...</translation>
     </message>
     <message>
         <source>…as octal</source>
-        <translation type="unfinished"></translation>
+        <translation>8進数として...</translation>
     </message>
     <message>
         <source>…as bits</source>
@@ -751,6 +759,28 @@
     <message>
         <source>…as EBCDIC</source>
         <translation>EBCDIC形式として…</translation>
+    </message>
+</context>
+<context>
+    <name>CaptureCommentDialog</name>
+    <message>
+        <source>Edit Capture Comments</source>
+        <translation>キャプチャコメントを編集</translation>
+    </message>
+    <message>
+        <source>Add Comment</source>
+        <translation>コメントを追加</translation>
+    </message>
+    <message>
+        <source>Section %1</source>
+        <translation>セクション %1</translation>
+    </message>
+</context>
+<context>
+    <name>CaptureCommentTabWidget</name>
+    <message>
+        <source>Comment %1</source>
+        <translation>コメント %1</translation>
     </message>
 </context>
 <context>
@@ -941,8 +971,8 @@
         <translation>詳細</translation>
     </message>
     <message>
-        <source>Capture file comments</source>
-        <translation>キャプチャファイルコメント</translation>
+        <source>Edit Comments</source>
+        <translation>コメントを編集</translation>
     </message>
     <message>
         <source>Refresh</source>
@@ -951,10 +981,6 @@
     <message>
         <source>Copy To Clipboard</source>
         <translation>クリップボードにコピー</translation>
-    </message>
-    <message>
-        <source>Save Comments</source>
-        <translation>コメントを保存</translation>
     </message>
     <message>
         <source>Capture File Properties</source>
@@ -981,10 +1007,6 @@
         <translation>ハッシュ(SHA256)</translation>
     </message>
     <message>
-        <source>Hash (RIPEMD160)</source>
-        <translation type="vanished">ハッシュ (RIPEMD160)</translation>
-    </message>
-    <message>
         <source>Hash (SHA1)</source>
         <translation>ハッシュ (SHA1)</translation>
     </message>
@@ -1009,8 +1031,16 @@
         <translation>最初のパケット</translation>
     </message>
     <message>
+        <source>First event</source>
+        <translation>最初のイベント</translation>
+    </message>
+    <message>
         <source>Last packet</source>
         <translation>最後のパケット</translation>
+    </message>
+    <message>
+        <source>Last event</source>
+        <translation>最後のイベント</translation>
     </message>
     <message>
         <source>Elapsed</source>
@@ -1049,6 +1079,10 @@
         <translation>欠落したパケット</translation>
     </message>
     <message>
+        <source>Dropped events</source>
+        <translation>欠落したイベント</translation>
+    </message>
+    <message>
         <source>Capture filter</source>
         <translation>キャプチャフィルタ</translation>
     </message>
@@ -1061,12 +1095,36 @@
         <translation>パケットサイズ制限(snaplen)</translation>
     </message>
     <message>
+        <source>Event size limit (snaplen)</source>
+        <translation>イベントサイズ制限(snaplen)</translation>
+    </message>
+    <message>
         <source>none</source>
         <translation>なし</translation>
     </message>
     <message>
         <source>%1 bytes</source>
         <translation>%1 バイト</translation>
+    </message>
+    <message>
+        <source>Comments</source>
+        <translation>コメント</translation>
+    </message>
+    <message>
+        <source>Comment %1: </source>
+        <translation>コメント %1:</translation>
+    </message>
+    <message>
+        <source>Decryption Secrets</source>
+        <translation>復号化シークレット</translation>
+    </message>
+    <message>
+        <source>Type</source>
+        <translation>種別</translation>
+    </message>
+    <message>
+        <source>Size</source>
+        <translation>サイズ</translation>
     </message>
     <message>
         <source>Statistics</source>
@@ -1093,6 +1151,10 @@
         <translation>パケット数</translation>
     </message>
     <message>
+        <source>Events</source>
+        <translation>イベント</translation>
+    </message>
+    <message>
         <source>Time span, s</source>
         <translation>時間間隔,秒</translation>
     </message>
@@ -1103,6 +1165,10 @@
     <message>
         <source>Average packet size, B</source>
         <translation>平均パケットサイズ,バイト</translation>
+    </message>
+    <message>
+        <source>Average event size, B</source>
+        <translation>平均イベントサイズ,バイト</translation>
     </message>
     <message>
         <source>Bytes</source>
@@ -1117,12 +1183,12 @@
         <translation>平均ビット数毎秒</translation>
     </message>
     <message>
-        <source>Section Comment</source>
-        <translation>セクション コメント</translation>
-    </message>
-    <message>
         <source>Packet Comments</source>
         <translation>パケットコメント</translation>
+    </message>
+    <message>
+        <source>Event Comments</source>
+        <translation>イベント コメント</translation>
     </message>
     <message>
         <source>&lt;p&gt;Frame %1: </source>
@@ -1133,6 +1199,14 @@
 
 </source>
         <translation>Wireshark %1 によって作成されました
+
+</translation>
+    </message>
+    <message>
+        <source>Created by Logray %1
+
+</source>
+        <translation>Logray %1 によって作成されました
 
 </translation>
     </message>
@@ -1362,6 +1436,14 @@ For example, use 1 hour to have a new file created every hour on the hour.</sour
         <translation>(時計の)時刻が特定の間隔になったら次のファイルに切り替えます。例えば、1時間に設定すると毎時１時間ごとに新しいファイルが作成されます</translation>
     </message>
     <message>
+        <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Usually a wireless network card will only capture the traffic sent to and from its own network address, and only captures &lt;em&gt;user data&lt;/em&gt; traffic with &amp;quot;fake&amp;quot; Ethernet headers. If you want to capture all traffic that wireless network cards can &amp;quot;see&amp;quot;, or are interested in 802.11 management or control packets, or radio-layer information, mark this option. Monitor mode availability depends on the wireless card and driver. See the Wiki for some more details of capturing packets on WLAN networks.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
+        <translation>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;通常、無線 ネットワークカードは自身のネットワークアドレスに送受信されるトラフィックのみキャプチャして、&amp;quot;偽の&amp;quot; Ethernetヘッダで &lt;em&gt;ユーザデータ&lt;/em&gt; トラフィックのみ取得します。もし無線ネットワークカードが&amp;quot;見える&amp;quot;すべてのトラフィックをキャプチャしたい、802.11管理や制御パケットや無線の物理層のヘッダ情報に興味がある場合にはこのオプションをマークしてください。モニターモードが利用できるかは無線カードとドライバに依存します。無線ネットワークに関してのパケットキャプチャのさらなる詳細についてはWikiを参照ください。&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</translation>
+    </message>
+    <message>
+        <source>Enable monitor mode on all 802.11 interfaces</source>
+        <translation>すべての802.11インターフェースにおいてモニターモードを有効化します</translation>
+    </message>
+    <message>
         <source>compression</source>
         <translation>圧縮</translation>
     </message>
@@ -1372,6 +1454,30 @@ For example, use 1 hour to have a new file created every hour on the hour.</sour
     <message>
         <source>gzip</source>
         <translation>gzip</translation>
+    </message>
+    <message>
+        <source>File infix pattern</source>
+        <translation>ファイルinfixパターン</translation>
+    </message>
+    <message>
+        <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;In multiple file mode, the date and time and file index number are inserted between filename template and any suffix. Select their order.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
+        <translation>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;複数ファイルモードにおいては、日付、時間とファイルインデックス番号がファイル名テンプレートとサフィックスの間に挿入されます。順番を選択してください。&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</translation>
+    </message>
+    <message>
+        <source>YYYYmmDDHHMMSS_NNNNN</source>
+        <translation>YYYYmmDDHHMMSS_NNNNN</translation>
+    </message>
+    <message>
+        <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Date and time before the file index number. This causes files to sort in creation time order, and keeps files from the same batch closely ordered.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
+        <translation>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;ファイルインデックス番号の前に日付と時刻を示します。これによりファイルは作成時fの順序でソートされ、同じバッチのファイルが近くに配置されます。&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</translation>
+    </message>
+    <message>
+        <source>NNNNN_YYYYmmDDHHMMSS</source>
+        <translation>NNNNN_YYYYmmDDHHMMSS</translation>
+    </message>
+    <message>
+        <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;File index number before the date and time. This is the historic Wireshark ordering.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
+        <translation>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;日付と時刻の前にファイルインデックスを示します。これは歴史的なWiresharkの順序です。&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</translation>
     </message>
     <message>
         <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;After capturing has switched to the next file and the given number of files has exceeded, the oldest file will be removed.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
@@ -1462,6 +1568,10 @@ For example, use 1 hour to have a new file created every hour on the hour.</sour
         <translation>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;指定した数のファイルを作成した後キャプチャを停止します&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</translation>
     </message>
     <message>
+        <source>Stop capturing after the specified number of files have been created.</source>
+        <translation>指定したファイル数が作成された後にキャプチャを停止します</translation>
+    </message>
+    <message>
         <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Stop capturing after the specified amount of data has been captured.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
         <translation>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;指定した量のデータがキャプチャされたらキャプチャを停止します&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</translation>
     </message>
@@ -1522,8 +1632,8 @@ For example, use 1 hour to have a new file created every hour on the hour.</sour
         <translation>エラー</translation>
     </message>
     <message>
-        <source>Multiple files: Requested filesize too large. The filesize cannot be greater than 2 GiB.</source>
-        <translation>複数ファイル:要求されたファイルサイズが大きすぎます。ファイルサイズは2GBより大きくできません</translation>
+        <source>Multiple files: Requested filesize too large. The filesize cannot be greater than 2 TB.</source>
+        <translation>複数ファイル:要求されたファイルサイズが大きすぎます。ファイルサイズは2テラバイトより大きくできません</translation>
     </message>
     <message>
         <source>Multiple files: No capture file name given. You must specify a filename if you want to use multiple files.</source>
@@ -1553,6 +1663,14 @@ For example, use 1 hour to have a new file created every hour on the hour.</sour
         <translation>プロミスキャスモードでパケットをキャプチャ</translation>
     </message>
     <message>
+        <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Usually a wireless network card will only capture the traffic sent to and from its own network address, and only captures &lt;em&gt;user data&lt;/em&gt; traffic with &amp;quot;fake&amp;quot; Ethernet headers. If you want to capture all traffic that wireless network cards can &amp;quot;see&amp;quot;, or are interested in 802.11 management or control packets, or radio-layer information, mark this option. Monitor mode availability depends on the wireless card and driver. See the Wiki for more details of capturing packets on WLAN networks.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
+        <translation>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;通常、無線 ネットワークカードは自身のネットワークアドレスに送受信されるトラフィックのみキャプチャして、&amp;quot;偽の&amp;quot; Ethernetヘッダで &lt;em&gt;ユーザデータ&lt;/em&gt; トラフィックのみ取得します。もし無線ネットワークカードが&amp;quot;見える&amp;quot;すべてのトラフィックをキャプチャしたい、802.11管理や制御パケットや無線の物理層のヘッダ情報に興味がある場合にはこのオプションをマークしてください。モニターモードが利用できるかは無線カードとドライバに依存します。無線ネットワークに関してのパケットキャプチャのさらなる詳細についてはWikiを参照ください。&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</translation>
+    </message>
+    <message>
+        <source>Capture packets in monitor mode on 802.11 devices</source>
+        <translation>802.11デバイスにおいてモニターモードでパケットをキャプチャします</translation>
+    </message>
+    <message>
         <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Capture packets in the next-generation capture file format.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
         <translation>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;次世代のキャプチャファイル形式でパケットをキャプチャします&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</translation>
     </message>
@@ -1570,23 +1688,15 @@ For example, use 1 hour to have a new file created every hour on the hour.</sour
     </message>
     <message>
         <source>Interval between updates (ms)</source>
-        <translation type="unfinished"></translation>
+        <translation>更新間隔(ms)</translation>
     </message>
     <message>
         <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;How often the capture notifies the GUI of new packets. Affects how often the GUI updates and the granularity of timers.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
-        <translation type="unfinished"></translation>
+        <translation>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;どのくらいの頻度でキャプチャによって新しいパケットのGUIの通知があるか。どのくらいの頻度でGUIが更新されるのとタイマの精度に影響します。&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</translation>
     </message>
     <message>
         <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;The interval between new packet updates. Affects how often the GUI updates and the granularity of timers.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Keep the packet list scrolled to the bottom while capturing.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
-        <translation>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;キャプチャ中にパケット一覧を一番下にスクロールし続けます&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</translation>
-    </message>
-    <message>
-        <source>Automatic scrolling in live capture</source>
-        <translation>キャプチャ中に自動スクロール</translation>
+        <translation>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;新しいパケットが更新される間隔。どのくらいの頻度でGUIが更新されるのとタイマの精度に影響します。&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</translation>
     </message>
     <message>
         <source>Don&apos;t load interfaces on startup</source>
@@ -1694,14 +1804,6 @@ For example, use 1 hour to have a new file created every hour on the hour.</sour
         <source>Export %1 Coloring Rules</source>
         <translation>%1 色付けルールをエクスポート</translation>
     </message>
-    <message>
-        <source>Your coloring rules file contains unknown rules</source>
-        <translation type="vanished">あなたの色付けルールのファイルは未知のルールを含んでいます。</translation>
-    </message>
-    <message>
-        <source>Wireshark doesn&apos;t recognize one or more of your coloring rules. They have been disabled.</source>
-        <translation type="vanished">Wiresharkは１つかそれ以上の色分けルールを認識しません。それらは無効とされました。</translation>
-    </message>
 </context>
 <context>
     <name>ColoringRulesModel</name>
@@ -1796,6 +1898,14 @@ For example, use 1 hour to have a new file created every hour on the hour.</sour
         <translation>解決済</translation>
     </message>
     <message>
+        <source>Width</source>
+        <translation>幅</translation>
+    </message>
+    <message>
+        <source>Alignment</source>
+        <translation>揃え</translation>
+    </message>
+    <message>
         <source>&lt;html&gt;Show human-readable strings instead of raw values for fields. Only applicable to custom columns with fields that have value strings.&lt;/html&gt;</source>
         <translation>&lt;html&gt;123raw(無加工)のフィールド値の代わりに人が読むことのできる文字列を表示します。有効な文字列を含むフィールドを持つカスタム列へ適用する場合にのみ適用できます。&lt;/html&gt;</translation>
     </message>
@@ -1825,6 +1935,29 @@ For example, use 1 hour to have a new file created every hour on the hour.</sour
     <message>
         <source>Reset all changes</source>
         <translation>すべての変更をリセットします</translation>
+    </message>
+</context>
+<context>
+    <name>ColumnTypeDelegate</name>
+    <message>
+        <source>Default</source>
+        <translation>デフォルト</translation>
+    </message>
+    <message>
+        <source>Left</source>
+        <translation>左</translation>
+    </message>
+    <message>
+        <source>Center</source>
+        <translation>中央</translation>
+    </message>
+    <message>
+        <source>Right</source>
+        <translation>右</translation>
+    </message>
+    <message>
+        <source>Unknown</source>
+        <translation>不明</translation>
     </message>
 </context>
 <context>
@@ -1907,6 +2040,10 @@ For example, use 1 hour to have a new file created every hour on the hour.</sour
     <message>
         <source>Bits/s B </source>
         <translation>ビット毎秒 B</translation>
+    </message>
+    <message>
+        <source>Flows</source>
+        <translation>フロー</translation>
     </message>
     <message>
         <source>Total Packets</source>
@@ -2024,27 +2161,51 @@ For example, use 1 hour to have a new file created every hour on the hour.</sour
     </message>
     <message>
         <source>…as MIME Data</source>
-        <translation type="unfinished"></translation>
+        <translation>MIMEデータとして...</translation>
     </message>
     <message>
         <source>…as C String</source>
-        <translation type="unfinished"></translation>
+        <translation>C言語文字列として...</translation>
     </message>
     <message>
         <source>Copy packet bytes as printable ASCII characters and escape sequences.</source>
-        <translation type="unfinished"></translation>
+        <translation>印刷可能なASCII文字とエスケープシーケンスとしてパケットバイト列をコピー</translation>
     </message>
     <message>
-        <source>…as Printable Text</source>
-        <translation type="vanished">印刷可能なテキストとして…</translation>
+        <source>…as Go literal</source>
+        <translation>…Go 言語のリテラルとして</translation>
     </message>
     <message>
-        <source>Copy only the printable text in the packet.</source>
-        <translation type="vanished">パケット内の印刷可能なテキストだけをコピー</translation>
+        <source>Copy packet bytes as Go literal.</source>
+        <translation>Go言語のリテラルとしてパケットバイト列をコピーします。</translation>
+    </message>
+    <message>
+        <source>…as C Array</source>
+        <translation>…C言語配列として</translation>
+    </message>
+    <message>
+        <source>Copy packet bytes as C Array.</source>
+        <translation>C言語配列としてパケットバイト列をコピーします。</translation>
     </message>
     <message>
         <source>…as a Hex Stream</source>
         <translation>16進数ストリームとして…</translation>
+    </message>
+    <message>
+        <source>…as UTF-8 Text</source>
+        <translation>…UTF-8テキストとして</translation>
+    </message>
+    <message>
+        <source>Copy packet bytes as text, treating as UTF-8.</source>
+        <translation>UTF-8として扱ってパケットバイト列をテキストとしてコピーします</translation>
+    </message>
+    <message>
+        <source>…as ASCII Text</source>
+        <translation>ASCII形式テキストとして…</translation>
+    </message>
+    <message>
+        <source>Copy packet bytes as text, treating as ASCII.</source>
+        <translation>ASCII形式として扱ってパケットバイト列をテキストとしてコピーします</translation>
     </message>
     <message>
         <source>Copy packet bytes as a stream of hex.</source>
@@ -2059,20 +2220,8 @@ For example, use 1 hour to have a new file created every hour on the hour.</sour
         <translation>BASE64エンコードされた文字列としてパケットバイト列をコピー</translation>
     </message>
     <message>
-        <source>…as Raw Binary</source>
-        <translation type="vanished">無加工バイナリ形式として...</translation>
-    </message>
-    <message>
         <source>Copy packet bytes as application/octet-stream MIME data.</source>
         <translation>MIME形式データ(application/octet-stream)としてパケットバイト列をコピー</translation>
-    </message>
-    <message>
-        <source>…as Escaped String</source>
-        <translation type="vanished">エスケープされた文字列として…</translation>
-    </message>
-    <message>
-        <source>Copy packet bytes as an escaped string.</source>
-        <translation type="vanished">エスケープされた文字列としてパケットバイト列をコピー</translation>
     </message>
 </context>
 <context>
@@ -2338,11 +2487,11 @@ For example, use 1 hour to have a new file created every hour on the hour.</sour
     <name>DissectorSyntaxLineEdit</name>
     <message>
         <source>Dissector entry</source>
-        <translation type="unfinished"></translation>
+        <translation>ダイセクタ登録</translation>
     </message>
     <message>
         <source>Enter a dissector %1</source>
-        <translation type="unfinished"></translation>
+        <translation>ダイセクタ %1 を入力</translation>
     </message>
 </context>
 <context>
@@ -2893,10 +3042,6 @@ For example, use 1 hour to have a new file created every hour on the hour.</sour
         <translation>開始</translation>
     </message>
     <message>
-        <source>Save</source>
-        <translation>保存</translation>
-    </message>
-    <message>
         <source>Default</source>
         <translation>デフォルト</translation>
     </message>
@@ -3037,6 +3182,14 @@ For example, use 1 hour to have a new file created every hour on the hour.</sour
         <translation>表示フィルタ</translation>
     </message>
     <message>
+        <source>Display Filter Macros</source>
+        <translation>表示フィルタマクロ</translation>
+    </message>
+    <message>
+        <source>New macro</source>
+        <translation>新規マクロ</translation>
+    </message>
+    <message>
         <source>Open </source>
         <translation>開く </translation>
     </message>
@@ -3120,8 +3273,16 @@ For example, use 1 hour to have a new file created every hour on the hour.</sour
 <context>
     <name>FilterListModel</name>
     <message>
+        <source>Macro Name</source>
+        <translation>マクロ名</translation>
+    </message>
+    <message>
         <source>Filter Name</source>
         <translation>フィルタ名</translation>
+    </message>
+    <message>
+        <source>Macro Expression</source>
+        <translation>マクロ式</translation>
     </message>
     <message>
         <source>Filter Expression</source>
@@ -3209,20 +3370,8 @@ For example, use 1 hour to have a new file created every hour on the hour.</sour
 <context>
     <name>FolderListModel</name>
     <message>
-        <source>&quot;File&quot; dialogs</source>
-        <translation>&quot;ファイル&quot; ダイアログ</translation>
-    </message>
-    <message>
-        <source>capture files</source>
-        <translation>キャプチャファイル</translation>
-    </message>
-    <message>
         <source>Temp</source>
         <translation>一時的</translation>
-    </message>
-    <message>
-        <source>untitled capture files</source>
-        <translation>名称未設定キャプチャファイル</translation>
     </message>
     <message>
         <source>Personal configuration</source>
@@ -3231,14 +3380,6 @@ For example, use 1 hour to have a new file created every hour on the hour.</sour
     <message>
         <source>Global configuration</source>
         <translation>グローバル設定</translation>
-    </message>
-    <message>
-        <source>dfilters, preferences, ethers, …</source>
-        <translation>dfilters, preferences, ethers, …</translation>
-    </message>
-    <message>
-        <source>dfilters, preferences, manuf, …</source>
-        <translation>dfilters, preferences, manuf, …</translation>
     </message>
     <message>
         <source>System</source>
@@ -3253,16 +3394,8 @@ For example, use 1 hour to have a new file created every hour on the hour.</sour
         <translation>プログラム</translation>
     </message>
     <message>
-        <source>program files</source>
-        <translation>プログラムファイル</translation>
-    </message>
-    <message>
         <source>Personal Plugins</source>
         <translation>個人プラグイン</translation>
-    </message>
-    <message>
-        <source>binary plugins</source>
-        <translation>バイナリプラグイン</translation>
     </message>
     <message>
         <source>Global Plugins</source>
@@ -3281,11 +3414,35 @@ For example, use 1 hour to have a new file created every hour on the hour.</sour
         <translation>Luaスクリプト</translation>
     </message>
     <message>
+        <source>&quot;File&quot; dialog location</source>
+        <translation>&quot;ファイル&quot; ダイアログの場所</translation>
+    </message>
+    <message>
+        <source>Capture files</source>
+        <translation>キャプチャファイル</translation>
+    </message>
+    <message>
+        <source>Untitled capture files</source>
+        <translation>名称未設定キャプチャファイル</translation>
+    </message>
+    <message>
+        <source>Preferences, profiles, manuf, …</source>
+        <translation>設定, プロファイル, manuf, …</translation>
+    </message>
+    <message>
+        <source>Program files</source>
+        <translation>プログラムファイル</translation>
+    </message>
+    <message>
+        <source>Binary plugins</source>
+        <translation>バイナリプラグイン</translation>
+    </message>
+    <message>
         <source>Personal Extcap path</source>
         <translation>個人Extcapパス</translation>
     </message>
     <message>
-        <source>external capture (extcap) plugins</source>
+        <source>External capture (extcap) plugins</source>
         <translation>外部キャプチャ(extcap)プラグイン</translation>
     </message>
     <message>
@@ -3333,7 +3490,7 @@ For example, use 1 hour to have a new file created every hour on the hour.</sour
     <name>FollowStreamAction</name>
     <message>
         <source>%1 Stream</source>
-        <translation type="unfinished"></translation>
+        <translation>%1 ストリーム</translation>
     </message>
 </context>
 <context>
@@ -3418,6 +3575,22 @@ For example, use 1 hour to have a new file created every hour on the hour.</sour
         </translation>
     </message>
     <message>
+        <source>Event %1. </source>
+        <translation>イベント %1 </translation>
+    </message>
+    <message numerus="yes">
+        <source>%Ln &lt;span style=&quot;color: %1; background-color:%2&quot;&gt;reads&lt;/span&gt;, </source>
+        <translation>
+            <numerusform>%Ln &lt;span style=&quot;color: %1; background-color:%2&quot;&gt;読み取り&lt;/span&gt;, </numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%Ln &lt;span style=&quot;color: %1; background-color:%2&quot;&gt;writes&lt;/span&gt;, </source>
+        <translation>
+            <numerusform>%Ln &lt;span style=&quot;color: %1; background-color:%2&quot;&gt;書き込み&lt;/span&gt;, </numerusform>
+        </translation>
+    </message>
+    <message>
         <source> Click to select.</source>
         <translation>クリックして選択します</translation>
     </message>
@@ -3450,6 +3623,18 @@ For example, use 1 hour to have a new file created every hour on the hour.</sour
         <translation>選択したパケットに %1 ストリームは見つかりませんでした</translation>
     </message>
     <message>
+        <source>Read activity(%6)</source>
+        <translation>読み取りアクティビティ(%6)</translation>
+    </message>
+    <message>
+        <source>Write activity(%6)</source>
+        <translation>書き込みアクティビティ(%6)</translation>
+    </message>
+    <message>
+        <source>Entire I/O activity (%1)</source>
+        <translation>全体のI/Oアクティビティ(%1)</translation>
+    </message>
+    <message>
         <source>Entire conversation (%1)</source>
         <translation>全体の対話 (%1)</translation>
     </message>
@@ -3464,10 +3649,6 @@ For example, use 1 hour to have a new file created every hour on the hour.</sour
     <message>
         <source>Save Stream Content As…</source>
         <translation>…としてストリーム内容を保存</translation>
-    </message>
-    <message>
-        <source>[Stream output truncated]</source>
-        <translation>[ストリーム出力が切り詰められました]</translation>
     </message>
     <message numerus="yes">
         <source>%Ln total stream(s).</source>
@@ -3494,9 +3675,20 @@ For example, use 1 hour to have a new file created every hour on the hour.</sour
         <translation>ヒント</translation>
     </message>
     <message>
-        <source>Show data as</source>
-        <oldsource>Show and save data as</oldsource>
-        <translation>としてデータを表示</translation>
+        <source>Show as</source>
+        <translation>として表示</translation>
+    </message>
+    <message>
+        <source>No delta times</source>
+        <translation>デルタ時間なし</translation>
+    </message>
+    <message>
+        <source>Turn delta times</source>
+        <translation>ターンデルタ時間</translation>
+    </message>
+    <message>
+        <source>All delta times</source>
+        <translation>全デルタ時間</translation>
     </message>
     <message>
         <source>Stream</source>
@@ -3511,8 +3703,19 @@ For example, use 1 hour to have a new file created every hour on the hour.</sour
         <translation>検索:</translation>
     </message>
     <message>
+        <source>Case sensitive</source>
+        <translation>大文字小文字を区別</translation>
+    </message>
+    <message>
         <source>Find &amp;Next</source>
         <translation>次を検索(&amp;N)</translation>
+    </message>
+</context>
+<context>
+    <name>FollowStreamText</name>
+    <message>
+        <source>[Stream output truncated]</source>
+        <translation>[ストリーム出力が切り詰められました]</translation>
     </message>
 </context>
 <context>
@@ -3734,6 +3937,29 @@ For example, use 1 hour to have a new file created every hour on the hour.</sour
     </message>
 </context>
 <context>
+    <name>IOConsoleDialog</name>
+    <message>
+        <source>Dialog</source>
+        <translation>ダイアログ</translation>
+    </message>
+    <message>
+        <source>Enter code</source>
+        <translation>コードを入力</translation>
+    </message>
+    <message>
+        <source>Evaluate</source>
+        <translation>評価</translation>
+    </message>
+    <message>
+        <source>Clear</source>
+        <translation>クリア</translation>
+    </message>
+    <message>
+        <source>Use %1 to evaluate.</source>
+        <translation>%1 を用いて評価</translation>
+    </message>
+</context>
+<context>
     <name>IOGraphDialog</name>
     <message>
         <source>Dialog</source>
@@ -3828,29 +4054,28 @@ For example, use 1 hour to have a new file created every hour on the hour.</sour
 &lt;/body&gt;&lt;/html&gt;</translation>
     </message>
     <message>
-        <source>Remove this graph.</source>
-        <oldsource>Remove this dissection behavior.</oldsource>
-        <translation>このグラフを削除します</translation>
-    </message>
-    <message>
         <source>Add a new graph.</source>
         <translation>新規グラフを追加します</translation>
-    </message>
-    <message>
-        <source>Duplicate this graph.</source>
-        <translation>このグラフを複製します</translation>
     </message>
     <message>
         <source>Clear all graphs.</source>
         <translation>すべてのグラフをクリア</translation>
     </message>
     <message>
-        <source>Move this graph upwards.</source>
-        <translation>このグラフを上に移動します</translation>
+        <source>Remove the selected graph(s).</source>
+        <translation>選択したグラフを削除します</translation>
     </message>
     <message>
-        <source>Move this graph downwards.</source>
-        <translation>このグラフを下に移動します</translation>
+        <source>Duplicate the selected graph(s).</source>
+        <translation>選択したグラフを複製します</translation>
+    </message>
+    <message>
+        <source>Move the selected graph(s) upwards.</source>
+        <translation>選択したグラフを上に移動します</translation>
+    </message>
+    <message>
+        <source>Move the selected graph(s) downwards.</source>
+        <translation>選択したグラフを下に移動します</translation>
     </message>
     <message>
         <source>Mouse</source>
@@ -3885,20 +4110,12 @@ For example, use 1 hour to have a new file created every hour on the hour.</sour
         <translation>ログのスケール</translation>
     </message>
     <message>
-        <source>Automatic Update</source>
-        <translation type="vanished">自動アップデート</translation>
-    </message>
-    <message>
         <source>Automatic update</source>
-        <translation type="unfinished"></translation>
+        <translation>自動アップデート</translation>
     </message>
     <message>
         <source>Enable legend</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Reset</source>
-        <translation>リセット</translation>
+        <translation>凡例を有効化</translation>
     </message>
     <message>
         <source>Reset Graph</source>
@@ -4114,6 +4331,42 @@ For example, use 1 hour to have a new file created every hour on the hour.</sour
         <translation>別のプロファイルからグラフをコピーします</translation>
     </message>
     <message>
+        <source>1 μs</source>
+        <translation>1マイクロ秒</translation>
+    </message>
+    <message>
+        <source>2 μs</source>
+        <translation>2マイクロ秒</translation>
+    </message>
+    <message>
+        <source>5 μs</source>
+        <translation>5マイクロ秒</translation>
+    </message>
+    <message>
+        <source>10 μs</source>
+        <translation>10マイクロ秒</translation>
+    </message>
+    <message>
+        <source>20 μs</source>
+        <translation>20マイクロ秒</translation>
+    </message>
+    <message>
+        <source>50 μs</source>
+        <translation>50マイクロ秒</translation>
+    </message>
+    <message>
+        <source>100 μs</source>
+        <translation>100マイクロ秒</translation>
+    </message>
+    <message>
+        <source>200 μs</source>
+        <translation>200マイクロ秒</translation>
+    </message>
+    <message>
+        <source>500 μs</source>
+        <translation>500マイクロ秒</translation>
+    </message>
+    <message>
         <source>1 ms</source>
         <translation>1ミリ秒</translation>
     </message>
@@ -4158,6 +4411,14 @@ For example, use 1 hour to have a new file created every hour on the hour.</sour
         <translation>5 秒</translation>
     </message>
     <message>
+        <source>2 min</source>
+        <translation>2分</translation>
+    </message>
+    <message>
+        <source>5 min</source>
+        <translation>5分</translation>
+    </message>
+    <message>
         <source>Wireshark I/O Graphs: %1</source>
         <translation>Wireshark入出力グラフ: %1</translation>
     </message>
@@ -4167,7 +4428,15 @@ For example, use 1 hour to have a new file created every hour on the hour.</sour
     </message>
     <message>
         <source>Filtered events</source>
-        <translation type="unfinished"></translation>
+        <translation>フィルタされたイベント</translation>
+    </message>
+    <message>
+        <source>All packets</source>
+        <translation>すべてのパケット</translation>
+    </message>
+    <message>
+        <source>All events</source>
+        <translation>すべてのイベント</translation>
     </message>
     <message>
         <source>All Packets</source>
@@ -4179,11 +4448,11 @@ For example, use 1 hour to have a new file created every hour on the hour.</sour
     </message>
     <message>
         <source>All Events</source>
-        <translation type="unfinished"></translation>
+        <translation>すべてのイベント</translation>
     </message>
     <message>
-        <source>Access Denied</source>
-        <translation type="unfinished"></translation>
+        <source>All Execs</source>
+        <translation>全ての Execs</translation>
     </message>
     <message>
         <source>Hover over the graph for details.</source>
@@ -4195,7 +4464,7 @@ For example, use 1 hour to have a new file created every hour on the hour.</sour
     </message>
     <message>
         <source>No events in interval</source>
-        <translation type="unfinished"></translation>
+        <translation>この間隔にイベントはありません</translation>
     </message>
     <message>
         <source>Click to select packet</source>
@@ -4207,11 +4476,11 @@ For example, use 1 hour to have a new file created every hour on the hour.</sour
     </message>
     <message>
         <source>Click to select event</source>
-        <translation type="unfinished"></translation>
+        <translation>クリックしてイベントを選んでください</translation>
     </message>
     <message>
         <source>Event</source>
-        <translation type="unfinished">イベント</translation>
+        <translation>イベント</translation>
     </message>
     <message>
         <source>%1 (%2s%3).</source>
@@ -4228,6 +4497,10 @@ For example, use 1 hour to have a new file created every hour on the hour.</sour
     <message>
         <source>Click to select a portion of the graph.</source>
         <translation>クリックしてグラフの割合を選びます</translation>
+    </message>
+    <message>
+        <source>%1 Intervals </source>
+        <translation>%1 インターバル</translation>
     </message>
     <message>
         <source>Portable Document Format (*.pdf)</source>
@@ -4925,7 +5198,7 @@ For example, use 1 hour to have a new file created every hour on the hour.</sour
     </message>
     <message>
         <source>&lt;p&gt;Local interfaces are unavailable because the packet capture driver isn&apos;t loaded.&lt;/p&gt;&lt;p&gt;You can fix this by running &lt;pre&gt;net start npcap&lt;/pre&gt; if you have Npcap installed or &lt;pre&gt;net start npf&lt;/pre&gt; if you have WinPcap installed. Both commands must be run as Administrator.&lt;/p&gt;</source>
-        <translation>&lt;p&gt;キャプチャドライバが読み込まれていないためローカル印ーフェースは利用できません。&lt;/p&gt;&lt;p&gt;以下を実行することで修正することができます。 もしNpcapをインストールした場合、&lt;pre&gt;net start npcap&lt;/pre&gt; もしWinPcapをインストールした場合、&lt;pre&gt;net start npf&lt;/pre&gt; 両方のコマンドは管理者権限として実行する必要があります。&lt;/p&gt;</translation>
+        <translation>&lt;p&gt;キャプチャドライバが読み込まれていないためローカルインターフェースは利用できません。&lt;/p&gt;&lt;p&gt;以下を実行することで修正することができます。 もしNpcapをインストールした場合、&lt;pre&gt;net start npcap&lt;/pre&gt; もしWinPcapをインストールした場合、&lt;pre&gt;net start npf&lt;/pre&gt; 両方のコマンドは管理者権限として実行する必要があります。&lt;/p&gt;</translation>
     </message>
     <message>
         <source>&lt;p&gt;You don&apos;t have permission to capture on local interfaces.&lt;/p&gt;&lt;p&gt;You can fix this by &lt;a href=&quot;file://%1&quot;&gt;installing ChmodBPF&lt;/a&gt;.&lt;/p&gt;</source>
@@ -4979,6 +5252,13 @@ For example, use 1 hour to have a new file created every hour on the hour.</sour
     <message>
         <source>Apply changes</source>
         <translation>変更を適用</translation>
+    </message>
+</context>
+<context>
+    <name>InterfaceTreeDelegate</name>
+    <message>
+        <source>default</source>
+        <translation>デフォルト</translation>
     </message>
 </context>
 <context>
@@ -5956,8 +6236,8 @@ For example, use 1 hour to have a new file created every hour on the hour.</sour
 <context>
     <name>LteMacStatisticsDialog</name>
     <message>
-        <source>LTE Mac Statistics</source>
-        <translation>LTE MAC統計</translation>
+        <source>LTE/NR Mac Statistics</source>
+        <translation>LTE/NR Mac 統計</translation>
     </message>
     <message>
         <source>Include SR frames in filter</source>
@@ -6265,12 +6545,12 @@ For example, use 1 hour to have a new file created every hour on the hour.</sour
         <translation>シーケンス番号</translation>
     </message>
     <message>
-        <source>LTE RLC Graph (UE=%1 chan=%2%3 %4 - %5)</source>
-        <translation>LTE RLCグラフ (UE=%1 chan=%2%3 %4 - %5)</translation>
+        <source>%1 RLC Graph (UE=%2 chan=%3%4 %5 - %6)</source>
+        <translation>%1 RLC グラフ (UE=%2 chan=%3%4 %5 - %6)</translation>
     </message>
     <message>
-        <source>LTE RLC Graph - no channel selected</source>
-        <translation>LTE RLCグラフ - チャンネルが選択されていません</translation>
+        <source>3GPP RLC Graph - no channel selected</source>
+        <translation>3GPP RLC グラフ - チャンネルが選択されていません</translation>
     </message>
     <message>
         <source>Save As…</source>
@@ -6324,8 +6604,8 @@ For example, use 1 hour to have a new file created every hour on the hour.</sour
 <context>
     <name>LteRlcStatisticsDialog</name>
     <message>
-        <source>LTE RLC Statistics</source>
-        <translation>LTE RLC統計</translation>
+        <source>3GPP RLC Statistics</source>
+        <translation>3GPP RLC 統計</translation>
     </message>
     <message>
         <source>Include SR frames in filter</source>
@@ -6411,6 +6691,10 @@ For example, use 1 hour to have a new file created every hour on the hour.</sour
         <translation>プロファイル: %1</translation>
     </message>
     <message>
+        <source> %1 Displayed: %2 (%3%)</source>
+        <translation> %1 表示: %2 (%3%)</translation>
+    </message>
+    <message>
         <source>Manage Profiles…</source>
         <translation>プロファイルの管理...</translation>
     </message>
@@ -6471,6 +6755,12 @@ For example, use 1 hour to have a new file created every hour on the hour.</sour
             <numerusform>%Ln バイト</numerusform>
         </translation>
     </message>
+    <message numerus="yes">
+        <source>%Ln bit(s)</source>
+        <translation>
+            <numerusform>%Ln ビット</numerusform>
+        </translation>
+    </message>
     <message>
         <source>Byte %1</source>
         <translation>%1 バイト</translation>
@@ -6484,9 +6774,12 @@ For example, use 1 hour to have a new file created every hour on the hour.</sour
         <translation>選択されたパケット: %1 %2 </translation>
     </message>
     <message>
-        <source>Packets: %1 %4 Displayed: %2 (%3%)</source>
-        <oldsource>Packets: %1 %4 Displayed: %2 %4 Marked: %3</oldsource>
-        <translation>パケット数: %1 %4 表示: %2 (%3%)</translation>
+        <source>Selected Event: %1 %2 </source>
+        <translation>選択したイベント: %1 %2 </translation>
+    </message>
+    <message>
+        <source>Events: %1</source>
+        <translation>イベント: %1</translation>
     </message>
     <message>
         <source> %1 Selected: %2 (%3%)</source>
@@ -6518,6 +6811,10 @@ For example, use 1 hour to have a new file created every hour on the hour.</sour
         <translation>パケットなし</translation>
     </message>
     <message>
+        <source>No Events</source>
+        <translation>イベントなし</translation>
+    </message>
+    <message>
         <source>From Zip File...</source>
         <translation>Zipファイルより...</translation>
     </message>
@@ -6546,6 +6843,13 @@ For example, use 1 hour to have a new file created every hour on the hour.</sour
         <translation type="obsolete">
             <numerusform>%n interface shown, %1 hidden</numerusform>
         </translation>
+    </message>
+</context>
+<context>
+    <name>MainWindow</name>
+    <message>
+        <source>Display filter as %1</source>
+        <translation>%1 として表示フィルタ</translation>
     </message>
 </context>
 <context>
@@ -6717,6 +7021,68 @@ For example, use 1 hour to have a new file created every hour on the hour.</sour
     <message>
         <source>New Pipe</source>
         <translation>新規パイプ</translation>
+    </message>
+</context>
+<context>
+    <name>ManufDialog</name>
+    <message>
+        <source>MAC Address Blocks</source>
+        <translation>MACアドレスブロック</translation>
+    </message>
+    <message>
+        <source>Search MAC address or address prefix. Special purpose bits are masked.</source>
+        <translation>MACアドレスかアドレスプレフィックスを検索します。特別な目的のビットはマスクされます</translation>
+    </message>
+    <message>
+        <source>MAC Address</source>
+        <translation>MACアドレス</translation>
+    </message>
+    <message>
+        <source>Search vendor name using a case-insentitive regular expression.</source>
+        <translation>大文字小文字を区別した正規表現を用いてベンダ名を検索します</translation>
+    </message>
+    <message>
+        <source>Vendor Name</source>
+        <translation>ベンダ名</translation>
+    </message>
+    <message>
+        <source>Show short name column.</source>
+        <translation>短い名前の列を表示</translation>
+    </message>
+    <message>
+        <source>Short name</source>
+        <translation>短い名前</translation>
+    </message>
+    <message>
+        <source>Select all</source>
+        <translation>すべてを選択</translation>
+    </message>
+    <message>
+        <source>Copy</source>
+        <translation>コピー</translation>
+    </message>
+    <message>
+        <source>Find</source>
+        <translation>検索</translation>
+    </message>
+    <message>
+        <source>Clear</source>
+        <translation>クリア</translation>
+    </message>
+</context>
+<context>
+    <name>ManufTableModel</name>
+    <message>
+        <source>Address Block</source>
+        <translation>アドレスブロック</translation>
+    </message>
+    <message>
+        <source>Short Name</source>
+        <translation>短い名前</translation>
+    </message>
+    <message>
+        <source>Vendor Name</source>
+        <translation>ベンダ名</translation>
     </message>
 </context>
 <context>
@@ -6995,6 +7361,10 @@ For example, use 1 hour to have a new file created every hour on the hour.</sour
         <translation>パケットバイト列を表示</translation>
     </message>
     <message>
+        <source>Layout:</source>
+        <translation>レイアウト:</translation>
+    </message>
+    <message>
         <source>Packet %1</source>
         <translation>パケット %1</translation>
     </message>
@@ -7012,8 +7382,14 @@ For example, use 1 hour to have a new file created every hour on the hour.</sour
     </message>
     <message numerus="yes">
         <source>%Ln byte(s)</source>
-        <translation type="unfinished">
+        <translation>
             <numerusform>%Ln バイト</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%Ln bit(s)</source>
+        <translation>
+            <numerusform>%Ln ビット</numerusform>
         </translation>
     </message>
 </context>
@@ -7186,7 +7562,7 @@ For example, use 1 hour to have a new file created every hour on the hour.</sour
     </message>
     <message>
         <source>Sorting …</source>
-        <translation type="unfinished"></translation>
+        <translation>ソート中 …</translation>
     </message>
 </context>
 <context>
@@ -7218,6 +7594,14 @@ For example, use 1 hour to have a new file created every hour on the hour.</sour
     <message>
         <source>Remove &amp;ignored packets</source>
         <translation>無視されたパケットを削除(&amp;i)</translation>
+    </message>
+    <message>
+        <source>Include &amp;depended upon packets</source>
+        <translation>依存したパケットも含める(&amp;d)</translation>
+    </message>
+    <message>
+        <source>Also include packets depended upon, such as those used to reassemble displayed packets</source>
+        <translation>表示されたパケットを再組立するのに用いられたパケットなど、依存したパケットも含めます。</translation>
     </message>
     <message>
         <source>First &amp;to last marked</source>
@@ -7342,6 +7726,14 @@ For example, use 1 hour to have a new file created every hour on the hour.</sour
         <translation>検索:</translation>
     </message>
     <message>
+        <source>Checking this will show only changed preferences.</source>
+        <translation>これをチェックすることで変更された設定のみ表示します</translation>
+    </message>
+    <message>
+        <source>Show changed values</source>
+        <translation>変更した値を表示</translation>
+    </message>
+    <message>
         <source>Preferences</source>
         <translation>設定</translation>
     </message>
@@ -7459,8 +7851,20 @@ For example, use 1 hour to have a new file created every hour on the hour.</sour
         <translation>このプロファイルをコピーします</translation>
     </message>
     <message>
+        <source>The number of packets or events to check for automatic profile switching.</source>
+        <translation>自動プロファイルスイッチのためのパケットやイベントの数</translation>
+    </message>
+    <message>
+        <source>Auto switch packet limit</source>
+        <translation>自動スイッチパケット限度</translation>
+    </message>
+    <message>
         <source>Configuration Profiles</source>
         <translation>設定プロファイル</translation>
+    </message>
+    <message>
+        <source>Auto switch event limit</source>
+        <translation>自動スイッチイベント限度</translation>
     </message>
     <message>
         <source>Import</source>
@@ -7636,6 +8040,10 @@ For example, use 1 hour to have a new file created every hour on the hour.</sour
     <message>
         <source>deleted</source>
         <translation>削除済</translation>
+    </message>
+    <message>
+        <source>Auto Switch Filter</source>
+        <translation>自動スイッチフィルタ</translation>
     </message>
     <message>
         <source>copy</source>
@@ -7876,27 +8284,27 @@ For example, use 1 hour to have a new file created every hour on the hour.</sour
     </message>
     <message>
         <source>Copy short names</source>
-        <translation type="unfinished"></translation>
+        <translation>短い名前をコピー</translation>
     </message>
     <message>
         <source>Copy short protocol names in use.</source>
-        <translation type="unfinished"></translation>
+        <translation>使われている短いプロトコル名をコピーします</translation>
     </message>
     <message>
         <source>Disable unused protocols</source>
-        <translation type="unfinished"></translation>
+        <translation>未使用のプロトコルを無効化</translation>
     </message>
     <message>
         <source>Disable all protocols but those listed.</source>
-        <translation type="unfinished"></translation>
+        <translation>リストされている全てのプロトコルを無効化します</translation>
     </message>
     <message>
         <source>Re-enable unused protocols</source>
-        <translation type="unfinished"></translation>
+        <translation>未使用のプロトコルを再度有効化</translation>
     </message>
     <message>
         <source>Re-enable protocols that were disabled in this dialog.</source>
-        <translation type="unfinished"></translation>
+        <translation>このダイアログで無効化されているプロトコルを再度有効化します</translation>
     </message>
     <message>
         <source>Protocol Hierarchy Statistics</source>
@@ -7916,19 +8324,19 @@ For example, use 1 hour to have a new file created every hour on the hour.</sour
     </message>
     <message>
         <source>protocol short names</source>
-        <translation type="unfinished"></translation>
+        <translation>プロトコルの短い名前</translation>
     </message>
     <message>
         <source>Protocols</source>
-        <translation type="unfinished"></translation>
+        <translation>プロトコル</translation>
     </message>
     <message>
         <source>Disable unused</source>
-        <translation type="unfinished"></translation>
+        <translation>未使用を無効化</translation>
     </message>
     <message>
         <source>Revert changes</source>
-        <translation type="unfinished"></translation>
+        <translation>変更を元に戻す</translation>
     </message>
     <message>
         <source>No display filter.</source>
@@ -7940,11 +8348,11 @@ For example, use 1 hour to have a new file created every hour on the hour.</sour
     </message>
     <message>
         <source>Unused protocols have been disabled.</source>
-        <translation type="unfinished"></translation>
+        <translation>未使用のプロトコルを無効化しました</translation>
     </message>
     <message>
         <source>Protocol changes have been reverted.</source>
-        <translation type="unfinished"></translation>
+        <translation>プロトコルの変更を元に戻しました</translation>
     </message>
 </context>
 <context>
@@ -7995,6 +8403,10 @@ For example, use 1 hour to have a new file created every hour on the hour.</sour
     <message>
         <source>Window Size (B)</source>
         <translation>ウインドウサイズ(バイト)</translation>
+    </message>
+    <message>
+        <source>Unacked (Outstanding) Bytes (B)</source>
+        <translation>ACKされていない(未処理の)バイト(B)</translation>
     </message>
     <message>
         <source>[no capture file]</source>
@@ -8157,6 +8569,14 @@ For example, use 1 hour to have a new file created every hour on the hour.</sour
         <translation>マーカー欠如？</translation>
     </message>
     <message>
+        <source>LTE</source>
+        <translation>LTE</translation>
+    </message>
+    <message>
+        <source>NR</source>
+        <translation>NR</translation>
+    </message>
+    <message>
         <source>C-RNTI</source>
         <translation>C-RNTI</translation>
     </message>
@@ -8175,6 +8595,10 @@ For example, use 1 hour to have a new file created every hour on the hour.</sour
     <message>
         <source>UEId</source>
         <translation>UEId</translation>
+    </message>
+    <message>
+        <source>RAT</source>
+        <translation>RAT</translation>
     </message>
     <message>
         <source>UL Frames</source>
@@ -8400,9 +8824,57 @@ For example, use 1 hour to have a new file created every hour on the hour.</sour
         <source>Browse…</source>
         <translation>参照…</translation>
     </message>
+    <message>
+        <source>PACKETS</source>
+        <translation>パケット</translation>
+    </message>
+    <message>
+        <source>EVENTS</source>
+        <translation>イベント</translation>
+    </message>
+    <message>
+        <source>BYTES</source>
+        <translation>バイト</translation>
+    </message>
+    <message>
+        <source>BITS</source>
+        <translation>ビット</translation>
+    </message>
+    <message>
+        <source>COUNT FRAMES</source>
+        <translation>フレーム数</translation>
+    </message>
+    <message>
+        <source>COUNT FIELDS</source>
+        <translation>フィールド数</translation>
+    </message>
+    <message>
+        <source>SUM</source>
+        <translation>合計</translation>
+    </message>
+    <message>
+        <source>MAX</source>
+        <translation>最大</translation>
+    </message>
+    <message>
+        <source>MIN</source>
+        <translation>最小</translation>
+    </message>
+    <message>
+        <source>AVERAGE</source>
+        <translation>平均</translation>
+    </message>
+    <message>
+        <source>THROUGHPUT</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>LOAD</source>
+        <translation>読込</translation>
+    </message>
 </context>
 <context>
-    <name>QObject::QObject</name>
+    <name>QObject::QObject::QObject</name>
     <message>
         <source>CCCH</source>
         <translation>CCCH</translation>
@@ -8500,6 +8972,13 @@ For example, use 1 hour to have a new file created every hour on the hour.</sour
     <message>
         <source>milliseconds</source>
         <translation>ミリ秒</translation>
+    </message>
+</context>
+<context>
+    <name>ResizeHeaderView</name>
+    <message>
+        <source>Resize all %1 to contents</source>
+        <translation>全ての %1 を内容に合わせてリサイズします</translation>
     </message>
 </context>
 <context>
@@ -8618,6 +9097,14 @@ For example, use 1 hour to have a new file created every hour on the hour.</sour
         <translation>解決したアドレス</translation>
     </message>
     <message>
+        <source>Copy</source>
+        <translation>コピー</translation>
+    </message>
+    <message>
+        <source>Save as…</source>
+        <translation>…として保存</translation>
+    </message>
+    <message>
         <source># Resolved addresses found in %1</source>
         <translation># %1 に解決したアドレスが見つかりました</translation>
     </message>
@@ -8628,6 +9115,61 @@ For example, use 1 hour to have a new file created every hour on the hour.</sour
         <translation># コメント
 #
 # </translation>
+    </message>
+</context>
+<context>
+    <name>ResolvedAddressesView</name>
+    <message>
+        <source>as Plain Text</source>
+        <translation>プレインテキストとして</translation>
+    </message>
+    <message>
+        <source>Copy selected rows</source>
+        <translation>選択した行をコピー</translation>
+    </message>
+    <message>
+        <source>Copy table</source>
+        <translation>表をコピー</translation>
+    </message>
+    <message>
+        <source>as CSV</source>
+        <translation>CSVとして</translation>
+    </message>
+    <message>
+        <source>as JSON</source>
+        <translation>JSONとして</translation>
+    </message>
+    <message>
+        <source>Save selected rows as…</source>
+        <translation>選択した行を…として保存</translation>
+    </message>
+    <message>
+        <source>Save table as…</source>
+        <translation>…として表を保存</translation>
+    </message>
+    <message>
+        <source>Save Resolved Addresses As…</source>
+        <translation>…として解決したアドレスを保存</translation>
+    </message>
+    <message>
+        <source>Plain text (*.txt)</source>
+        <translation>プレインテキスト (*.txt)</translation>
+    </message>
+    <message>
+        <source>CSV Document (*.csv)</source>
+        <translation>CSV書類 (*.csv)</translation>
+    </message>
+    <message>
+        <source>JSON Document (*.json)</source>
+        <translation>JSON書類 (*.json)</translation>
+    </message>
+    <message>
+        <source>Warning</source>
+        <translation>警告</translation>
+    </message>
+    <message>
+        <source>Unable to save %1: %2</source>
+        <translation>%1を保存できません: %2</translation>
     </message>
 </context>
 <context>
@@ -9883,254 +10425,6 @@ For example, use 1 hour to have a new file created every hour on the hour.</sour
         <source>Analyze</source>
         <translation>分析</translation>
     </message>
-    <message>
-        <source>Reset Graph</source>
-        <translation>グラフをリセット</translation>
-    </message>
-    <message>
-        <source>Reset the graph to its initial state.</source>
-        <translation>グラフを初期状態にリセットします</translation>
-    </message>
-    <message>
-        <source>0</source>
-        <translation>0</translation>
-    </message>
-    <message>
-        <source>Zoom In</source>
-        <translation>ズームイン</translation>
-    </message>
-    <message>
-        <source>+</source>
-        <translation>+</translation>
-    </message>
-    <message>
-        <source>Zoom Out</source>
-        <translation>ズームアウト</translation>
-    </message>
-    <message>
-        <source>-</source>
-        <translation>-</translation>
-    </message>
-    <message>
-        <source>Move Up 10 Pixels</source>
-        <translation>上に10ピクセル移動</translation>
-    </message>
-    <message>
-        <source>Up</source>
-        <translation>上</translation>
-    </message>
-    <message>
-        <source>Move Left 10 Pixels</source>
-        <translation>左に10ピクセル移動</translation>
-    </message>
-    <message>
-        <source>Left</source>
-        <translation>左</translation>
-    </message>
-    <message>
-        <source>Move Right 10 Pixels</source>
-        <translation>右に10ピクセル移動</translation>
-    </message>
-    <message>
-        <source>Right</source>
-        <translation>右</translation>
-    </message>
-    <message>
-        <source>Move Down 10 Pixels</source>
-        <translation>下に10ピクセル移動</translation>
-    </message>
-    <message>
-        <source>Down</source>
-        <translation>下</translation>
-    </message>
-    <message>
-        <source>Move Up 1 Pixel</source>
-        <translation>上に1ピクセル移動</translation>
-    </message>
-    <message>
-        <source>Shift+Up</source>
-        <translation>Shift+Up</translation>
-    </message>
-    <message>
-        <source>Move Left 1 Pixel</source>
-        <translation>左に1ピクセル移動</translation>
-    </message>
-    <message>
-        <source>Shift+Left</source>
-        <translation>Shift+Left</translation>
-    </message>
-    <message>
-        <source>Move Right 1 Pixel</source>
-        <translation>右に1ピクセル移動</translation>
-    </message>
-    <message>
-        <source>Shift+Right</source>
-        <translation>Shift+Right</translation>
-    </message>
-    <message>
-        <source>Move Down 1 Pixel</source>
-        <translation>下に1ピクセル移動</translation>
-    </message>
-    <message>
-        <source>Shift+Down</source>
-        <translation>Shift+Down</translation>
-    </message>
-    <message>
-        <source>Next Stream</source>
-        <translation>次のストリーム</translation>
-    </message>
-    <message>
-        <source>Go to the next stream in the capture</source>
-        <translation>キャプチャ内の次のストリームへ移動します</translation>
-    </message>
-    <message>
-        <source>PgUp</source>
-        <translation>ページアップ</translation>
-    </message>
-    <message>
-        <source>Previous Stream</source>
-        <translation>前のストリーム</translation>
-    </message>
-    <message>
-        <source>Go to the previous stream in the capture</source>
-        <translation>キャプチャ内の前のストリームへ移動します</translation>
-    </message>
-    <message>
-        <source>PgDown</source>
-        <translation>ページダウン</translation>
-    </message>
-    <message>
-        <source>Switch Direction</source>
-        <translation>向きを切替</translation>
-    </message>
-    <message>
-        <source>Switch direction (swap TCP endpoints)</source>
-        <translation>向きを切り替え(TCPの終端を入替)</translation>
-    </message>
-    <message>
-        <source>D</source>
-        <translation>D</translation>
-    </message>
-    <message>
-        <source>Go To Packet Under Cursor</source>
-        <translation>カーソル位置にあるパケットへ移動</translation>
-    </message>
-    <message>
-        <source>Go to packet currently under the cursor</source>
-        <translation>現在のカーソル位置にあるパケットへ移動します</translation>
-    </message>
-    <message>
-        <source>G</source>
-        <translation>G</translation>
-    </message>
-    <message>
-        <source>Drag / Zoom</source>
-        <translation>ドラッグ/ズーム</translation>
-    </message>
-    <message>
-        <source>Toggle mouse drag / zoom behavior</source>
-        <translation>マウスのドラッグ/ズームの動作を切替えます</translation>
-    </message>
-    <message>
-        <source>Z</source>
-        <translation>Z</translation>
-    </message>
-    <message>
-        <source>Relative / Absolute Sequence Numbers</source>
-        <translation>相対的/絶対的シーケンス番号を切替</translation>
-    </message>
-    <message>
-        <source>Toggle relative / absolute sequence numbers</source>
-        <translation>相対的/絶対的シーケンス番号を切り替えます</translation>
-    </message>
-    <message>
-        <source>S</source>
-        <translation>S</translation>
-    </message>
-    <message>
-        <source>Capture / Session Time Origin</source>
-        <translation>キャプチャ/セッション時間起点</translation>
-    </message>
-    <message>
-        <source>Toggle capture / session time origin</source>
-        <translation>キャプチャ/セッション時間起点を切り替えます</translation>
-    </message>
-    <message>
-        <source>T</source>
-        <translation>T</translation>
-    </message>
-    <message>
-        <source>Crosshairs</source>
-        <translation>十字カーソル</translation>
-    </message>
-    <message>
-        <source>Toggle crosshairs</source>
-        <translation>十字カーソルの表示を切り替えます</translation>
-    </message>
-    <message>
-        <source>Space</source>
-        <translation>スペース</translation>
-    </message>
-    <message>
-        <source>Round Trip Time</source>
-        <translation>往復遅延時間</translation>
-    </message>
-    <message>
-        <source>Switch to the Round Trip Time graph</source>
-        <translation>往復遅延時間グラフに切り替えます</translation>
-    </message>
-    <message>
-        <source>1</source>
-        <translation>1</translation>
-    </message>
-    <message>
-        <source>Throughput</source>
-        <translation>スループット</translation>
-    </message>
-    <message>
-        <source>Switch to the Throughput graph</source>
-        <translation>スループットグラフに切り替えます</translation>
-    </message>
-    <message>
-        <source>2</source>
-        <translation>2</translation>
-    </message>
-    <message>
-        <source>Time / Sequence (Stevens)</source>
-        <translation>時間/シーケンス (Stevens)</translation>
-    </message>
-    <message>
-        <source>Switch to the Stevens-style Time / Sequence graph</source>
-        <translation>Stevens形式の時間/シーケンスグラフに切り替えます</translation>
-    </message>
-    <message>
-        <source>3</source>
-        <translation>3</translation>
-    </message>
-    <message>
-        <source>Window Scaling</source>
-        <translation>ウインドウスケーリング</translation>
-    </message>
-    <message>
-        <source>Switch to the Window Scaling graph</source>
-        <translation>ウインドウスケーリンググラフに切り替えます</translation>
-    </message>
-    <message>
-        <source>5</source>
-        <translation>5</translation>
-    </message>
-    <message>
-        <source>Time / Sequence (tcptrace)</source>
-        <translation>時間/シーケンス(tcptrace)</translation>
-    </message>
-    <message>
-        <source>Switch to the tcptrace-style Time / Sequence graph</source>
-        <translation>tcptrace形式の時間/シーケンスグラフに切り替えます</translation>
-    </message>
-    <message>
-        <source>4</source>
-        <translation>4</translation>
-    </message>
 </context>
 <context>
     <name>SCTPAssocAnalyseDialog</name>
@@ -10155,10 +10449,6 @@ For example, use 1 hour to have a new file created every hour on the hour.</sour
         <translation>アソシエーションをフィルタ</translation>
     </message>
     <message>
-        <source>Close</source>
-        <translation>閉じる</translation>
-    </message>
-    <message>
         <source>Number of Data Chunks from EP2 to EP1: </source>
         <translation>EP2からEP1へのデータチャンク数:</translation>
     </message>
@@ -10177,10 +10467,6 @@ For example, use 1 hour to have a new file created every hour on the hour.</sour
     <message>
         <source>Number of Data Bytes from EP2 to EP1: </source>
         <translation>EP2からEP1へのデータバイト数:</translation>
-    </message>
-    <message>
-        <source>TextLabel</source>
-        <translation>テキストラベル</translation>
     </message>
     <message>
         <source>Endpoint 1</source>
@@ -10209,6 +10495,14 @@ For example, use 1 hour to have a new file created every hour on the hour.</sour
     <message>
         <source>Minimum Number of Inbound Streams:</source>
         <translation>内向きストリームの最小数:</translation>
+    </message>
+    <message>
+        <source>-</source>
+        <translation>-</translation>
+    </message>
+    <message>
+        <source>&lt;small&gt;&lt;i&gt;For complete analysis check SCTP preference Enable Association indexing&lt;/i&gt;&lt;/small&gt;</source>
+        <translation>&lt;small&gt;&lt;i&gt;分析を完了するためにSCTPの設定のアソシエーションのインデックスが有効か確認してください。&lt;/i&gt;&lt;/small&gt;</translation>
     </message>
     <message>
         <source>Complete List of IP addresses from INIT Chunk:</source>
@@ -10333,10 +10627,6 @@ For example, use 1 hour to have a new file created every hour on the hour.</sour
         <translation>最大サイズにリセット</translation>
     </message>
     <message>
-        <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;br/&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
-        <translation>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;br/&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</translation>
-    </message>
-    <message>
         <source>Save Graph</source>
         <translation>グラフを保存</translation>
     </message>
@@ -10382,10 +10672,6 @@ For example, use 1 hour to have a new file created every hour on the hour.</sour
     <message>
         <source>Reset to full size</source>
         <translation>最大サイズにリセット</translation>
-    </message>
-    <message>
-        <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;br/&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
-        <translation>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;br/&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</translation>
     </message>
     <message>
         <source>Save Graph</source>
@@ -10561,6 +10847,10 @@ For example, use 1 hour to have a new file created every hour on the hour.</sour
         <translation>パケットバイト列</translation>
     </message>
     <message>
+        <source>&lt;b&gt;Options:&lt;/b&gt;</source>
+        <translation>&lt;b&gt;オプション:&lt;/b&gt;</translation>
+    </message>
+    <message>
         <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Search for strings containing narrow (UTF-8 and ASCII) or wide (UTF-16) characters.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
         <translation>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;ナロー文字列 (UTF-8とASCII)もしくはワイド(UTF-16)文字を検索&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</translation>
     </message>
@@ -10579,6 +10869,18 @@ For example, use 1 hour to have a new file created every hour on the hour.</sour
     <message>
         <source>Case sensitive</source>
         <translation>大文字小文字を区別</translation>
+    </message>
+    <message>
+        <source>Backwards</source>
+        <translation>戻る</translation>
+    </message>
+    <message>
+        <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Search for a subsequent occurrence in the current packet before advancing to the next packet.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
+        <translation>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;次のパケットへ進む前に現在のパケットの中で続いて起こるフィールド値を検索します。&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</translation>
+    </message>
+    <message>
+        <source>Multiple occurrences</source>
+        <translation>複数発生するフィールド値</translation>
     </message>
     <message>
         <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Search for data using display filter syntax (e.g. ip.addr==10.1.1.1), a hexadecimal string (e.g. fffffda5), a plain string (e.g. My String) or a regular expression (e.g. colou?r).&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
@@ -10616,6 +10918,22 @@ For example, use 1 hour to have a new file created every hour on the hour.</sour
     <message>
         <source>Invalid filter.</source>
         <translation>無効なフィルタです</translation>
+    </message>
+    <message>
+        <source>Event List</source>
+        <translation>イベントリスト</translation>
+    </message>
+    <message>
+        <source>Event Details</source>
+        <translation>イベント詳細</translation>
+    </message>
+    <message>
+        <source>Event Bytes</source>
+        <translation>イベントバイト数</translation>
+    </message>
+    <message>
+        <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Search the Info column of the event list (summary pane), decoded event display labels (tree view pane) or the ASCII-converted event data (hex view pane).&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
+        <translation>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;イベント一覧(概要部分)やデコードされたイベント表示ラベル(ツリー表示部分)やアスキー変換されたイベントデータ(16進数表示部分)を検索します&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</translation>
     </message>
     <message>
         <source>That filter doesn&apos;t test anything.</source>
@@ -11059,6 +11377,10 @@ For example, use 1 hour to have a new file created every hour on the hour.</sour
         <translation>検索:</translation>
     </message>
     <message>
+        <source>Case sensitive</source>
+        <translation>大文字小文字を区別</translation>
+    </message>
+    <message>
         <source>Find &amp;Next</source>
         <translation>次を検索</translation>
     </message>
@@ -11153,13 +11475,21 @@ For example, use 1 hour to have a new file created every hour on the hour.</sour
         <translation>…として保存</translation>
     </message>
     <message>
+        <source>Decoded as %1.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Save Selected Packet Bytes As…</source>
         <translation>…として選択したパケットバイト列を保存</translation>
     </message>
+    <message>
+        <source>compressed %1</source>
+        <translation type="unfinished"></translation>
+    </message>
     <message numerus="yes">
-        <source>Displaying %Ln byte(s).</source>
-        <translation>
-            <numerusform>%Ln バイトを表示中</numerusform>
+        <source>Using %Ln byte(s).</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
         </translation>
     </message>
     <message>
@@ -11228,6 +11558,10 @@ For example, use 1 hour to have a new file created every hour on the hour.</sour
     <message>
         <source>Finding local interfaces</source>
         <translation>ローカルインターフェースを見つけています</translation>
+    </message>
+    <message>
+        <source>Applying changed preferences</source>
+        <translation>変更した設定を適用中</translation>
     </message>
     <message>
         <source>(Unknown action)</source>
@@ -11904,6 +12238,57 @@ For example, use 1 hour to have a new file created every hour on the hour.</sour
     </message>
 </context>
 <context>
+    <name>TLSKeylogDialog</name>
+    <message>
+        <source>Dialog</source>
+        <translation>ダイアログ</translation>
+    </message>
+    <message>
+        <source>Browse…</source>
+        <translation>参照…</translation>
+    </message>
+    <message>
+        <source>Command line</source>
+        <translation>コマンドライン</translation>
+    </message>
+    <message>
+        <source>Run an application with the SSLKEYLOGFILE environment variable set to the file specified by the TLS key log filename preference. This enables TLS decryption in Wireshark. Set the key log file and start the capture before launching the application to ensure that the initial TLS handshakes are captured.</source>
+        <translation>TLSキーログファイル名設定で指定したファイルにSSLKEYLOGFILE環境変数を設定してアプリケーションを起動します。これによってWiresharkでTLSの復号化が行えます。初回のTLSハンドシェイクがキャプチャされたことを確認するためにアプリケーションを起動する前にキーログファイルを設定してキャプチャを開始してください。</translation>
+    </message>
+    <message>
+        <source>&lt;span style=&quot; font-size:small;&quot;&gt;Firefox and Chrome are known to work. If your desired browser is currently running, close it first before launching it below. Command line options are supported.&lt;/span&gt;</source>
+        <translation>&lt;span style=&quot; font-size:small;&quot;&gt;FirefoxとChromeが動作することで知られています。望むブラウザが現在起動している場合は以下を起動する前に一度閉じてください。コマンドラインオプションもサポートされます。</translation>
+    </message>
+    <message>
+        <source>TLS (Pre)-Master-Secret log file path (tls.keylog_file)</source>
+        <translation>TLS (プリ)マスターシークレット ログファイルパス (tls.keylog_file)</translation>
+    </message>
+    <message>
+        <source>&lt;span style=&quot; font-size:small;&quot;&gt;TLS session secrets will be logged to this file. If you change this field, hit the Save button to update the TLS protocol preferences.&lt;/span&gt;</source>
+        <translation>&lt;span style=&quot; font-size:small;&quot;&gt;TLS セッションシークレットはこのファイルに記録されます。このフィールドを変更したら保存ボタンを押してTLSプロトコル設定を更新してください。&lt;/span&gt;</translation>
+    </message>
+    <message>
+        <source>Launch application with SSLKEYLOGFILE</source>
+        <translation>SSLKEYLOGFILEとともにアプリケーションを起動します</translation>
+    </message>
+    <message>
+        <source>Launch</source>
+        <translation>起動</translation>
+    </message>
+    <message>
+        <source>Save</source>
+        <translation>保存</translation>
+    </message>
+    <message>
+        <source>TLS Keylog file</source>
+        <translation>TLSキーログファイル</translation>
+    </message>
+    <message>
+        <source>Program to start with SSLKEYLOGFILE</source>
+        <translation>SSLKEYLOGFILEとともに開始するプログラム</translation>
+    </message>
+</context>
+<context>
     <name>TapParameterDialog</name>
     <message>
         <source>Dialog</source>
@@ -12020,11 +12405,7 @@ For example, use 1 hour to have a new file created every hour on the hour.</sour
     </message>
     <message>
         <source>Time shifting is not available while capturing packets.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Time shifting is not available capturing packets.</source>
-        <translation type="vanished">時間調整はパケットキャプチャ中に利用できません</translation>
+        <translation>時間調整はパケットキャプチャ中に利用できません</translation>
     </message>
 </context>
 <context>
@@ -12181,22 +12562,20 @@ For example, use 1 hour to have a new file created every hour on the hour.</sour
         <translation>新規エントリを作成します</translation>
     </message>
     <message>
-        <source>Remove this entry.</source>
-        <oldsource>Remove this profile.</oldsource>
-        <translation>このエントリを削除します</translation>
+        <source>Remove the selected entry(ies).</source>
+        <translation>選択したエントリを削除します</translation>
     </message>
     <message>
-        <source>Copy this entry.</source>
-        <oldsource>Copy this profile.</oldsource>
-        <translation>このエントリをコピーします</translation>
+        <source>Copy the selected entry(ies).</source>
+        <translation>選択したエントリをコピーします</translation>
     </message>
     <message>
-        <source>Move entry up.</source>
-        <translation>エントリを上に移動します</translation>
+        <source>Move the selected entry(ies) up.</source>
+        <translation>選択したエントリを上に移動します</translation>
     </message>
     <message>
-        <source>Move entry down.</source>
-        <translation>エントリを下に移動します</translation>
+        <source>Move the selected entry(ies) down.</source>
+        <translation>選択したエントリを下に移動します</translation>
     </message>
     <message>
         <source>Clear all entries.</source>
@@ -12222,20 +12601,20 @@ For example, use 1 hour to have a new file created every hour on the hour.</sour
         <translation>新規エントリを作成します</translation>
     </message>
     <message>
-        <source>Remove this entry.</source>
-        <translation>このエントリを削除します</translation>
+        <source>Remove the selected entry(ies).</source>
+        <translation>選択したエントリを削除します</translation>
     </message>
     <message>
-        <source>Copy this entry.</source>
-        <translation>このエントリをコピーします</translation>
+        <source>Copy the selected entry(ies).</source>
+        <translation>選択したエントリをコピーします</translation>
     </message>
     <message>
-        <source>Move entry up.</source>
-        <translation>エントリを上に移動します</translation>
+        <source>Move the selected entry(ies) up.</source>
+        <translation>選択したエントリを上に移動します</translation>
     </message>
     <message>
-        <source>Move entry down.</source>
-        <translation>エントリを下に移動します</translation>
+        <source>Move the selected entry(ies) down.</source>
+        <translation>選択したエントリを下に移動します</translation>
     </message>
     <message>
         <source>Clear all entries.</source>
@@ -12605,8 +12984,16 @@ a:hover {
         <translation>あなたはWiresharkを使ってインターネットを互いにつなぐ膠をキャプチャしています</translation>
     </message>
     <message>
+        <source>You are sniffing the glue that holds your system together using Logray </source>
+        <translation>あなたはLograyを使ってシステムを互いに繋ぐ膠をキャプチャしています</translation>
+    </message>
+    <message>
         <source>You are running Wireshark </source>
         <translation>Wiresharkを起動中</translation>
+    </message>
+    <message>
+        <source>You are running Logray </source>
+        <translation>Lograyを起動中です </translation>
     </message>
     <message>
         <source> You receive automatic updates.</source>
@@ -12885,14 +13272,6 @@ a:hover {
         <translation>ファイルが見つかりませんでした</translation>
     </message>
     <message>
-        <source>&amp;Contents</source>
-        <translation>目次(&amp;C)</translation>
-    </message>
-    <message>
-        <source>Wireshark Filter</source>
-        <translation>Wiresharkフィルタ</translation>
-    </message>
-    <message>
         <source>TShark</source>
         <translation>Tshark</translation>
     </message>
@@ -13158,10 +13537,6 @@ a:hover {
         <translation>無線ツールバー</translation>
     </message>
     <message>
-        <source>Help contents</source>
-        <translation>ヘルプ目次</translation>
-    </message>
-    <message>
         <source>FAQs</source>
         <translation>FAQ&apos;s</translation>
     </message>
@@ -13282,11 +13657,6 @@ a:hover {
         <translation>前のパケットを検索します</translation>
     </message>
     <message>
-        <source>&amp;Mark/Unmark Packet(s)</source>
-        <oldsource>&amp;Mark/Unmark Packet</oldsource>
-        <translation>パケットをマーク/マーク解除(&amp;M)</translation>
-    </message>
-    <message>
         <source>Mark All Displayed</source>
         <translation>表示されているものをすべてマークします</translation>
     </message>
@@ -13313,11 +13683,6 @@ a:hover {
     <message>
         <source>Go to the previous marked packet</source>
         <translation>前にマークされたパケットに移動します</translation>
-    </message>
-    <message>
-        <source>&amp;Ignore/Unignore Packet(s)</source>
-        <oldsource>&amp;Ignore/Unignore Packet</oldsource>
-        <translation>パケットを無視/無視を解除(&amp;I)</translation>
     </message>
     <message>
         <source>Ignore All Displayed</source>
@@ -13370,22 +13735,6 @@ a:hover {
     <message>
         <source>Remove all packet comments in the capture file</source>
         <translation>キャプチャファイルにあるすべてのパケットを削除します</translation>
-    </message>
-    <message>
-        <source>Inject TLS Secrets</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Embed used TLS secrets in the capture file</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Discard All Secrets</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Discard all decryption secrets in the capture file</source>
-        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>&amp;Configuration Profiles…</source>
@@ -13456,28 +13805,8 @@ a:hover {
         <translation>TCPウインドウスケーリング</translation>
     </message>
     <message>
-        <source>DCCP Stream</source>
-        <translation type="vanished">DCCPストリーム</translation>
-    </message>
-    <message>
-        <source>TLS Stream</source>
-        <translation type="vanished">TLS ストリーム</translation>
-    </message>
-    <message>
-        <source>HTTP Stream</source>
-        <translation type="vanished">HTTPストリーム</translation>
-    </message>
-    <message>
         <source>HTTP/2 Stream</source>
         <translation>HTTP/2 ストリーム</translation>
-    </message>
-    <message>
-        <source>QUIC Stream</source>
-        <translation type="vanished">QUIC ストリーム</translation>
-    </message>
-    <message>
-        <source>Websocket Stream</source>
-        <translation type="vanished">Webソケットストリーム</translation>
     </message>
     <message>
         <source>SIP Call</source>
@@ -13805,7 +14134,23 @@ a:hover {
     </message>
     <message>
         <source>Show packet times as the seconds since the first captured packet.</source>
-        <translation type="unfinished"></translation>
+        <translation>パケット時間を最初にキャプチャされたパケットからの秒数で表示します</translation>
+    </message>
+    <message>
+        <source>Tenths of a millisecond</source>
+        <translation>×10ミリ秒</translation>
+    </message>
+    <message>
+        <source>Hundredths of a millisecond</source>
+        <translation>×100ミリ秒</translation>
+    </message>
+    <message>
+        <source>Tenths of a microsecond</source>
+        <translation>×10マイクロ秒</translation>
+    </message>
+    <message>
+        <source>Hundredths of a microsecond</source>
+        <translation>×100マイクロ秒</translation>
     </message>
     <message>
         <source>Packet &amp;Diagram</source>
@@ -13940,12 +14285,32 @@ a:hover {
         <translation>証明書</translation>
     </message>
     <message>
+        <source>MAC Address Blocks</source>
+        <translation>MACアドレスブロック</translation>
+    </message>
+    <message>
         <source>&amp;Options…</source>
         <translation>オプション…(&amp;O)</translation>
     </message>
     <message>
+        <source>&amp;3GPP Uu</source>
+        <translation>&amp;3GPP Uu</translation>
+    </message>
+    <message>
         <source>&amp;Wireless</source>
         <translation>無線(&amp;W)</translation>
+    </message>
+    <message>
+        <source>&amp;User&apos;s Guide</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Wireshark User&apos;s Guide</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Display Filters</source>
+        <translation>表示フィルタ</translation>
     </message>
     <message>
         <source>Capture &amp;Filters…</source>
@@ -13992,8 +14357,16 @@ a:hover {
         <translation>前を検索(&amp;v)</translation>
     </message>
     <message>
+        <source>&amp;Mark/Unmark Selected</source>
+        <translation>選択をマーク/マーク解除(&amp;M)</translation>
+    </message>
+    <message>
         <source>Mark or unmark each selected packet</source>
         <translation>各々の選択されたパケットをマーク/マーク解除します</translation>
+    </message>
+    <message>
+        <source>&amp;Ignore/Unignore Selected</source>
+        <translation>選択を無視/無視を解除(&amp;I)</translation>
     </message>
     <message>
         <source>Ignore or unignore each selected packet</source>
@@ -14012,6 +14385,22 @@ a:hover {
         <translation>時間調整…</translation>
     </message>
     <message>
+        <source>Inject TLS Secrets</source>
+        <translation>TLSシークレットを注入</translation>
+    </message>
+    <message>
+        <source>Embed used TLS secrets in the capture file</source>
+        <translation>キャプチャファイルで使用されたTLSシークレットを埋め込みます</translation>
+    </message>
+    <message>
+        <source>Discard All Secrets</source>
+        <translation>すべてのシークレットを破棄</translation>
+    </message>
+    <message>
+        <source>Discard all decryption secrets in the capture file</source>
+        <translation>キャプチャファイルのすべての復号化シークレットを破棄します</translation>
+    </message>
+    <message>
         <source>&amp;Preferences…</source>
         <translation>設定…(&amp;P)</translation>
     </message>
@@ -14020,12 +14409,16 @@ a:hover {
         <translation>TCP スループット</translation>
     </message>
     <message>
-        <source>TCP Stream</source>
-        <translation type="vanished">TCPストリーム</translation>
+        <source>General</source>
+        <translation>一般</translation>
     </message>
     <message>
-        <source>UDP Stream</source>
-        <translation type="vanished">UDPストリーム</translation>
+        <source>Query-Response</source>
+        <translation>クエリ-応答</translation>
+    </message>
+    <message>
+        <source>DNS Query-Response Statistics</source>
+        <translation>DNSクエリ-応答統計</translation>
     </message>
     <message>
         <source>Request Sequences</source>
@@ -14034,6 +14427,14 @@ a:hover {
     <message>
         <source>HTTP Request Sequences</source>
         <translation>HTTPリクエストシーケンス</translation>
+    </message>
+    <message>
+        <source>E2AP</source>
+        <translation>E2AP</translation>
+    </message>
+    <message>
+        <source>E2AP Messages</source>
+        <translation>E2AP メッセージ</translation>
     </message>
     <message>
         <source>Decode &amp;As…</source>
@@ -14354,6 +14755,14 @@ a:hover {
         <translation>選択されたフィールドによって参照されたパケットへ移動します</translation>
     </message>
     <message>
+        <source>TLS Keylog Launcher</source>
+        <translation>TLSキーログランチャー</translation>
+    </message>
+    <message>
+        <source>Release Notes</source>
+        <translation>リリースノート</translation>
+    </message>
+    <message>
         <source>&amp;VoIP Calls</source>
         <translation>VoIP通話(&amp;V)</translation>
     </message>
@@ -14384,10 +14793,6 @@ a:hover {
     <message>
         <source>&amp;GSM</source>
         <translation>&amp;GSM</translation>
-    </message>
-    <message>
-        <source>&amp;LTE</source>
-        <translation>&amp;LTE</translation>
     </message>
     <message>
         <source>&amp;MTP3</source>
@@ -14674,6 +15079,10 @@ a:hover {
         <translation>保存しないで終了(&amp;w)</translation>
     </message>
     <message>
+        <source>USB CDC Data</source>
+        <translation>USB CDC データ</translation>
+    </message>
+    <message>
         <source>There is no &quot;rtp.ssrc&quot; field in this version of Wireshark.</source>
         <translation>このバージョンのWiresharkには &quot;rtp.ssrc&quot; フィールドはありません</translation>
     </message>
@@ -14828,6 +15237,10 @@ a:hover {
         <translation>Wiresharkが初期化している間お待ちください…</translation>
     </message>
     <message>
+        <source> before updating</source>
+        <translation>更新前</translation>
+    </message>
+    <message>
         <source>There are no TLS Session Keys to save.</source>
         <translation>保存するTLSセッション鍵はありません</translation>
     </message>
@@ -14843,15 +15256,15 @@ a:hover {
     </message>
     <message>
         <source>No TLS Secrets</source>
-        <translation type="unfinished"></translation>
+        <translation>TLSシークレットなし</translation>
     </message>
     <message>
         <source>There are no available secrets used to decrypt TLS traffic in the capture file.  Would you like to view information about how to decrypt TLS traffic on the wiki?</source>
-        <translation type="unfinished"></translation>
+        <translation>キャプチャファイルにはTLSトラフィックを復号化するために用いられる利用可能なシークレットはありません。WikiでTLSトラフィックを復号する方法についての情報をご覧になりますか？</translation>
     </message>
     <message>
         <source>Are you sure you want to discard all decryption secrets?</source>
-        <translation type="unfinished"></translation>
+        <translation>本当にすべての復号化シークレットを破棄されますか？</translation>
     </message>
     <message>
         <source>No filter available. Try another %1.</source>

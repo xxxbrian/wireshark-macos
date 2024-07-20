@@ -18,13 +18,13 @@
 void proto_register_mgmt (void);
 void proto_reg_handoff_mgmt (void);
 
-static int proto_mgmt = -1;
-static int hf_mgmt_opnum = -1;
-static int hf_mgmt_proto = -1;
-static int hf_mgmt_rc = -1;
-static int hf_mgmt_princ_size = -1;
-static int hf_mgmt_princ_name = -1;
-static gint ett_mgmt = -1;
+static int proto_mgmt;
+static int hf_mgmt_opnum;
+static int hf_mgmt_proto;
+static int hf_mgmt_rc;
+static int hf_mgmt_princ_size;
+static int hf_mgmt_princ_name;
+static gint ett_mgmt;
 
 
 static e_guid_t uuid_mgmt = { 0xafa8bd80, 0x7d8a, 0x11c9, { 0xbe, 0xf4, 0x08, 0x00, 0x2b, 0x10, 0x29, 0x89 } };
@@ -52,7 +52,7 @@ mgmtrpc_dissect_inq_princ_name_request(tvbuff_t *tvb, int offset, packet_info *p
 
 
 
-static dcerpc_sub_dissector mgmt_dissectors[] = {
+static const dcerpc_sub_dissector mgmt_dissectors[] = {
 	{ 0, "rpc__mgmt_inq_if_ids", NULL, NULL },
 	{ 1, "rpc__mgmt_inq_stats", NULL, NULL },
 	{ 2, "rpc__mgmt_is_server_listening", NULL, NULL },

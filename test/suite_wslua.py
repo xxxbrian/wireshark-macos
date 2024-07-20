@@ -195,9 +195,13 @@ class TestWslua:
         '''wslua pinfo'''
         check_lua_script('pinfo.lua', dhcp_pcap, True)
 
-    def test_wslua_proto(self, check_lua_script_verify):
+    def test_wslua_proto(self, check_lua_script):
         '''wslua proto'''
-        check_lua_script_verify('proto.lua', dns_port_pcap, check_stage_1=True)
+        check_lua_script('proto.lua', empty_pcap, True)
+
+    def test_wslua_byte_array(self, check_lua_script):
+        '''wslua byte_array'''
+        check_lua_script('byte_array.lua', empty_pcap, True)
 
     def test_wslua_protofield_tree(self, check_lua_script):
         '''wslua protofield with a tree'''
@@ -256,7 +260,7 @@ class TestWslua:
         '''wslua globals'''
         check_lua_script('verify_globals.lua', empty_pcap, True,
             '-X', 'lua_script1:' + os.path.join(dirs.lua_dir, ''),
-            '-X', 'lua_script1:' + os.path.join(dirs.lua_dir, 'globals_2.2.txt'),
+            '-X', 'lua_script1:' + os.path.join(dirs.lua_dir, 'globals_4.4.txt'),
         )
 
     def test_wslua_struct(self, check_lua_script):
@@ -275,6 +279,9 @@ class TestWslua:
         '''wslua try_heuristics'''
         check_lua_script('try_heuristics.lua', dns_port_pcap, True)
 
+    def test_wslua_add_packet_field(self, check_lua_script):
+        '''wslua add_packet_field'''
+        check_lua_script('add_packet_field.lua', dns_port_pcap, True)
 
 class TestWsluaUnicode:
     def test_wslua_unicode(self, cmd_tshark, features, dirs, capture_file, unicode_env):

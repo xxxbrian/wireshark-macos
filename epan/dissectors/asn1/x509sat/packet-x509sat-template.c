@@ -14,6 +14,7 @@
 #include <epan/packet.h>
 #include <epan/oids.h>
 #include <epan/asn1.h>
+#include <epan/proto_data.h>
 #include <epan/strutil.h>
 
 #include "packet-ber.h"
@@ -29,7 +30,7 @@ void proto_register_x509sat(void);
 void proto_reg_handoff_x509sat(void);
 
 /* Initialize the protocol and registered fields */
-static int proto_x509sat = -1;
+static int proto_x509sat;
 #include "packet-x509sat-hf.c"
 
 /* Initialize the subtree pointers */
@@ -47,7 +48,7 @@ void proto_register_x509sat(void) {
   };
 
   /* List of subtrees */
-  static gint *ett[] = {
+  static int *ett[] = {
 #include "packet-x509sat-ettarr.c"
   };
 

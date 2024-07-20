@@ -23,10 +23,12 @@
 #include <QActionGroup>
 #include <QMouseEvent>
 #include <QPainter>
+#include <QScreen>
 #include <QScrollBar>
 #include <QStyle>
 #include <QStyleOption>
 #include <QTextLayout>
+#include <QWindow>
 
 // To do:
 // - Add recent settings and context menu items to show/hide the offset.
@@ -68,6 +70,10 @@ ByteViewText::ByteViewText(const QByteArray &data, packet_char_enc encoding, QWi
 
     offset_normal_fg_ = ColorUtils::alphaBlend(palette().windowText(), palette().window(), 0.35);
     offset_field_fg_ = ColorUtils::alphaBlend(palette().windowText(), palette().window(), 0.65);
+    ctx_menu_.setToolTipsVisible(true);
+
+    window()->winId(); // Required for screenChanged? https://phabricator.kde.org/D20171
+    connect(window()->windowHandle(), &QWindow::screenChanged, viewport(), [=](const QScreen *) { viewport()->update(); });
 
     createContextMenu();
 
@@ -212,6 +218,18 @@ void ByteViewText::markAppendix(int start, int length)
 {
     field_a_start_ = start;
     field_a_len_ = length;
+    viewport()->update();
+}
+
+void ByteViewText::unmarkField()
+{
+    proto_start_ = 0;
+    proto_len_ = 0;
+    field_start_ = 0;
+    field_len_ = 0;
+    marked_byte_offset_ = -1;
+    field_a_start_ = 0;
+    field_a_len_ = 0;
     viewport()->update();
 }
 
@@ -390,11 +408,7 @@ void ByteViewText::updateLayoutMetrics()
 
 int ByteViewText::stringWidth(const QString &line)
 {
-#if (QT_VERSION >= QT_VERSION_CHECK(5, 11, 0))
     return viewport()->fontMetrics().horizontalAdvance(line);
-#else
-    return viewport()->fontMetrics().boundingRect(line).width();
-#endif
 }
 
 // Draw a line of byte view text for a given offset.

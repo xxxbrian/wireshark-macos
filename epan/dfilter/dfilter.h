@@ -73,6 +73,9 @@ dfilter_expand(const char *expr, df_error_t **err_ret);
 #define DF_DEBUG_FLEX		(1U << 3)
 /* Enable debug trace for lemon. */
 #define DF_DEBUG_LEMON		(1U << 4)
+/* If the root of the syntax tree is a field, load and return the field values.
+ * By default the field is only checked for existence. */
+#define DF_RETURN_VALUES        (1U << 5)
 
 /* Compiles a string to a dfilter_t.
  * On success, sets the dfilter* pointed to by dfp
@@ -86,11 +89,11 @@ dfilter_expand(const char *expr, df_error_t **err_ret);
  * g_malloc(), and must be freed with g_free().
  * The dfilter* will be set to NULL after a failure.
  *
- * Returns TRUE on success, FALSE on failure.
+ * Returns true on success, false on failure.
  */
 WS_DLL_PUBLIC
-gboolean
-dfilter_compile_full(const gchar *text, dfilter_t **dfp,
+bool
+dfilter_compile_full(const char *text, dfilter_t **dfp,
 			df_error_t **errpp, unsigned flags,
 			const char *caller);
 
@@ -98,6 +101,15 @@ dfilter_compile_full(const gchar *text, dfilter_t **dfp,
 	dfilter_compile_full(text, dfp, errp, \
 				DF_EXPAND_MACROS|DF_OPTIMIZE, \
 				__func__)
+
+struct stnode;
+
+/** Build a syntax tree for a filter
+ * @param text A display filter.
+ * @return The root node of a syntax tree on success or NULL on failure.
+ */
+WS_DLL_PUBLIC
+struct stnode *dfilter_get_syntax_tree(const char *text);
 
 /* Frees all memory used by dfilter, and frees
  * the dfilter itself. */
@@ -107,12 +119,17 @@ dfilter_free(dfilter_t *df);
 
 /* Apply compiled dfilter */
 WS_DLL_PUBLIC
-gboolean
+bool
 dfilter_apply_edt(dfilter_t *df, struct epan_dissect *edt);
 
 /* Apply compiled dfilter */
-gboolean
+bool
 dfilter_apply(dfilter_t *df, proto_tree *tree);
+
+/* Apply compiled dfilter and return final set of fvalues (if they
+ * exist) in addition to true/false determination. */
+bool
+dfilter_apply_full(dfilter_t *df, proto_tree *tree, GPtrArray **fvals);
 
 /* Prime a proto_tree using the fields/protocols used in a dfilter. */
 void
@@ -129,27 +146,31 @@ void
 dfilter_load_field_references_edt(const dfilter_t *df, struct epan_dissect *edt);
 
 /* Check if dfilter has interesting fields */
-gboolean
+bool
 dfilter_has_interesting_fields(const dfilter_t *df);
 
 /* Check if dfilter is interested in a given field
  *
  * @param df The dfilter
  * @param hfid The header field info ID to check
- * @return TRUE if the field is interesting to the dfilter
+ * @return true if the field is interesting to the dfilter
  */
-gboolean
+bool
 dfilter_interested_in_field(const dfilter_t *df, int hfid);
 
 /* Check if dfilter is interested in a given protocol
  *
  * @param df The dfilter
  * @param proto_id The protocol ID to check
- * @return TRUE if the dfilter is interested in a field whose
+ * @return true if the dfilter is interested in a field whose
  * parent is proto_id
  */
-gboolean
+bool
 dfilter_interested_in_proto(const dfilter_t *df, int proto_id);
+
+WS_DLL_PUBLIC
+bool
+dfilter_requires_columns(const dfilter_t *df);
 
 WS_DLL_PUBLIC
 GPtrArray *
@@ -172,7 +193,7 @@ WS_DLL_PUBLIC
 const char *
 dfilter_text(dfilter_t *df);
 
-/* Text representation of syntax tree (if it was saved, NULL oterwise). */
+/* Text representation of syntax tree (if it was saved, NULL otherwise). */
 WS_DLL_PUBLIC
 const char *
 dfilter_syntax_tree(dfilter_t *df);

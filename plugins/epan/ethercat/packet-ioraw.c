@@ -22,15 +22,15 @@ void proto_register_ioraw(void);
 void proto_reg_handoff_ioraw(void);
 
 /* Define the ioraw proto */
-int proto_ioraw  = -1;
+int proto_ioraw;
 
-static int ett_ioraw = -1;
+static int ett_ioraw;
 
 static dissector_handle_t ioraw_handle;
 
-/* static int hf_ioraw_summary = -1; */
-static int hf_ioraw_header = -1;
-static int hf_ioraw_data = -1;
+/* static int hf_ioraw_summary; */
+static int hf_ioraw_header;
+static int hf_ioraw_data;
 
 /*ioraw*/
 static void IoRawSummaryFormater( char *szText, int nMax)
@@ -42,11 +42,11 @@ static int dissect_ioraw(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree, vo
 {
    proto_item *ti;
    proto_tree *ioraw_tree;
-   gint offset = 0;
+   int offset = 0;
    char szText[200];
    int nMax = sizeof(szText)-1;
 
-   guint ioraw_length = tvb_reported_length(tvb);
+   unsigned ioraw_length = tvb_reported_length(tvb);
 
    col_set_str(pinfo->cinfo, COL_PROTOCOL, "IO-RAW");
 
@@ -88,7 +88,7 @@ void proto_register_ioraw(void)
          }
       };
 
-   static gint *ett[] =
+   static int *ett[] =
       {
          &ett_ioraw
       };

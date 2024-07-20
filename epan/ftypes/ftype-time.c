@@ -6,15 +6,18 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
+#define _GNU_SOURCE
 #include "config.h"
 #include "ftypes-int.h"
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <math.h>
 
 #include <epan/to_str.h>
 #include <wsutil/time_util.h>
+#include <wsutil/ws_strptime.h>
 #include <wsutil/safe-math.h>
 
 
@@ -32,7 +35,7 @@ cmp_order(const fvalue_t *a, const fvalue_t *b, int *cmp)
  *
  * If successful endptr points to the first invalid character.
  */
-static gboolean
+static bool
 get_nsecs(const char *startp, int *nsecs, const char **endptr)
 {
 	int ndigits = 0;
@@ -66,7 +69,7 @@ get_nsecs(const char *startp, int *nsecs, const char **endptr)
 			/*
 			 * Not a digit - error.
 			 */
-			return FALSE;
+			return false;
 		}
 		digit = *p - '0';
 		if (digit != 0) {
@@ -79,7 +82,7 @@ get_nsecs(const char *startp, int *nsecs, const char **endptr)
 			 * isn't valid.
 			 */
 			if (scale < 0)
-				return FALSE;
+				return false;
 			for (i = 0; i < scale; i++)
 				digit *= 10;
 			val += digit;
@@ -89,20 +92,20 @@ get_nsecs(const char *startp, int *nsecs, const char **endptr)
 	*nsecs = val;
 	if (endptr)
 		*endptr = startp + ndigits;
-	return TRUE;
+	return true;
 }
 
-static gboolean
+static bool
 val_from_unix_time(fvalue_t *fv, const char *s)
 {
 	const char    *curptr;
 	char *endptr;
-	gboolean negative = FALSE;
+	bool negative = false;
 
 	curptr = s;
 
 	if (*curptr == '-') {
-		negative = TRUE;
+		negative = true;
 		curptr++;
 	}
 
@@ -116,7 +119,7 @@ val_from_unix_time(fvalue_t *fv, const char *s)
 		 */
 		fv->value.time.secs = strtoul(curptr, &endptr, 10);
 		if (endptr == curptr || (*endptr != '\0' && *endptr != '.'))
-			return FALSE;
+			return false;
 		curptr = endptr;
 		if (*curptr == '.')
 			curptr++;	/* skip the decimal point */
@@ -137,7 +140,7 @@ val_from_unix_time(fvalue_t *fv, const char *s)
 		 * Get the nanoseconds value.
 		 */
 		if (!get_nsecs(curptr, &fv->value.time.nsecs, NULL))
-			return FALSE;
+			return false;
 	} else {
 		/*
 		 * No nanoseconds value - it's 0.
@@ -149,35 +152,37 @@ val_from_unix_time(fvalue_t *fv, const char *s)
 		fv->value.time.secs = -fv->value.time.secs;
 		fv->value.time.nsecs = -fv->value.time.nsecs;
 	}
-	return TRUE;
+	return true;
 }
 
-static gboolean
-relative_val_from_literal(fvalue_t *fv, const char *s, gboolean allow_partial_value _U_, gchar **err_msg)
+static bool
+relative_val_from_uinteger64(fvalue_t *fv, const char *s _U_, uint64_t value, char **err_msg _U_)
+{
+	fv->value.time.secs = (time_t)value;
+	fv->value.time.nsecs = 0;
+	return true;
+}
+
+static bool
+relative_val_from_sinteger64(fvalue_t *fv, const char *s _U_, int64_t value, char **err_msg _U_)
+{
+	fv->value.time.secs = (time_t)value;
+	fv->value.time.nsecs = 0;
+	return true;
+}
+
+static bool
+relative_val_from_float(fvalue_t *fv, const char *s, double value, char **err_msg _U_)
 {
 	if (val_from_unix_time(fv, s))
-		return TRUE;
+		return true;
 
-	if (err_msg != NULL)
-		*err_msg = ws_strdup_printf("\"%s\" is not a valid time.", s);
-	return FALSE;
-}
+	double whole, fraction;
 
-/* Returns TRUE if 's' starts with an abbreviated month name. */
-static gboolean
-parse_month_name(const char *s, int *tm_mon)
-{
-	const char *months[] = {
-		"Jan", "Feb", "Mar", "Apr", "May", "Jun",
-		"Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
-	};
-	for (int i = 0; i < 12; i++) {
-		if (g_ascii_strncasecmp(s, months[i], 3) == 0) {
-			*tm_mon = i;
-			return TRUE;
-		}
-	}
-	return FALSE;
+	fraction = modf(value, &whole);
+	fv->value.time.secs = (time_t)whole;
+	fv->value.time.nsecs = (int)(fraction * 1000000000);
+	return true;
 }
 
 /*
@@ -190,46 +195,106 @@ parse_month_name(const char *s, int *tm_mon)
  * (https://docs.microsoft.com/en-us/cpp/c-runtime-library/reference/mktime-mktime32-mktime64)
  */
 
+/*
+ * Timezone support:
+ *
+     %z    an ISO 8601, RFC-2822, or RFC-3339 time zone specification.  (A
+           NetBSD extension.)  This is one of the following:
+                 -   The offset from Coordinated Universal Time (`UTC') speci-
+                     fied as:
+                           ·   [+-]hhmm
+                           ·   [+-]hh:mm
+                           ·   [+-]hh
+                 -   `UTC' specified as:
+                           ·   UTC (`Coordinated Universal Time')
+                           ·   GMT (`Greenwich Mean Time')
+                           ·   UT (`Universal Time')
+                           ·   Z (`Zulu Time')
+                 -   A three character US time zone specified as:
+                           ·   EDT
+                           ·   EST
+                           ·   CDT
+                           ·   CST
+                           ·   MDT
+                           ·   MST
+                           ·   PDT
+                           ·   PST
+                     with the first letter standing for `Eastern' (``E''),
+                     `Central' (``C''), `Mountain' (``M'') or `Pacific'
+                     (``P''), and the second letter standing for `Daylight'
+                     (``D'' or summer) time or `Standard' (``S'') time
+                 -   a single letter military or nautical time zone specified
+                     as:
+                           ·   ``A'' through ``I''
+                           ·   ``K'' through ``Y''
+                           ·   ``J'' (non-nautical local time zone)
+
+     %Z    time zone name or no characters when time zone information is
+           unavailable.  (A NetBSD extension.)
+*/
+
+/*
+ * POSIX and C11 calendar time APIs are limited, poorly documented and have
+ * loads of bagage and surprising behavior and quirks (most stemming from
+ * the fact that the struct tm argument is sometimes both input and output).
+ * See the following reference for a reliable method of handling arbitrary timezones:
+ *    C: Converting struct tm times with timezone to time_t
+ *    http://kbyanc.blogspot.com/2007/06/c-converting-struct-tm-times-with.html
+ * Relevant excerpt:
+ *    "However, if your libc implements both tm_gmtoff and timegm(3) you are
+ *    in luck. You just need to use timegm(3) to get the time_t representing
+ *    the time in GMT and then subtract the offset stored in tm_gmtoff.
+ *    The tricky part is that calling timegm(3) will modify the struct tm,
+ *    clearing the tm_gmtoff field to zero."
+ */
+
 #define EXAMPLE "Example: \"Nov 12, 1999 08:55:44.123\" or \"2011-07-04 12:34:56\""
 
-static gboolean
+static bool
 absolute_val_from_string(fvalue_t *fv, const char *s, size_t len _U_, char **err_msg_ptr)
 {
 	struct tm tm;
-	const char *curptr = NULL;
+	const char *bufptr, *curptr = NULL;
 	const char *endptr;
-	gboolean has_seconds = TRUE;
+	bool has_seconds = true;
+	bool has_timezone = true;
 	char *err_msg = NULL;
+	struct ws_timezone zoneinfo = { 0, NULL };
 
 	/* Try Unix time first. */
 	if (val_from_unix_time(fv, s))
-		return TRUE;
+		return true;
 
 	/* Try ISO 8601 format. */
-	if (iso8601_to_nstime(&fv->value.time, s, ISO8601_DATETIME) == strlen(s))
-		return TRUE;
+	endptr = iso8601_to_nstime(&fv->value.time, s, ISO8601_DATETIME);
+	/* Check whether it parsed all of the string */
+	if (endptr != NULL && *endptr == '\0')
+		return true;
 
-	/* Try other legacy formats. */
+	/* No - try other legacy formats. */
 	memset(&tm, 0, sizeof(tm));
+	/* Let the computer figure out if it's DST. */
+	tm.tm_isdst = -1;
 
-	if (strlen(s) < sizeof("2000-1-1") - 1)
+	/* Parse the date. ws_strptime() always uses the "C" locale. */
+	bufptr = s;
+	curptr = ws_strptime(bufptr, "%b %d, %Y", &tm, &zoneinfo);
+	if (curptr == NULL)
+		curptr = ws_strptime(bufptr,"%Y-%m-%d", &tm, &zoneinfo);
+	if (curptr == NULL)
 		goto fail;
 
-	/* Do not use '%b' to parse the month name, it is locale-specific. */
-	if (s[3] == ' ' && parse_month_name(s, &tm.tm_mon))
-		curptr = ws_strptime(s + 4, "%d, %Y %H:%M:%S", &tm);
-
+	/* Parse the time, it is optional. */
+	bufptr = curptr;
+	curptr = ws_strptime(bufptr, " %H:%M:%S", &tm, &zoneinfo);
 	if (curptr == NULL) {
-		has_seconds = FALSE;
-		curptr = ws_strptime(s,"%Y-%m-%d %H:%M", &tm);
+		has_seconds = false;
+		/* Seconds can be omitted but minutes (and hours) are required
+		 * for a valid time value. */
+		curptr = ws_strptime(bufptr," %H:%M", &tm, &zoneinfo);
 	}
 	if (curptr == NULL)
-		curptr = ws_strptime(s,"%Y-%m-%d %H", &tm);
-	if (curptr == NULL)
-		curptr = ws_strptime(s,"%Y-%m-%d", &tm);
-	if (curptr == NULL)
-		goto fail;
-	tm.tm_isdst = -1;	/* let the computer figure out if it's DST */
+		curptr = bufptr;
 
 	if (*curptr == '.') {
 		/* Nanoseconds */
@@ -256,35 +321,34 @@ absolute_val_from_string(fvalue_t *fv, const char *s, size_t len _U_, char **err
 		fv->value.time.nsecs = 0;
 	}
 
+	/* Timezone */
+	bufptr = curptr;
+	curptr = ws_strptime(bufptr, "%n%z", &tm, &zoneinfo);
+	if (curptr == NULL) {
+		/* No timezone, assume localtime. */
+		has_timezone = false;
+		curptr = bufptr;
+	}
+
 	/* Skip whitespace */
 	while (g_ascii_isspace(*curptr)) {
 		curptr++;
 	}
 
-	/* Do we have a Timezone? */
-	if (strcmp(curptr, "UTC") == 0) {
-		curptr += strlen("UTC");
-		if (*curptr == '\0') {
-			/* It's UTC */
-			fv->value.time.secs = mktime_utc(&tm);
-			goto done;
-		}
-		else {
-			err_msg = ws_strdup("Unexpected data after time value.");
-			goto fail;
-		}
-	}
-	if (*curptr == '\0') {
-		/* Local time */
-		fv->value.time.secs = mktime(&tm);
-		goto done;
-	}
-	else {
+	if (*curptr != '\0') {
 		err_msg = ws_strdup("Unexpected data after time value.");
 		goto fail;
 	}
 
-done:
+	if (has_timezone) {
+		/* Convert our calendar time (presumed in UTC, possibly with
+		 * an extra timezone offset correction datum) to epoch time. */
+		fv->value.time.secs = mktime_utc(&tm);
+	}
+	else {
+		/* Convert our calendar time (in the local timezone) to epoch time. */
+		fv->value.time.secs = mktime(&tm);
+	}
 	if (fv->value.time.secs == (time_t)-1) {
 		/*
 		 * XXX - should we supply an error message that mentions
@@ -300,7 +364,12 @@ done:
 		goto fail;
 	}
 
-	return TRUE;
+	if (has_timezone) {
+		/* Normalize to UTC with the offset we have saved. */
+		fv->value.time.secs -= zoneinfo.tm_gmtoff;
+	}
+
+	return true;
 
 fail:
 	if (err_msg_ptr != NULL) {
@@ -315,13 +384,31 @@ fail:
 		g_free(err_msg);
 	}
 
-	return FALSE;
+	return false;
 }
 
-static gboolean
-absolute_val_from_literal(fvalue_t *fv, const char *s, gboolean allow_partial_value _U_, gchar **err_msg)
+static bool
+absolute_val_from_literal(fvalue_t *fv, const char *s, bool allow_partial_value _U_, char **err_msg)
 {
 	return absolute_val_from_string(fv, s, 0, err_msg);
+}
+
+static bool
+absolute_val_from_uinteger64(fvalue_t *fv, const char *s, uint64_t value _U_, char **err_msg)
+{
+	return absolute_val_from_literal(fv, s, FALSE, err_msg);
+}
+
+static bool
+absolute_val_from_sinteger64(fvalue_t *fv, const char *s, int64_t value _U_, char **err_msg)
+{
+	return absolute_val_from_literal(fv, s, FALSE, err_msg);
+}
+
+static bool
+absolute_val_from_float(fvalue_t *fv, const char *s, double value _U_, char **err_msg)
+{
+	return absolute_val_from_literal(fv, s, FALSE, err_msg);
 }
 
 static void
@@ -355,7 +442,6 @@ abs_time_to_ftrepr_dfilter(wmem_allocator_t *scope,
 {
 	struct tm *tm;
 	char datetime_format[128];
-	int nsecs;
 	char nsecs_buf[32];
 
 	if (use_utc) {
@@ -377,11 +463,7 @@ abs_time_to_ftrepr_dfilter(wmem_allocator_t *scope,
 	if (nstime->nsecs == 0)
 		return wmem_strdup_printf(scope, datetime_format, "");
 
-	nsecs = nstime->nsecs;
-	while (nsecs > 0 && (nsecs % 10) == 0) {
-		nsecs /= 10;
-	}
-	snprintf(nsecs_buf, sizeof(nsecs_buf), ".%d", nsecs);
+	snprintf(nsecs_buf, sizeof(nsecs_buf), ".%09d", nstime->nsecs);
 
 	return wmem_strdup_printf(scope, datetime_format, nsecs_buf);
 }
@@ -396,6 +478,7 @@ absolute_val_to_repr(wmem_allocator_t *scope, const fvalue_t *fv, ftrepr_t rtype
 
 	switch (rtype) {
 		case FTREPR_DISPLAY:
+		case FTREPR_JSON:
 			rep = abs_time_to_str_ex(scope, &fv->value.time,
 					field_display, ABS_TIME_TO_STR_SHOW_ZONE);
 			break;
@@ -427,19 +510,19 @@ relative_val_to_repr(wmem_allocator_t *scope, const fvalue_t *fv, ftrepr_t rtype
 	return rel_time_to_secs_str(scope, &fv->value.time);
 }
 
-static guint
+static unsigned
 time_hash(const fvalue_t *fv)
 {
 	return nstime_hash(&fv->value.time);
 }
 
-static gboolean
+static bool
 time_is_zero(const fvalue_t *fv)
 {
 	return nstime_is_zero(&fv->value.time);
 }
 
-static gboolean
+static bool
 time_is_negative(const fvalue_t *fv)
 {
 	return fv->value.time.secs < 0;
@@ -458,11 +541,11 @@ time_unary_minus(fvalue_t * dst, const fvalue_t *src, char **err_ptr _U_)
 static void
 check_ns_wraparound(nstime_t *ns, jmp_buf env)
 {
-	if (ns->nsecs >= NS_PER_S || (ns->nsecs > 0 && ns->secs < 0)) {
+	while(ns->nsecs >= NS_PER_S || (ns->nsecs > 0 && ns->secs < 0)) {
 		ws_safe_sub_jmp(&ns->nsecs, ns->nsecs, NS_PER_S, env);
 		ws_safe_add_jmp(&ns->secs, ns->secs, 1, env);
 	}
-	else if(ns->nsecs <= -NS_PER_S || (ns->nsecs < 0 && ns->secs > 0)) {
+	while (ns->nsecs <= -NS_PER_S || (ns->nsecs < 0 && ns->secs > 0)) {
 		ws_safe_add_jmp(&ns->nsecs, ns->nsecs, NS_PER_S, env);
 		ws_safe_sub_jmp(&ns->secs, ns->secs, 1, env);
 	}
@@ -476,16 +559,8 @@ _nstime_add(nstime_t *res, nstime_t a, const nstime_t b, jmp_buf env)
 	check_ns_wraparound(res, env);
 }
 
-static void
-_nstime_sub(nstime_t *res, nstime_t a, const nstime_t b, jmp_buf env)
-{
-	ws_safe_sub_jmp(&res->secs, a.secs, b.secs, env);
-	ws_safe_sub_jmp(&res->nsecs, a.nsecs, b.nsecs, env);
-	check_ns_wraparound(res, env);
-}
-
 static enum ft_result
-time_add(fvalue_t * dst, const fvalue_t *a, const fvalue_t *b, char **err_ptr)
+time_add(fvalue_t *dst, const fvalue_t *a, const fvalue_t *b, char **err_ptr)
 {
 	jmp_buf env;
 	if (setjmp(env) != 0) {
@@ -496,8 +571,16 @@ time_add(fvalue_t * dst, const fvalue_t *a, const fvalue_t *b, char **err_ptr)
 	return FT_OK;
 }
 
+static void
+_nstime_sub(nstime_t *res, nstime_t a, const nstime_t b, jmp_buf env)
+{
+	ws_safe_sub_jmp(&res->secs, a.secs, b.secs, env);
+	ws_safe_sub_jmp(&res->nsecs, a.nsecs, b.nsecs, env);
+	check_ns_wraparound(res, env);
+}
+
 static enum ft_result
-time_subtract(fvalue_t * dst, const fvalue_t *a, const fvalue_t *b, char **err_ptr)
+time_subtract(fvalue_t *dst, const fvalue_t *a, const fvalue_t *b, char **err_ptr)
 {
 	jmp_buf env;
 	if (setjmp(env) != 0) {
@@ -508,14 +591,100 @@ time_subtract(fvalue_t * dst, const fvalue_t *a, const fvalue_t *b, char **err_p
 	return FT_OK;
 }
 
+static void
+_nstime_mul_int(nstime_t *res, nstime_t a, int64_t val, jmp_buf env)
+{
+	ws_safe_mul_jmp(&res->secs, a.secs, (time_t)val, env);
+	ws_safe_mul_jmp(&res->nsecs, a.nsecs, (int)val, env);
+	check_ns_wraparound(res, env);
+}
+
+static void
+_nstime_mul_float(nstime_t *res, nstime_t a, double val, jmp_buf env)
+{
+	res->secs = (time_t)(a.secs * val);
+	res->nsecs = (int)(a.nsecs * val);
+	check_ns_wraparound(res, env);
+}
+
+static enum ft_result
+time_multiply(fvalue_t *dst, const fvalue_t *a, const fvalue_t *b, char **err_ptr)
+{
+	jmp_buf env;
+	if (setjmp(env) != 0) {
+		*err_ptr = ws_strdup_printf("time_subtract: overflow");
+		return FT_ERROR;
+	}
+
+	ftenum_t ft_b = fvalue_type_ftenum(b);
+	if (ft_b == FT_INT64) {
+		int64_t val = fvalue_get_sinteger64((fvalue_t *)b);
+		_nstime_mul_int(&dst->value.time, a->value.time, val, env);
+	}
+	else if (ft_b == FT_DOUBLE) {
+		double val = fvalue_get_floating((fvalue_t *)b);
+		_nstime_mul_float(&dst->value.time, a->value.time, val, env);
+	}
+	else {
+		ws_critical("Invalid RHS ftype: %s", ftype_pretty_name(ft_b));
+		return FT_BADARG;
+	}
+	return FT_OK;
+}
+
+static void
+_nstime_div_int(nstime_t *res, nstime_t a, int64_t val, jmp_buf env)
+{
+	ws_safe_div_jmp(&res->secs, a.secs, (time_t)val, env);
+	ws_safe_div_jmp(&res->nsecs, a.nsecs, (int)val, env);
+}
+
+static void
+_nstime_div_float(nstime_t *res, nstime_t a, double val)
+{
+	res->secs = (time_t)(a.secs / val);
+	res->nsecs = (int)(a.nsecs / val);
+}
+
+static enum ft_result
+time_divide(fvalue_t *dst, const fvalue_t *a, const fvalue_t *b, char **err_ptr)
+{
+	jmp_buf env;
+	if (setjmp(env) != 0) {
+		*err_ptr = ws_strdup_printf("time_divide: overflow");
+		return FT_ERROR;
+	}
+
+	ftenum_t ft_b = fvalue_type_ftenum(b);
+	if (ft_b == FT_INT64) {
+		int64_t val = fvalue_get_sinteger64((fvalue_t *)b);
+		if (val == 0) {
+			*err_ptr = ws_strdup_printf("time_divide: division by zero");
+			return FT_ERROR;
+		}
+		_nstime_div_int(&dst->value.time, a->value.time, val, env);
+	}
+	else if (ft_b == FT_DOUBLE) {
+		double val = fvalue_get_floating((fvalue_t *)b);
+		if (val == 0) {
+			*err_ptr = ws_strdup_printf("time_divide: division by zero");
+			return FT_ERROR;
+		}
+		_nstime_div_float(&dst->value.time, a->value.time, val);
+	}
+	else {
+		ws_critical("Invalid RHS ftype: %s", ftype_pretty_name(ft_b));
+		return FT_BADARG;
+	}
+	return FT_OK;
+}
+
 void
 ftype_register_time(void)
 {
 
-	static ftype_t abstime_type = {
+	static const ftype_t abstime_type = {
 		FT_ABSOLUTE_TIME,		/* ftype */
-		"FT_ABSOLUTE_TIME",		/* name */
-		"Date and time",		/* pretty_name */
 		0,				/* wire_size */
 		time_fvalue_new,		/* new_value */
 		time_fvalue_copy,		/* copy_value */
@@ -523,10 +692,14 @@ ftype_register_time(void)
 		absolute_val_from_literal,	/* val_from_literal */
 		absolute_val_from_string,	/* val_from_string */
 		NULL,				/* val_from_charconst */
+		absolute_val_from_uinteger64,	/* val_from_uinteger64 */
+		absolute_val_from_sinteger64,	/* val_from_sinteger64 */
+		absolute_val_from_float,	/* val_from_double */
 		absolute_val_to_repr,		/* val_to_string_repr */
 
 		NULL,				/* val_to_uinteger64 */
 		NULL,				/* val_to_sinteger64 */
+		NULL,				/* val_from_double */
 
 		{ .set_value_time = time_fvalue_set },	/* union set_value */
 		{ .get_value_time = value_get },	/* union get_value */
@@ -544,25 +717,27 @@ ftype_register_time(void)
 		time_unary_minus,		/* unary_minus */
 		time_add,			/* add */
 		time_subtract,			/* subtract */
-		NULL,				/* multiply */
-		NULL,				/* divide */
+		time_multiply,			/* multiply */
+		time_divide,			/* divide */
 		NULL,				/* modulo */
 	};
-	static ftype_t reltime_type = {
+	static const ftype_t reltime_type = {
 		FT_RELATIVE_TIME,		/* ftype */
-		"FT_RELATIVE_TIME",		/* name */
-		"Time offset",			/* pretty_name */
 		0,				/* wire_size */
 		time_fvalue_new,		/* new_value */
 		time_fvalue_copy,		/* copy_value */
 		NULL,				/* free_value */
-		relative_val_from_literal,	/* val_from_literal */
+		NULL,				/* val_from_literal */
 		NULL,				/* val_from_string */
 		NULL,				/* val_from_charconst */
+		relative_val_from_uinteger64,	/* val_from_uinteger64 */
+		relative_val_from_sinteger64,	/* val_from_sinteger64 */
+		relative_val_from_float,	/* val_from_double */
 		relative_val_to_repr,		/* val_to_string_repr */
 
 		NULL,				/* val_to_uinteger64 */
 		NULL,				/* val_to_sinteger64 */
+		NULL,				/* val_from_double */
 
 		{ .set_value_time = time_fvalue_set },	/* union set_value */
 		{ .get_value_time = value_get },	/* union get_value */
@@ -580,8 +755,8 @@ ftype_register_time(void)
 		time_unary_minus,		/* unary_minus */
 		time_add,			/* add */
 		time_subtract,			/* subtract */
-		NULL,				/* multiply */
-		NULL,				/* divide */
+		time_multiply,			/* multiply */
+		time_divide,			/* divide */
 		NULL,				/* modulo */
 	};
 

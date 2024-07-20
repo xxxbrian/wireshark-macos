@@ -26,7 +26,7 @@
 void proto_register_butc(void);
 void proto_reg_handoff_butc(void);
 
-static int proto_butc = -1;
+static int proto_butc;
 ETH_HF
 
 ETH_ETT
@@ -52,14 +52,12 @@ ETH_HFARR
 ETH_ETTARR
         };
 
-        proto_butc = proto_register_protocol(
-                "DCE/RPC BUTC", 
-		"BUTC", "butc");
+        proto_butc = proto_register_protocol("DCE/RPC BUTC", "BUTC", "butc");
 	proto_register_field_array(proto_butc, hf, array_length(hf));
         proto_register_subtree_array(ett, array_length(ett));
 }
 
-static dcerpc_sub_dissector function_dissectors[] = {
+static const dcerpc_sub_dissector function_dissectors[] = {
 ETH_FT
 	{ 0, NULL, NULL, NULL },
 };

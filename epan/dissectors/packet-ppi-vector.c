@@ -137,129 +137,129 @@ static const value_string relativeto_string[] = {
 void proto_register_ppi_vector(void);
 
 /* protocol */
-static int proto_ppi_vector = -1;
+static int proto_ppi_vector;
 
 /* "top" level fields */
-static int hf_ppi_vector_version = -1;
-static int hf_ppi_vector_pad = -1;
-static int hf_ppi_vector_length = -1;
-static int hf_ppi_vector_present = -1;
-static int hf_ppi_vector_vflags = -1;
-static int hf_ppi_vector_vchars = -1;
-static int hf_ppi_vector_rot_x = -1;
-static int hf_ppi_vector_rot_y = -1;
-static int hf_ppi_vector_rot_z = -1;
+static int hf_ppi_vector_version;
+static int hf_ppi_vector_pad;
+static int hf_ppi_vector_length;
+static int hf_ppi_vector_present;
+static int hf_ppi_vector_vflags;
+static int hf_ppi_vector_vchars;
+static int hf_ppi_vector_rot_x;
+static int hf_ppi_vector_rot_y;
+static int hf_ppi_vector_rot_z;
 
 /* V1 */
-static int hf_ppi_vector_off_r = -1;
-static int hf_ppi_vector_off_f = -1;
-static int hf_ppi_vector_off_u = -1;
-static int hf_ppi_vector_vel_r = -1;
-static int hf_ppi_vector_vel_f = -1;
-static int hf_ppi_vector_vel_u = -1;
-static int hf_ppi_vector_vel_t = -1;
-static int hf_ppi_vector_acc_r = -1;
-static int hf_ppi_vector_acc_f = -1;
-static int hf_ppi_vector_acc_u = -1;
-static int hf_ppi_vector_acc_t = -1;
+static int hf_ppi_vector_off_r;
+static int hf_ppi_vector_off_f;
+static int hf_ppi_vector_off_u;
+static int hf_ppi_vector_vel_r;
+static int hf_ppi_vector_vel_f;
+static int hf_ppi_vector_vel_u;
+static int hf_ppi_vector_vel_t;
+static int hf_ppi_vector_acc_r;
+static int hf_ppi_vector_acc_f;
+static int hf_ppi_vector_acc_u;
+static int hf_ppi_vector_acc_t;
 
 /* V2 */
-static int hf_ppi_vector_off_x = -1;
-static int hf_ppi_vector_off_y = -1;
-static int hf_ppi_vector_off_z = -1;
+static int hf_ppi_vector_off_x;
+static int hf_ppi_vector_off_y;
+static int hf_ppi_vector_off_z;
 
-static int hf_ppi_vector_err_rot= -1;
-static int hf_ppi_vector_err_off= -1;
+static int hf_ppi_vector_err_rot;
+static int hf_ppi_vector_err_off;
 
 /* V1 only */
-static int hf_ppi_vector_err_vel= -1;
-static int hf_ppi_vector_err_acc= -1;
+static int hf_ppi_vector_err_vel;
+static int hf_ppi_vector_err_acc;
 
-static int hf_ppi_vector_descstr= -1;
-static int hf_ppi_vector_appspecific_num = -1;
-static int hf_ppi_vector_appspecific_data = -1;
+static int hf_ppi_vector_descstr;
+static int hf_ppi_vector_appspecific_num;
+static int hf_ppi_vector_appspecific_data;
 
 /* "Present" flags */
-static int hf_ppi_vector_present_vflags = -1;
-static int hf_ppi_vector_present_vchars = -1;
-static int hf_ppi_vector_present_val_x = -1;
-static int hf_ppi_vector_present_val_y = -1;
-static int hf_ppi_vector_present_val_z = -1;
+static int hf_ppi_vector_present_vflags;
+static int hf_ppi_vector_present_vchars;
+static int hf_ppi_vector_present_val_x;
+static int hf_ppi_vector_present_val_y;
+static int hf_ppi_vector_present_val_z;
 
 /* V1 */
-static int hf_ppi_vector_present_off_r = -1;
-static int hf_ppi_vector_present_off_f = -1;
-static int hf_ppi_vector_present_off_u = -1;
-static int hf_ppi_vector_present_vel_r = -1;
-static int hf_ppi_vector_present_vel_f = -1;
-static int hf_ppi_vector_present_vel_u = -1;
-static int hf_ppi_vector_present_vel_t = -1;
-static int hf_ppi_vector_present_acc_r = -1;
-static int hf_ppi_vector_present_acc_f = -1;
-static int hf_ppi_vector_present_acc_u = -1;
-static int hf_ppi_vector_present_acc_t = -1;
+static int hf_ppi_vector_present_off_r;
+static int hf_ppi_vector_present_off_f;
+static int hf_ppi_vector_present_off_u;
+static int hf_ppi_vector_present_vel_r;
+static int hf_ppi_vector_present_vel_f;
+static int hf_ppi_vector_present_vel_u;
+static int hf_ppi_vector_present_vel_t;
+static int hf_ppi_vector_present_acc_r;
+static int hf_ppi_vector_present_acc_f;
+static int hf_ppi_vector_present_acc_u;
+static int hf_ppi_vector_present_acc_t;
 
 /* V2 */
-static int hf_ppi_vector_present_off_x = -1;
-static int hf_ppi_vector_present_off_y = -1;
-static int hf_ppi_vector_present_off_z = -1;
+static int hf_ppi_vector_present_off_x;
+static int hf_ppi_vector_present_off_y;
+static int hf_ppi_vector_present_off_z;
 
-static int hf_ppi_vector_present_err_rot = -1;
-static int hf_ppi_vector_present_err_off = -1;
+static int hf_ppi_vector_present_err_rot;
+static int hf_ppi_vector_present_err_off;
 
 /* V1 only */
-static int hf_ppi_vector_present_err_vel = -1;
-static int hf_ppi_vector_present_err_acc = -1;
+static int hf_ppi_vector_present_err_vel;
+static int hf_ppi_vector_present_err_acc;
 
-static int hf_ppi_vector_present_descstr= -1;
-static int hf_ppi_vector_presenappsecific_num = -1;
-static int hf_ppi_vector_present_appspecific_data = -1;
-static int hf_ppi_vector_present_ext = -1;
+static int hf_ppi_vector_present_descstr;
+static int hf_ppi_vector_presenappsecific_num;
+static int hf_ppi_vector_present_appspecific_data;
+static int hf_ppi_vector_present_ext;
 
 /* VectorFlags bits */
 /* There are currently only three bits and two fields defined in vector flags.
 *  These control the units/interpretation of a vector
 */
-static int hf_ppi_vector_vflags_defines_forward = -1; /* bit 0 */
+static int hf_ppi_vector_vflags_defines_forward; /* bit 0 */
 
 /* V1 */
-static int hf_ppi_vector_vflags_rots_absolute = -1; /* different ways to display the same bit, hi or low */
-static int hf_ppi_vector_vflags_offsets_from_gps = -1; /* these are different ways to display the same bit, hi or low */
+static int hf_ppi_vector_vflags_rots_absolute; /* different ways to display the same bit, hi or low */
+static int hf_ppi_vector_vflags_offsets_from_gps; /* these are different ways to display the same bit, hi or low */
 
 /* V2 */
-static int hf_ppi_vector_vflags_relative_to= -1; /* bits 1 and 2 */
+static int hf_ppi_vector_vflags_relative_to; /* bits 1 and 2 */
 
 /*  There are currently eight vector characteristics.
 *  These are purely descriptive (no mathematical importance)
 */
-static int hf_ppi_vector_vchars_antenna = -1;
-static int hf_ppi_vector_vchars_dir_of_travel = -1;
-static int hf_ppi_vector_vchars_front_of_veh = -1;
+static int hf_ppi_vector_vchars_antenna;
+static int hf_ppi_vector_vchars_dir_of_travel;
+static int hf_ppi_vector_vchars_front_of_veh;
 
 /* V2 only */
-static int hf_ppi_vector_vchars_angle_of_arrival= -1;
-static int hf_ppi_vector_vchars_transmitter_pos= -1;
+static int hf_ppi_vector_vchars_angle_of_arrival;
+static int hf_ppi_vector_vchars_transmitter_pos;
 
-static int hf_ppi_vector_vchars_gps_derived = -1;
-static int hf_ppi_vector_vchars_ins_derived = -1;
-static int hf_ppi_vector_vchars_compass_derived = -1;
-static int hf_ppi_vector_vchars_accelerometer_derived = -1;
-static int hf_ppi_vector_vchars_human_derived = -1;
-static int hf_ppi_vector_unknown_data = -1;
+static int hf_ppi_vector_vchars_gps_derived;
+static int hf_ppi_vector_vchars_ins_derived;
+static int hf_ppi_vector_vchars_compass_derived;
+static int hf_ppi_vector_vchars_accelerometer_derived;
+static int hf_ppi_vector_vchars_human_derived;
+static int hf_ppi_vector_unknown_data;
 
 /*These represent arrow-dropdownthings in the gui */
-static gint ett_ppi_vector = -1;
-static gint ett_ppi_vector_present = -1;
-static gint ett_ppi_vectorflags= -1;
-static gint ett_ppi_vectorchars= -1;
+static int ett_ppi_vector;
+static int ett_ppi_vector_present;
+static int ett_ppi_vectorflags;
+static int ett_ppi_vectorchars;
 
-static expert_field ei_ppi_vector_present_bit = EI_INIT;
-static expert_field ei_ppi_vector_length = EI_INIT;
+static expert_field ei_ppi_vector_present_bit;
+static expert_field ei_ppi_vector_length;
 
 
 /* We want to abbreviate this field into a single line. Does so without any string manipulation */
 static void
-annotate_vector_chars(guint32 chars, proto_tree *my_pt)
+annotate_vector_chars(uint32_t chars, proto_tree *my_pt)
 {
     if (chars & PPI_VECTOR_VCHARS_ANTENNA)
         proto_item_append_text(my_pt, " (Antenna)");
@@ -274,7 +274,7 @@ annotate_vector_chars(guint32 chars, proto_tree *my_pt)
 }
 
 static void
-dissect_ppi_vector_v1(tvbuff_t *tvb, packet_info *pinfo, int offset, gint length_remaining, proto_tree *ppi_vector_tree)
+dissect_ppi_vector_v1(tvbuff_t *tvb, packet_info *pinfo, int offset, int length_remaining, proto_tree *ppi_vector_tree)
 {
     proto_tree *vectorflags_tree          = NULL;
     proto_tree *vectorchars_tree          = NULL;
@@ -283,15 +283,15 @@ dissect_ppi_vector_v1(tvbuff_t *tvb, packet_info *pinfo, int offset, gint length
 
     /* bits */
     int bit;
-    guint32 present, next_present;
+    uint32_t present, next_present;
     /* values actually read out, for displaying */
-    gdouble rot_x, rot_y, rot_z;
-    gdouble off_r, off_f, off_u;
-    gdouble vel_r, vel_f, vel_u, vel_t;
-    gdouble acc_r, acc_f, acc_u, acc_t = 0;
-    gdouble err_rot, err_off, err_vel, err_acc;
-    guint32 appsecific_num; /* appdata parser should add a subtree based on this value */
-    guint32 flags=0, chars=0;
+    double rot_x, rot_y, rot_z;
+    double off_r, off_f, off_u;
+    double vel_r, vel_f, vel_u, vel_t;
+    double acc_r, acc_f, acc_u, acc_t = 0;
+    double err_rot, err_off, err_vel, err_acc;
+    uint32_t appsecific_num; /* appdata parser should add a subtree based on this value */
+    uint32_t flags=0, chars=0;
 
     static int * const ppi_vector_present_flags[] = {
         &hf_ppi_vector_present_vflags,
@@ -322,7 +322,7 @@ dissect_ppi_vector_v1(tvbuff_t *tvb, packet_info *pinfo, int offset, gint length
     };
 
     /* temporary, conversion values */
-    guint32 t_val;
+    uint32_t t_val;
 
     present = tvb_get_letohl(tvb, offset+4);
     /* Subtree for the "present flags" bitfield. */
@@ -612,7 +612,7 @@ dissect_ppi_vector_v1(tvbuff_t *tvb, packet_info *pinfo, int offset, gint length
 }
 
 static void
-dissect_ppi_vector_v2(tvbuff_t *tvb, packet_info *pinfo, int offset, gint length_remaining, proto_tree *ppi_vector_tree, proto_item *vector_line)
+dissect_ppi_vector_v2(tvbuff_t *tvb, packet_info *pinfo, int offset, int length_remaining, proto_tree *ppi_vector_tree, proto_item *vector_line)
 {
     proto_tree *vectorflags_tree          = NULL;
     proto_tree *vectorchars_tree          = NULL;
@@ -621,21 +621,21 @@ dissect_ppi_vector_v2(tvbuff_t *tvb, packet_info *pinfo, int offset, gint length
 
     /* bits */
     int bit;
-    guint32 present, next_present;
+    uint32_t present, next_present;
 
     /* values actually read out, for displaying */
-    gchar *curr_str;
+    char *curr_str;
 
     /* these are used to specially handle RelativeTo: */
-    guint32  relativeto_int;
-    const gchar *relativeto_str= "RelativeTo: Forward"; /* default if vflags is not present*/
+    uint32_t relativeto_int;
+    const char *relativeto_str;
 
     /* normal fields*/
-    guint32 flags=0, chars=0;
-    gdouble rot_x, rot_y, rot_z;
-    gdouble off_x, off_y, off_z;
-    gdouble err_rot, err_off;
-    guint32  appsecific_num; /* appdata parser should add a subtree based on this value */
+    uint32_t flags=0, chars=0;
+    double rot_x, rot_y, rot_z;
+    double off_x, off_y, off_z;
+    double err_rot, err_off;
+    uint32_t appsecific_num; /* appdata parser should add a subtree based on this value */
 
     static int * const ppi_vector_present_flags[] = {
         &hf_ppi_vector_present_vflags,
@@ -656,7 +656,7 @@ dissect_ppi_vector_v2(tvbuff_t *tvb, packet_info *pinfo, int offset, gint length
     };
 
     /* temporary, conversion values */
-    guint32 t_val;
+    uint32_t t_val;
 
     present = tvb_get_letohl(tvb, offset+4);
     /* Subtree for the "present flags" bitfield. */
@@ -903,18 +903,18 @@ dissect_ppi_vector(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree, void* da
 {
     proto_tree *ppi_vector_tree;
     proto_item *ti, *vector_line;
-    gint        length_remaining;
+    int         length_remaining;
     int         offset          = 0;
 
     /* values actually read out, for displaying */
-    guint32 version;
-    guint length;
+    uint32_t version;
+    unsigned length;
 
     /* Clear out stuff in the info column */
     col_clear(pinfo->cinfo,COL_INFO);
 
     /* pull out the first three fields of the BASE-GEOTAG-HEADER */
-    version = tvb_get_guint8(tvb, offset);
+    version = tvb_get_uint8(tvb, offset);
     length  = tvb_get_letohs(tvb, offset+2);
 
     /* Setup basic column info */
@@ -1322,7 +1322,7 @@ proto_register_ppi_vector(void)
             NULL, HFILL } },
 
     };
-    static gint *ett[] = {
+    static int *ett[] = {
         &ett_ppi_vector,
         &ett_ppi_vector_present,
         &ett_ppi_vectorflags,

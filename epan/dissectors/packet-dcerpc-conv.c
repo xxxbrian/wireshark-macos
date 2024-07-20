@@ -19,18 +19,18 @@
 void proto_register_conv (void);
 void proto_reg_handoff_conv (void);
 
-static int proto_conv = -1;
-static int hf_conv_opnum = -1;
-static int hf_conv_rc = -1;
-static int hf_conv_who_are_you_rqst_actuid = -1;
-static int hf_conv_who_are_you_rqst_boot_time = -1;
-static int hf_conv_who_are_you2_rqst_actuid = -1;
-static int hf_conv_who_are_you2_rqst_boot_time = -1;
-static int hf_conv_who_are_you_resp_seq = -1;
-static int hf_conv_who_are_you2_resp_seq = -1;
-static int hf_conv_who_are_you2_resp_casuuid = -1;
+static int proto_conv;
+static int hf_conv_opnum;
+static int hf_conv_rc;
+static int hf_conv_who_are_you_rqst_actuid;
+static int hf_conv_who_are_you_rqst_boot_time;
+static int hf_conv_who_are_you2_rqst_actuid;
+static int hf_conv_who_are_you2_rqst_boot_time;
+static int hf_conv_who_are_you_resp_seq;
+static int hf_conv_who_are_you2_resp_seq;
+static int hf_conv_who_are_you2_resp_casuuid;
 
-static gint ett_conv = -1;
+static gint ett_conv;
 
 
 static e_guid_t uuid_conv = { 0x333a2276, 0x0000, 0x0000, { 0x0d, 0x00, 0x00, 0x80, 0x9c, 0x00, 0x00, 0x00 } };
@@ -134,7 +134,7 @@ conv_dissect_who_are_you2_resp (tvbuff_t *tvb, int offset,
 }
 
 
-static dcerpc_sub_dissector conv_dissectors[] = {
+static const dcerpc_sub_dissector conv_dissectors[] = {
 	{ 0, "who_are_you",
 	  conv_dissect_who_are_you_rqst, conv_dissect_who_are_you_resp },
 	{ 1, "who_are_you2",
@@ -171,7 +171,7 @@ proto_register_conv (void)
 	{ &hf_conv_who_are_you2_resp_seq,
 	    {"Sequence Number", "conv.who_are_you2_resp_seq", FT_UINT32, BASE_DEC, NULL, 0x0, NULL, HFILL }},
 	{ &hf_conv_who_are_you2_resp_casuuid,
-	    {"Client's address space UUID", "conv.who_are_you2_resp_casuuid", FT_GUID, BASE_NONE, NULL, 0x0, "UUID", HFILL }}
+	    {"Client's address space UUID", "conv.who_are_you2_resp_casuuid", FT_GUID, BASE_NONE, NULL, 0x0, NULL, HFILL }}
 	};
 
 	static gint *ett[] = {

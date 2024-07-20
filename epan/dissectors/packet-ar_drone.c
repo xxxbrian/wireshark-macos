@@ -25,55 +25,55 @@ void proto_reg_handoff_ar_drone(void);
 /* ************************************************ */
 
 /* ar_drone Protocol */
-static int proto_ar_drone = -1;
+static int proto_ar_drone;
 
 /* ar_drone Dissector handle */
 static dissector_handle_t ar_drone_handle;
 
 /* Headers */
-static int hf_command = -1;
-static int hf_PCMD_id = -1;
-static int hf_PCMD_flag = -1;
-static int hf_PCMD_roll = -1;
-static int hf_PCMD_pitch = -1;
-static int hf_PCMD_gaz = -1;
-static int hf_PCMD_yaw = -1;
-static int hf_REF_id = -1;
-static int hf_REF_ctrl = -1;
-static int hf_FTRIM_seq = -1;
-static int hf_CONFIG_seq = -1;
-static int hf_CONFIG_name = -1;
-static int hf_CONFIG_val = -1;
-static int hf_CONFIG_ID_seq = -1;
-static int hf_CONFIG_ID_session = -1;
-static int hf_CONFIG_ID_user = -1;
-static int hf_CONFIG_ID_app = -1;
-static int hf_COMWDG = -1;
-static int hf_LED_seq = -1;
-static int hf_LED_anim = -1;
-static int hf_LED_freq = -1;
-static int hf_LED_sec = -1;
-static int hf_ANIM_seq = -1;
-static int hf_ANIM_anim = -1;
-static int hf_ANIM_sec = -1;
-static int hf_CTRL_seq = -1;
-static int hf_CTRL_mode = -1;
-static int hf_CTRL_fsize = -1;
+static int hf_command;
+static int hf_PCMD_id;
+static int hf_PCMD_flag;
+static int hf_PCMD_roll;
+static int hf_PCMD_pitch;
+static int hf_PCMD_gaz;
+static int hf_PCMD_yaw;
+static int hf_REF_id;
+static int hf_REF_ctrl;
+static int hf_FTRIM_seq;
+static int hf_CONFIG_seq;
+static int hf_CONFIG_name;
+static int hf_CONFIG_val;
+static int hf_CONFIG_ID_seq;
+static int hf_CONFIG_ID_session;
+static int hf_CONFIG_ID_user;
+static int hf_CONFIG_ID_app;
+static int hf_COMWDG;
+static int hf_LED_seq;
+static int hf_LED_anim;
+static int hf_LED_freq;
+static int hf_LED_sec;
+static int hf_ANIM_seq;
+static int hf_ANIM_anim;
+static int hf_ANIM_sec;
+static int hf_CTRL_seq;
+static int hf_CTRL_mode;
+static int hf_CTRL_fsize;
 
 /**Subtrees */
-static gint ett_FTRIM = -1;
-static gint ett_ar_drone = -1;
-static gint ett_PCMD = -1;
-static gint ett_REF = -1;
-static gint ett_CONFIG = -1;
-static gint ett_CONFIG_ID = -1;
-static gint ett_COMWDG = -1;
-static gint ett_LED = -1;
-static gint ett_ANIM = -1;
-static gint ett_CTRL = -1;
+static int ett_FTRIM;
+static int ett_ar_drone;
+static int ett_PCMD;
+static int ett_REF;
+static int ett_CONFIG;
+static int ett_CONFIG_ID;
+static int ett_COMWDG;
+static int ett_LED;
+static int ett_ANIM;
+static int ett_CTRL;
 
-static expert_field ei_NO_COMMA = EI_INIT;
-static expert_field ei_NO_CR = EI_INIT;
+static expert_field ei_NO_COMMA;
+static expert_field ei_NO_CR;
 
 /* Value String */
 #if 0 /* TODO: Delete these?  Or make use of them? */
@@ -94,7 +94,7 @@ static const string_string CTRL_mode_vs[] = {
     { "4" , " (CFG_GET_CONTROL_MODE)" },
     { "5" , " (ACK_CONTROL_MODE)" },
     { "6" , " (CUSTOM_CFG_GET_CONTROL_MODE)" },
-    { 0, NULL }
+    { NULL, NULL }
 };
 
 /* ********************************************** */
@@ -103,13 +103,13 @@ static const string_string CTRL_mode_vs[] = {
 static int
 dissect_ar_drone(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree, void *data _U_)
 {
-    gint        offset, length;
-    gint        master_offset = 0;
+    int         offset, length;
+    int         master_offset = 0;
     proto_item *ti, *sub_item;
     proto_tree *ar_tree, *sub_tree;
     char       *command;
-    guint8     *complete_str;
-    guint32     dword;
+    uint8_t    *complete_str;
+    uint32_t    dword;
 
     if (tvb_captured_length(tvb) < 4)
         return 0;
@@ -142,7 +142,7 @@ dissect_ar_drone(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree, void *data
         if (!strncmp(command, "AT*PCMD", 7))
         {
             /** Parse according the PCMD layout: */
-            guint8      PCMD_byte;
+            uint8_t     PCMD_byte;
             const char *PCMD_str;
 
             sub_tree = proto_item_add_subtree(sub_item, ett_PCMD);
@@ -175,14 +175,14 @@ dissect_ar_drone(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree, void *data
             }
             ti = proto_tree_add_item(sub_tree, hf_PCMD_roll, tvb, offset, length, ENC_ASCII);
 
-            PCMD_byte = tvb_get_guint8(tvb, offset);
+            PCMD_byte = tvb_get_uint8(tvb, offset);
             if (PCMD_byte == 0x30)
             {
                 PCMD_str = " (NO CHANGE)";
             }
             else if (PCMD_byte == 0x2d)
             {
-                PCMD_byte = tvb_get_guint8(tvb, offset + 1);
+                PCMD_byte = tvb_get_uint8(tvb, offset + 1);
                 if (PCMD_byte == 0x30)
                 {
                     PCMD_str = " (NO CHANGE)";
@@ -207,14 +207,14 @@ dissect_ar_drone(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree, void *data
             }
             ti = proto_tree_add_item(sub_tree, hf_PCMD_pitch, tvb, offset, length, ENC_ASCII);
 
-            PCMD_byte = tvb_get_guint8(tvb, offset);
+            PCMD_byte = tvb_get_uint8(tvb, offset);
             if (PCMD_byte == 0x30)
             {
                 PCMD_str = " (NO CHANGE)";
             }
             else if (PCMD_byte == 0x2d)
             {
-                PCMD_byte = tvb_get_guint8(tvb, offset + 1);
+                PCMD_byte = tvb_get_uint8(tvb, offset + 1);
                 if (PCMD_byte == 0x30)
                 {
                     PCMD_str = " (NO CHANGE)";
@@ -239,14 +239,14 @@ dissect_ar_drone(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree, void *data
             }
             ti = proto_tree_add_item(sub_tree, hf_PCMD_gaz, tvb, offset, length, ENC_ASCII);
 
-            PCMD_byte = tvb_get_guint8(tvb, offset);
+            PCMD_byte = tvb_get_uint8(tvb, offset);
             if (PCMD_byte == 0x30)
             {
                 PCMD_str = " (NO CHANGE)";
             }
             else if (PCMD_byte == 0x2d)
             {
-                PCMD_byte = tvb_get_guint8(tvb, offset + 1);
+                PCMD_byte = tvb_get_uint8(tvb, offset + 1);
                 if (PCMD_byte == 0x30)
                 {
                     PCMD_str = " (NO CHANGE)";
@@ -271,14 +271,14 @@ dissect_ar_drone(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree, void *data
             }
             ti = proto_tree_add_item(sub_tree, hf_PCMD_yaw, tvb, offset, length, ENC_ASCII);
 
-            PCMD_byte = tvb_get_guint8(tvb, offset);
+            PCMD_byte = tvb_get_uint8(tvb, offset);
             if (PCMD_byte == 0x30)
             {
                 PCMD_str = " (NO CHANGE)";
             }
             else if (PCMD_byte == 0x2d)
             {
-                PCMD_byte = tvb_get_guint8(tvb, offset + 1);
+                PCMD_byte = tvb_get_uint8(tvb, offset + 1);
                 if (PCMD_byte == 0x30)
                 {
                     PCMD_str = " (NO CHANGE)";
@@ -508,7 +508,7 @@ dissect_ar_drone(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree, void *data
 
         }else if (!strncmp(command, "AT*CTRL", 7))
         {
-            const guint8* CTRL_mode_str;
+            const uint8_t* CTRL_mode_str;
 
             /** Parse according to the CTRL layout: */
             sub_tree = proto_item_add_subtree(sub_item, ett_CTRL);
@@ -554,6 +554,12 @@ dissect_ar_drone(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree, void *data
     }
 
     return master_offset;
+}
+
+static bool
+dissect_ar_drone_heur(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree, void *data)
+{
+    return dissect_ar_drone(tvb, pinfo, tree, data) > 0;
 }
 
 void
@@ -732,7 +738,7 @@ proto_register_ar_drone(void)
     };
 
     /* Setup protocol subtree array */
-    static gint *ett[] = {
+    static int *ett[] = {
     &ett_ar_drone,
     &ett_PCMD,
     &ett_REF,
@@ -766,7 +772,7 @@ proto_register_ar_drone(void)
 void
 proto_reg_handoff_ar_drone(void)
 {
-    heur_dissector_add("udp", dissect_ar_drone, "AR Drone over UDP", "ar_drone_udp", proto_ar_drone, HEURISTIC_ENABLE);
+    heur_dissector_add("udp", dissect_ar_drone_heur, "AR Drone over UDP", "ar_drone_udp", proto_ar_drone, HEURISTIC_ENABLE);
     dissector_add_for_decode_as_with_preference("udp.port", ar_drone_handle);
 }
 

@@ -52,15 +52,21 @@ MainWindowPreferencesFrame::MainWindowPreferencesFrame(QWidget *parent) :
     ui->maxRecentLineEdit->setStyleSheet(indent_ss);
 
     int num_entry_width = ui->maxFilterLineEdit->fontMetrics().height() * 3;
-    ui->maxFilterLineEdit->setMaximumWidth(num_entry_width);
-    ui->maxRecentLineEdit->setMaximumWidth(num_entry_width);
+    int num_entry_height = ui->maxFilterLineEdit->fontMetrics().height();
+    // Some styles (e.g., adwaita) add some extra space around the contents.
+    // Find the actual maximum size to set the widget.
+    QStyleOptionFrame opt;
+    initStyleOption(&opt);
+    QSize num_entry_size = ui->maxRecentLineEdit->style()->sizeFromContents(QStyle::CT_LineEdit, &opt, QSize(num_entry_width, num_entry_height));
+    ui->maxFilterLineEdit->setMaximumWidth(num_entry_size.width());
+    ui->maxRecentLineEdit->setMaximumWidth(num_entry_size.width());
 
     QString li_path = QString(":/languages/language%1.svg").arg(ColorUtils::themeIsDark() ? ".dark" : "");
     QIcon language_icon = QIcon(li_path);
     ui->languageComboBox->setItemIcon(0, language_icon);
 
     QString globalLanguagesPath(QString(get_datafile_dir()) + "/languages/");
-    QString userLanguagesPath(gchar_free_to_qstring(get_persconffile_path("languages/", FALSE)));
+    QString userLanguagesPath(gchar_free_to_qstring(get_persconffile_path("languages/", false)));
 
     QStringList filenames = QDir(":/i18n/").entryList(QStringList("wireshark_*.qm"));
     filenames += QDir(globalLanguagesPath).entryList(QStringList("wireshark_*.qm"));
@@ -159,8 +165,7 @@ void MainWindowPreferencesFrame::on_foStyleSpecifiedRadioButton_toggled(bool che
 void MainWindowPreferencesFrame::on_foStyleSpecifiedLineEdit_textEdited(const QString &new_dir)
 {
     prefs_set_string_value(pref_fileopen_dir_, new_dir.toStdString().c_str(), pref_stashed);
-    prefs_set_enum_value(pref_fileopen_style_, FO_STYLE_SPECIFIED, pref_stashed);
-    updateWidgets();
+    ui->foStyleSpecifiedRadioButton->setChecked(true);
 }
 
 void MainWindowPreferencesFrame::on_foStyleSpecifiedPushButton_clicked()
@@ -171,8 +176,7 @@ void MainWindowPreferencesFrame::on_foStyleSpecifiedPushButton_clicked()
 
     ui->foStyleSpecifiedLineEdit->setText(specified_dir);
     prefs_set_string_value(pref_fileopen_dir_, specified_dir.toStdString().c_str(), pref_stashed);
-    prefs_set_enum_value(pref_fileopen_style_, FO_STYLE_SPECIFIED, pref_stashed);
-    updateWidgets();
+    ui->foStyleSpecifiedRadioButton->setChecked(true);
 }
 
 void MainWindowPreferencesFrame::on_maxFilterLineEdit_textEdited(const QString &new_max)

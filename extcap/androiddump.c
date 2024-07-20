@@ -19,6 +19,7 @@
 #include <string.h>
 #include <errno.h>
 #include <time.h>
+#include <fcntl.h>
 #include <wsutil/strtoi.h>
 #include <wsutil/filesystem.h>
 #include <wsutil/privileges.h>
@@ -199,7 +200,7 @@ enum {
     OPT_CONFIG_BT_LOCAL_TCP_PORT
 };
 
-static struct ws_option longopts[] = {
+static const struct ws_option longopts[] = {
     EXTCAP_BASE_OPTIONS,
     { "help",                     ws_no_argument,       NULL, OPT_HELP},
     { "version",                  ws_no_argument,       NULL, OPT_VERSION},
@@ -385,18 +386,30 @@ static void useSndTimeout(socket_handle_t  sock) {
 }
 
 static void useNonBlockingConnectTimeout(socket_handle_t  sock) {
-    int res_snd;
-    int res_rcv;
 #ifdef _WIN32
-    const DWORD socket_timeout = SOCKET_RW_TIMEOUT_MS;
     unsigned long non_blocking = 1;
-
-    res_snd = setsockopt(sock, SOL_SOCKET, SO_SNDTIMEO, (const char *) &socket_timeout, sizeof(socket_timeout));
-    res_rcv = setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, (const char *) &socket_timeout, sizeof(socket_timeout));
 
     /* set socket to non-blocking */
     ioctlsocket(sock, FIONBIO, &non_blocking);
 #else
+    int flags = fcntl(sock, F_GETFL);
+    fcntl(sock, F_SETFL, flags | O_NONBLOCK);
+#endif
+}
+
+static void useNormalConnectTimeout(socket_handle_t  sock) {
+    int res_snd;
+    int res_rcv;
+#ifdef _WIN32
+    const DWORD socket_timeout = SOCKET_RW_TIMEOUT_MS;
+    unsigned long non_blocking = 0;
+
+    res_snd = setsockopt(sock, SOL_SOCKET, SO_SNDTIMEO, (const char *) &socket_timeout, sizeof(socket_timeout));
+    res_rcv = setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, (const char *) &socket_timeout, sizeof(socket_timeout));
+    ioctlsocket(sock, FIONBIO, &non_blocking);
+#else
+    int flags = fcntl(sock, F_GETFL);
+    fcntl(sock, F_SETFL, flags & ~O_NONBLOCK);
     const struct timeval socket_timeout = {
         .tv_sec = SOCKET_RW_TIMEOUT_MS / 1000,
         .tv_usec = (SOCKET_RW_TIMEOUT_MS % 1000) * 1000
@@ -407,26 +420,6 @@ static void useNonBlockingConnectTimeout(socket_handle_t  sock) {
 #endif
     if (res_snd != 0)
         ws_debug("Can't set socket timeout, using default");
-    if (res_rcv != 0)
-        ws_debug("Can't set socket timeout, using default");
-}
-
-static void useNormalConnectTimeout(socket_handle_t  sock) {
-    int res_rcv;
-#ifdef _WIN32
-    const DWORD socket_timeout = 0;
-    unsigned long non_blocking = 0;
-
-    res_rcv = setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, (const char *) &socket_timeout, sizeof(socket_timeout));
-    ioctlsocket(sock, FIONBIO, &non_blocking);
-#else
-    const struct timeval socket_timeout = {
-        .tv_sec = SOCKET_RW_TIMEOUT_MS / 1000,
-        .tv_usec = (SOCKET_RW_TIMEOUT_MS % 1000) * 1000
-    };
-
-    res_rcv = setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, &socket_timeout, sizeof(socket_timeout));
-#endif
     if (res_rcv != 0)
         ws_debug("Can't set socket timeout, using default");
 }
@@ -543,6 +536,9 @@ static socket_handle_t adb_connect(const char *server_ip, unsigned short *server
     struct sockaddr_in server;
     struct sockaddr_in client;
     int                status;
+#ifndef _WIN32
+    int                result;
+#endif
     int                tries = 0;
 
     memset(&server, 0x0, sizeof(server));
@@ -557,12 +553,14 @@ static socket_handle_t adb_connect(const char *server_ip, unsigned short *server
     }
 
     useNonBlockingConnectTimeout(sock);
-    while (tries < SOCKET_CONNECT_TIMEOUT_TRIES) {
-        status = connect(sock, (struct sockaddr *) &server, (socklen_t)sizeof(server));
-        tries += 1;
-
+    status = connect(sock, (struct sockaddr *) &server, (socklen_t)sizeof(server));
 #ifdef _WIN32
-        if ((status == SOCKET_ERROR) && (WSAGetLastError() == WSAEWOULDBLOCK)) {
+    if ((status == SOCKET_ERROR) && (WSAGetLastError() == WSAEWOULDBLOCK)) {
+#else
+    if ((status == SOCKET_ERROR) && (errno == EINPROGRESS)) {
+#endif
+        while (tries < SOCKET_CONNECT_TIMEOUT_TRIES) {
+            tries += 1;
             struct timeval timeout = {
                 .tv_sec = 0,
                 .tv_usec = SOCKET_CONNECT_DELAY_US,
@@ -570,15 +568,24 @@ static socket_handle_t adb_connect(const char *server_ip, unsigned short *server
             fd_set fdset;
             FD_ZERO(&fdset);
             FD_SET(sock, &fdset);
-            if ((select(0, NULL, &fdset, NULL, &timeout) != 0) && (FD_ISSET(sock, &fdset))) {
+            if ((select(sock+1, NULL, &fdset, NULL, &timeout) != 0) && (FD_ISSET(sock, &fdset))) {
+#ifdef _WIN32
                 status = 0;
+                break;
+#else
+                length = sizeof(result);
+                getsockopt(sock, SOL_SOCKET, SO_ERROR, &result, &length);
+                if (result == 0) {
+                    status = 0;
+                } else {
+                    ws_debug("Error connecting to ADB: <%s>", strerror(result));
+                }
+                break;
+#endif
+            } else {
+                ws_debug("Try %i: Timeout connecting to ADB", tries);
             }
         }
-#endif
-
-        if (status != SOCKET_ERROR)
-            break;
-        g_usleep(SOCKET_CONNECT_DELAY_US);
     }
     useNormalConnectTimeout(sock);
 
@@ -607,7 +614,7 @@ static socket_handle_t adb_connect(const char *server_ip, unsigned short *server
             return INVALID_SOCKET;
         }
 #else
-    ws_debug("Cannot connect to ADB: <%s> Please check that adb daemon is running.", strerror(errno));
+    ws_debug("Cannot connect to ADB: Please check that adb daemon is running.");
     closesocket(sock);
     return INVALID_SOCKET;
 #endif
@@ -2311,8 +2318,9 @@ static int capture_android_logcat(char *interface, char *fifo,
 /* need to unpack the pcap and then send the packet data to the dumper.       */
 /*----------------------------------------------------------------------------*/
 static int capture_android_tcpdump(char *interface, char *fifo,
-        const char *adb_server_ip, unsigned short *adb_server_tcp_port) {
-    static const char                       *const adb_shell_tcpdump_format = "exec:tcpdump -U -n -s 0 -u -i %s -w - 2>/dev/null";
+        char *capture_filter, const char *adb_server_ip,
+        unsigned short *adb_server_tcp_port) {
+    static const char                       *const adb_shell_tcpdump_format = "exec:tcpdump -U -n -s 0 -u -i %s -w - %s 2>/dev/null";
     static const char                       *const regex_interface = INTERFACE_ANDROID_TCPDUMP "-(?<iface>.*?)-(?<serial>.*)";
     struct extcap_dumper                     extcap_dumper;
     static char                              data[PACKET_LENGTH];
@@ -2330,7 +2338,8 @@ static int capture_android_tcpdump(char *interface, char *fifo,
     GRegex                                  *regex = NULL;
     GError                                  *err = NULL;
     GMatchInfo                              *match = NULL;
-    char                                     tcpdump_cmd[80];
+    char                                    *tcpdump_cmd = NULL;
+    char                                    *quoted_filter = NULL;
 
     regex = g_regex_new(regex_interface, G_REGEX_RAW, (GRegexMatchFlags)0, &err);
     if (!regex) {
@@ -2358,9 +2367,12 @@ static int capture_android_tcpdump(char *interface, char *fifo,
         return EXIT_CODE_INVALID_SOCKET_11;
     }
 
-    snprintf(tcpdump_cmd, sizeof(tcpdump_cmd), adb_shell_tcpdump_format, iface);
+    quoted_filter = g_shell_quote(capture_filter ? capture_filter : "");
+    tcpdump_cmd = ws_strdup_printf(adb_shell_tcpdump_format, iface, quoted_filter);
     g_free(iface);
+    g_free(quoted_filter);
     result = adb_send(sock, tcpdump_cmd);
+    g_free(tcpdump_cmd);
     if (result) {
         ws_warning("Error while setting adb transport");
         closesocket(sock);
@@ -2634,13 +2646,13 @@ int main(int argc, char *argv[]) {
             if (ws_optarg && !*ws_optarg)
                 logcat_text = true;
             else
-                logcat_text = (g_ascii_strncasecmp(ws_optarg, "TRUE", 4) == 0);
+                logcat_text = (g_ascii_strncasecmp(ws_optarg, "true", 4) == 0);
             break;
         case OPT_CONFIG_LOGCAT_IGNORE_LOG_BUFFER:
             if (ws_optarg == NULL || (ws_optarg && !*ws_optarg))
                 logcat_ignore_log_buffer = true;
             else
-                logcat_ignore_log_buffer = (g_ascii_strncasecmp(ws_optarg, "TRUE", 4) == 0);
+                logcat_ignore_log_buffer = (g_ascii_strncasecmp(ws_optarg, "true", 4) == 0);
             break;
         case OPT_CONFIG_LOGCAT_CUSTOM_OPTIONS:
             if (ws_optarg == NULL || (ws_optarg && *ws_optarg == '\0')) {
@@ -2668,7 +2680,7 @@ int main(int argc, char *argv[]) {
             }
             break;
         case OPT_CONFIG_BT_FORWARD_SOCKET:
-            bt_forward_socket = (g_ascii_strncasecmp(ws_optarg, "TRUE", 4) == 0);
+            bt_forward_socket = (g_ascii_strncasecmp(ws_optarg, "true", 4) == 0);
             break;
         case OPT_CONFIG_BT_LOCAL_IP:
             bt_local_ip = ws_optarg;
@@ -2764,7 +2776,7 @@ int main(int argc, char *argv[]) {
         else if (extcap_conf->interface && (is_specified_interface(extcap_conf->interface, INTERFACE_ANDROID_BLUETOOTH_BTSNOOP_NET)))
             ret = capture_android_bluetooth_btsnoop_net(extcap_conf->interface, extcap_conf->fifo, adb_server_ip, adb_server_tcp_port);
         else if (extcap_conf->interface && (is_specified_interface(extcap_conf->interface,INTERFACE_ANDROID_TCPDUMP)))
-            ret = capture_android_tcpdump(extcap_conf->interface, extcap_conf->fifo, adb_server_ip, adb_server_tcp_port);
+            ret = capture_android_tcpdump(extcap_conf->interface, extcap_conf->fifo, extcap_conf->capture_filter, adb_server_ip, adb_server_tcp_port);
 
         goto end;
     }

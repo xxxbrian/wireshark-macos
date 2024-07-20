@@ -1,7 +1,7 @@
 /* Do not modify this file. Changes will be overwritten.                      */
 /* Generated automatically by the ASN.1 to Wireshark dissector compiler       */
 /* packet-e2ap.c                                                              */
-/* asn2wrs.py -L -p e2ap -c ./e2ap.cnf -s ./packet-e2ap-template -D . -O ../.. E2AP-CommonDataTypes.asn E2AP-Constants.asn E2AP-Containers.asn E2AP-IEs.asn E2AP-PDU-Contents.asn E2AP-PDU-Descriptions.asn e2sm-v2.01.asn e2sm-ric-v1.02.asn e2sm-kpm-v2.02.asn e2sm-ni-v1.00.asn */
+/* asn2wrs.py -q -L -p e2ap -c ./e2ap.cnf -s ./packet-e2ap-template -D . -O ../.. E2AP-CommonDataTypes.asn E2AP-Constants.asn E2AP-Containers.asn E2AP-IEs.asn E2AP-PDU-Contents.asn E2AP-PDU-Descriptions.asn e2sm-v3.01.asn e2sm-rc-v1.03.asn e2sm-kpm-v3.00.asn e2sm-ni-v1.00.asn */
 
 /* packet-e2ap.c
  * Routines for E2APApplication Protocol (e2ap) packet dissection
@@ -13,11 +13,10 @@
  *
  * SPDX-License-Identifier: GPL-2.0-or-later
  *
- * References: ORAN-WG3.E2AP-v02.01, ORAN-WG3.E2SM-KPM-v02.02, ORAN-WG3.E2SM-RC.01.02
+ * References: ORAN-WG3.E2AP-v03.00, ORAN-WG3.E2SM-KPM-v03.00, ORAN-WG3.E2SM-RC.03.00
  */
 
 #include "config.h"
-#include <stdio.h>
 
 #include <epan/packet.h>
 #include <epan/strutil.h>
@@ -27,12 +26,15 @@
 #include <epan/expert.h>
 #include <epan/proto_data.h>
 #include <epan/conversation.h>
-#include <epan/exceptions.h>
-#include <epan/show_exception.h>
 #include <epan/to_str.h>
+#include <epan/oids.h>
+#include <epan/tap.h>
+#include <epan/stats_tree.h>
 
 #include "packet-e2ap.h"
 #include "packet-per.h"
+#include "packet-ntp.h"
+
 #define PNAME  "E2 Application Protocol"
 #define PSNAME "E2AP"
 #define PFNAME "e2ap"
@@ -64,6 +66,7 @@ static dissector_handle_t e2ap_handle;
 #define maxnoofParametersToReport      65535
 #define maxnoofPolicyConditions        65535
 #define maxnoofAssociatedRANParameters 65535
+#define maxnoofUEID                    65535
 #define maxnoofCellID                  65535
 #define maxnoofRANOutcomeParameters    255
 #define maxnoofParametersinStructure   65535
@@ -73,6 +76,7 @@ static dissector_handle_t e2ap_handle;
 #define maxnoofUEeventInfo             65535
 #define maxnoofRANparamTest            255
 #define maxnoofNeighbourCell           65535
+#define maxnoofRICStyles               63
 #define maxnoofCallProcessTypes        65535
 #define maxnoofCallProcessBreakpoints  65535
 #define maxnoofInsertIndication        65535
@@ -81,16 +85,15 @@ static dissector_handle_t e2ap_handle;
 #define maxnoofInsertIndicationActions 63
 #define maxnoofMulCtrlActions          63
 #define maxnoofCells                   16384
-#define maxnoofRICStyles               63
 #define maxnoofMeasurementInfo         65535
 #define maxnoofLabelInfo               2147483647
 #define maxnoofMeasurementRecord       65535
 #define maxnoofMeasurementValue        2147483647
 #define maxnoofConditionInfo           32768
-#define maxnoofUEID                    65535
 #define maxnoofConditionInfoPerSub     32768
 #define maxnoofUEIDPerSub              65535
 #define maxnoofUEMeasReport            65535
+#define maxnoofBin                     65535
 #define maxofInterfaceProtocolTests    15
 #define maxofRANueGroups               255
 #define maxofActionParameters          255
@@ -111,7 +114,10 @@ typedef enum _ProcedureCode_enum {
   id_E2nodeConfigurationUpdate =  10,
   id_E2connectionUpdate =  11,
   id_RICsubscriptionDeleteRequired =  12,
-  id_E2removal =  13
+  id_E2removal =  13,
+  id_RICsubscriptionModification =  14,
+  id_RICsubscriptionModificationRequired =  15,
+  id_RICquery  =  16
 } ProcedureCode_enum;
 
 typedef enum _ProtocolIE_ID_enum {
@@ -173,1248 +179,1424 @@ typedef enum _ProtocolIE_ID_enum {
   id_E2nodeTNLassociationRemoval =  58,
   id_E2nodeTNLassociationRemoval_Item =  59,
   id_RICsubscriptionToBeRemoved =  60,
-  id_RICsubscription_withCause_Item =  61
+  id_RICsubscription_withCause_Item =  61,
+  id_RICsubscriptionStartTime =  62,
+  id_RICsubscriptionEndTime =  63,
+  id_RICeventTriggerDefinitionToBeModified =  64,
+  id_RICactionsToBeRemovedForModification_List =  65,
+  id_RICaction_ToBeRemovedForModification_Item =  66,
+  id_RICactionsToBeModifiedForModification_List =  67,
+  id_RICaction_ToBeModifiedForModification_Item =  68,
+  id_RICactionsToBeAddedForModification_List =  69,
+  id_RICaction_ToBeAddedForModification_Item =  70,
+  id_RICactionsRemovedForModification_List =  71,
+  id_RICaction_RemovedForModification_Item =  72,
+  id_RICactionsFailedToBeRemovedForModification_List =  73,
+  id_RICaction_FailedToBeRemovedForModification_Item =  74,
+  id_RICactionsModifiedForModification_List =  75,
+  id_RICaction_ModifiedForModification_Item =  76,
+  id_RICactionsFailedToBeModifiedForModification_List =  77,
+  id_RICaction_FailedToBeModifiedForModification_Item =  78,
+  id_RICactionsAddedForModification_List =  79,
+  id_RICaction_AddedForModification_Item =  80,
+  id_RICactionsFailedToBeAddedForModification_List =  81,
+  id_RICaction_FailedToBeAddedForModification_Item =  82,
+  id_RICactionsRequiredToBeModified_List =  83,
+  id_RICaction_RequiredToBeModified_Item =  84,
+  id_RICactionsRequiredToBeRemoved_List =  85,
+  id_RICaction_RequiredToBeRemoved_Item =  86,
+  id_RICactionsConfirmedForModification_List =  87,
+  id_RICaction_ConfirmedForModification_Item =  88,
+  id_RICactionsRefusedToBeModified_List =  89,
+  id_RICaction_RefusedToBeModified_Item =  90,
+  id_RICactionsConfirmedForRemoval_List =  91,
+  id_RICaction_ConfirmedForRemoval_Item =  92,
+  id_RICactionsRefusedToBeRemoved_List =  93,
+  id_RICaction_RefusedToBeRemoved_Item =  94,
+  id_RICqueryHeader =  95,
+  id_RICqueryDefinition =  96,
+  id_RICqueryOutcome =  97
 } ProtocolIE_ID_enum;
 
 /* Initialize the protocol and registered fields */
-static int proto_e2ap = -1;
-static int hf_e2ap_Cause_PDU = -1;                /* Cause */
-static int hf_e2ap_CriticalityDiagnostics_PDU = -1;  /* CriticalityDiagnostics */
-static int hf_e2ap_GlobalE2node_ID_PDU = -1;      /* GlobalE2node_ID */
-static int hf_e2ap_GlobalRIC_ID_PDU = -1;         /* GlobalRIC_ID */
-static int hf_e2ap_RANfunctionID_PDU = -1;        /* RANfunctionID */
-static int hf_e2ap_RICactionID_PDU = -1;          /* RICactionID */
-static int hf_e2ap_RICcallProcessID_PDU = -1;     /* RICcallProcessID */
-static int hf_e2ap_RICcontrolAckRequest_PDU = -1;  /* RICcontrolAckRequest */
-static int hf_e2ap_RICcontrolHeader_PDU = -1;     /* RICcontrolHeader */
-static int hf_e2ap_RICcontrolMessage_PDU = -1;    /* RICcontrolMessage */
-static int hf_e2ap_RICcontrolOutcome_PDU = -1;    /* RICcontrolOutcome */
-static int hf_e2ap_RICindicationHeader_PDU = -1;  /* RICindicationHeader */
-static int hf_e2ap_RICindicationMessage_PDU = -1;  /* RICindicationMessage */
-static int hf_e2ap_RICindicationSN_PDU = -1;      /* RICindicationSN */
-static int hf_e2ap_RICindicationType_PDU = -1;    /* RICindicationType */
-static int hf_e2ap_RICrequestID_PDU = -1;         /* RICrequestID */
-static int hf_e2ap_TimeToWait_PDU = -1;           /* TimeToWait */
-static int hf_e2ap_TNLinformation_PDU = -1;       /* TNLinformation */
-static int hf_e2ap_TransactionID_PDU = -1;        /* TransactionID */
-static int hf_e2ap_RICsubscriptionRequest_PDU = -1;  /* RICsubscriptionRequest */
-static int hf_e2ap_RICsubscriptionDetails_PDU = -1;  /* RICsubscriptionDetails */
-static int hf_e2ap_RICaction_ToBeSetup_Item_PDU = -1;  /* RICaction_ToBeSetup_Item */
-static int hf_e2ap_RICsubscriptionResponse_PDU = -1;  /* RICsubscriptionResponse */
-static int hf_e2ap_RICaction_Admitted_List_PDU = -1;  /* RICaction_Admitted_List */
-static int hf_e2ap_RICaction_Admitted_Item_PDU = -1;  /* RICaction_Admitted_Item */
-static int hf_e2ap_RICaction_NotAdmitted_List_PDU = -1;  /* RICaction_NotAdmitted_List */
-static int hf_e2ap_RICaction_NotAdmitted_Item_PDU = -1;  /* RICaction_NotAdmitted_Item */
-static int hf_e2ap_RICsubscriptionFailure_PDU = -1;  /* RICsubscriptionFailure */
-static int hf_e2ap_RICsubscriptionDeleteRequest_PDU = -1;  /* RICsubscriptionDeleteRequest */
-static int hf_e2ap_RICsubscriptionDeleteResponse_PDU = -1;  /* RICsubscriptionDeleteResponse */
-static int hf_e2ap_RICsubscriptionDeleteFailure_PDU = -1;  /* RICsubscriptionDeleteFailure */
-static int hf_e2ap_RICsubscriptionDeleteRequired_PDU = -1;  /* RICsubscriptionDeleteRequired */
-static int hf_e2ap_RICsubscription_List_withCause_PDU = -1;  /* RICsubscription_List_withCause */
-static int hf_e2ap_RICsubscription_withCause_Item_PDU = -1;  /* RICsubscription_withCause_Item */
-static int hf_e2ap_RICindication_PDU = -1;        /* RICindication */
-static int hf_e2ap_RICcontrolRequest_PDU = -1;    /* RICcontrolRequest */
-static int hf_e2ap_RICcontrolAcknowledge_PDU = -1;  /* RICcontrolAcknowledge */
-static int hf_e2ap_RICcontrolFailure_PDU = -1;    /* RICcontrolFailure */
-static int hf_e2ap_ErrorIndication_PDU = -1;      /* ErrorIndication */
-static int hf_e2ap_E2setupRequest_PDU = -1;       /* E2setupRequest */
-static int hf_e2ap_E2setupResponse_PDU = -1;      /* E2setupResponse */
-static int hf_e2ap_E2setupFailure_PDU = -1;       /* E2setupFailure */
-static int hf_e2ap_E2connectionUpdate_PDU = -1;   /* E2connectionUpdate */
-static int hf_e2ap_E2connectionUpdate_List_PDU = -1;  /* E2connectionUpdate_List */
-static int hf_e2ap_E2connectionUpdate_Item_PDU = -1;  /* E2connectionUpdate_Item */
-static int hf_e2ap_E2connectionUpdateRemove_List_PDU = -1;  /* E2connectionUpdateRemove_List */
-static int hf_e2ap_E2connectionUpdateRemove_Item_PDU = -1;  /* E2connectionUpdateRemove_Item */
-static int hf_e2ap_E2connectionUpdateAcknowledge_PDU = -1;  /* E2connectionUpdateAcknowledge */
-static int hf_e2ap_E2connectionSetupFailed_List_PDU = -1;  /* E2connectionSetupFailed_List */
-static int hf_e2ap_E2connectionSetupFailed_Item_PDU = -1;  /* E2connectionSetupFailed_Item */
-static int hf_e2ap_E2connectionUpdateFailure_PDU = -1;  /* E2connectionUpdateFailure */
-static int hf_e2ap_E2nodeConfigurationUpdate_PDU = -1;  /* E2nodeConfigurationUpdate */
-static int hf_e2ap_E2nodeComponentConfigAddition_List_PDU = -1;  /* E2nodeComponentConfigAddition_List */
-static int hf_e2ap_E2nodeComponentConfigAddition_Item_PDU = -1;  /* E2nodeComponentConfigAddition_Item */
-static int hf_e2ap_E2nodeComponentConfigUpdate_List_PDU = -1;  /* E2nodeComponentConfigUpdate_List */
-static int hf_e2ap_E2nodeComponentConfigUpdate_Item_PDU = -1;  /* E2nodeComponentConfigUpdate_Item */
-static int hf_e2ap_E2nodeComponentConfigRemoval_List_PDU = -1;  /* E2nodeComponentConfigRemoval_List */
-static int hf_e2ap_E2nodeComponentConfigRemoval_Item_PDU = -1;  /* E2nodeComponentConfigRemoval_Item */
-static int hf_e2ap_E2nodeTNLassociationRemoval_List_PDU = -1;  /* E2nodeTNLassociationRemoval_List */
-static int hf_e2ap_E2nodeTNLassociationRemoval_Item_PDU = -1;  /* E2nodeTNLassociationRemoval_Item */
-static int hf_e2ap_E2nodeConfigurationUpdateAcknowledge_PDU = -1;  /* E2nodeConfigurationUpdateAcknowledge */
-static int hf_e2ap_E2nodeComponentConfigAdditionAck_List_PDU = -1;  /* E2nodeComponentConfigAdditionAck_List */
-static int hf_e2ap_E2nodeComponentConfigAdditionAck_Item_PDU = -1;  /* E2nodeComponentConfigAdditionAck_Item */
-static int hf_e2ap_E2nodeComponentConfigUpdateAck_List_PDU = -1;  /* E2nodeComponentConfigUpdateAck_List */
-static int hf_e2ap_E2nodeComponentConfigUpdateAck_Item_PDU = -1;  /* E2nodeComponentConfigUpdateAck_Item */
-static int hf_e2ap_E2nodeComponentConfigRemovalAck_List_PDU = -1;  /* E2nodeComponentConfigRemovalAck_List */
-static int hf_e2ap_E2nodeComponentConfigRemovalAck_Item_PDU = -1;  /* E2nodeComponentConfigRemovalAck_Item */
-static int hf_e2ap_E2nodeConfigurationUpdateFailure_PDU = -1;  /* E2nodeConfigurationUpdateFailure */
-static int hf_e2ap_ResetRequest_PDU = -1;         /* ResetRequest */
-static int hf_e2ap_ResetResponse_PDU = -1;        /* ResetResponse */
-static int hf_e2ap_RICserviceUpdate_PDU = -1;     /* RICserviceUpdate */
-static int hf_e2ap_RANfunctions_List_PDU = -1;    /* RANfunctions_List */
-static int hf_e2ap_RANfunction_Item_PDU = -1;     /* RANfunction_Item */
-static int hf_e2ap_RANfunctionsID_List_PDU = -1;  /* RANfunctionsID_List */
-static int hf_e2ap_RANfunctionID_Item_PDU = -1;   /* RANfunctionID_Item */
-static int hf_e2ap_RICserviceUpdateAcknowledge_PDU = -1;  /* RICserviceUpdateAcknowledge */
-static int hf_e2ap_RANfunctionsIDcause_List_PDU = -1;  /* RANfunctionsIDcause_List */
-static int hf_e2ap_RANfunctionIDcause_Item_PDU = -1;  /* RANfunctionIDcause_Item */
-static int hf_e2ap_RICserviceUpdateFailure_PDU = -1;  /* RICserviceUpdateFailure */
-static int hf_e2ap_RICserviceQuery_PDU = -1;      /* RICserviceQuery */
-static int hf_e2ap_E2RemovalRequest_PDU = -1;     /* E2RemovalRequest */
-static int hf_e2ap_E2RemovalResponse_PDU = -1;    /* E2RemovalResponse */
-static int hf_e2ap_E2RemovalFailure_PDU = -1;     /* E2RemovalFailure */
-static int hf_e2ap_E2AP_PDU_PDU = -1;             /* E2AP_PDU */
-static int hf_e2ap_E2SM_RC_EventTrigger_PDU = -1;  /* E2SM_RC_EventTrigger */
-static int hf_e2ap_E2SM_RC_ActionDefinition_PDU = -1;  /* E2SM_RC_ActionDefinition */
-static int hf_e2ap_E2SM_RC_IndicationHeader_PDU = -1;  /* E2SM_RC_IndicationHeader */
-static int hf_e2ap_E2SM_RC_IndicationMessage_PDU = -1;  /* E2SM_RC_IndicationMessage */
-static int hf_e2ap_E2SM_RC_CallProcessID_PDU = -1;  /* E2SM_RC_CallProcessID */
-static int hf_e2ap_E2SM_RC_ControlHeader_PDU = -1;  /* E2SM_RC_ControlHeader */
-static int hf_e2ap_E2SM_RC_ControlMessage_PDU = -1;  /* E2SM_RC_ControlMessage */
-static int hf_e2ap_E2SM_RC_ControlOutcome_PDU = -1;  /* E2SM_RC_ControlOutcome */
-static int hf_e2ap_E2SM_RC_RANFunctionDefinition_PDU = -1;  /* E2SM_RC_RANFunctionDefinition */
-static int hf_e2ap_E2SM_KPM_EventTriggerDefinition_PDU = -1;  /* E2SM_KPM_EventTriggerDefinition */
-static int hf_e2ap_E2SM_KPM_ActionDefinition_PDU = -1;  /* E2SM_KPM_ActionDefinition */
-static int hf_e2ap_E2SM_KPM_IndicationHeader_PDU = -1;  /* E2SM_KPM_IndicationHeader */
-static int hf_e2ap_E2SM_KPM_IndicationMessage_PDU = -1;  /* E2SM_KPM_IndicationMessage */
-static int hf_e2ap_E2SM_KPM_RANfunction_Description_PDU = -1;  /* E2SM_KPM_RANfunction_Description */
-static int hf_e2ap_E2SM_NI_EventTriggerDefinition_PDU = -1;  /* E2SM_NI_EventTriggerDefinition */
-static int hf_e2ap_E2SM_NI_ActionDefinition_PDU = -1;  /* E2SM_NI_ActionDefinition */
-static int hf_e2ap_E2SM_NI_IndicationHeader_PDU = -1;  /* E2SM_NI_IndicationHeader */
-static int hf_e2ap_E2SM_NI_IndicationMessage_PDU = -1;  /* E2SM_NI_IndicationMessage */
-static int hf_e2ap_E2SM_NI_CallProcessID_PDU = -1;  /* E2SM_NI_CallProcessID */
-static int hf_e2ap_E2SM_NI_ControlHeader_PDU = -1;  /* E2SM_NI_ControlHeader */
-static int hf_e2ap_E2SM_NI_ControlMessage_PDU = -1;  /* E2SM_NI_ControlMessage */
-static int hf_e2ap_E2SM_NI_ControlOutcome_PDU = -1;  /* E2SM_NI_ControlOutcome */
-static int hf_e2ap_E2SM_NI_RANfunction_Description_PDU = -1;  /* E2SM_NI_RANfunction_Description */
-static int hf_e2ap_ProtocolIE_Container_item = -1;  /* ProtocolIE_Field */
-static int hf_e2ap_id = -1;                       /* ProtocolIE_ID */
-static int hf_e2ap_criticality = -1;              /* Criticality */
-static int hf_e2ap_value = -1;                    /* T_value */
-static int hf_e2ap_ricRequest = -1;               /* CauseRICrequest */
-static int hf_e2ap_ricService = -1;               /* CauseRICservice */
-static int hf_e2ap_e2Node = -1;                   /* CauseE2node */
-static int hf_e2ap_transport = -1;                /* CauseTransport */
-static int hf_e2ap_protocol = -1;                 /* CauseProtocol */
-static int hf_e2ap_misc = -1;                     /* CauseMisc */
-static int hf_e2ap_procedureCode = -1;            /* ProcedureCode */
-static int hf_e2ap_triggeringMessage = -1;        /* TriggeringMessage */
-static int hf_e2ap_procedureCriticality = -1;     /* Criticality */
-static int hf_e2ap_ricRequestorID = -1;           /* RICrequestID */
-static int hf_e2ap_iEsCriticalityDiagnostics = -1;  /* CriticalityDiagnostics_IE_List */
-static int hf_e2ap_CriticalityDiagnostics_IE_List_item = -1;  /* CriticalityDiagnostics_IE_Item */
-static int hf_e2ap_iECriticality = -1;            /* Criticality */
-static int hf_e2ap_iE_ID = -1;                    /* ProtocolIE_ID */
-static int hf_e2ap_typeOfError = -1;              /* TypeOfError */
-static int hf_e2ap_e2nodeComponentRequestPart = -1;  /* T_e2nodeComponentRequestPart */
-static int hf_e2ap_e2nodeComponentResponsePart = -1;  /* T_e2nodeComponentResponsePart */
-static int hf_e2ap_updateOutcome = -1;            /* T_updateOutcome */
-static int hf_e2ap_failureCause = -1;             /* Cause */
-static int hf_e2ap_e2nodeComponentInterfaceTypeNG = -1;  /* T_e2nodeComponentInterfaceTypeNG */
-static int hf_e2ap_e2nodeComponentInterfaceTypeXn = -1;  /* T_e2nodeComponentInterfaceTypeXn */
-static int hf_e2ap_e2nodeComponentInterfaceTypeE1 = -1;  /* T_e2nodeComponentInterfaceTypeE1 */
-static int hf_e2ap_e2nodeComponentInterfaceTypeF1 = -1;  /* T_e2nodeComponentInterfaceTypeF1 */
-static int hf_e2ap_e2nodeComponentInterfaceTypeW1 = -1;  /* E2nodeComponentInterfaceW1 */
-static int hf_e2ap_e2nodeComponentInterfaceTypeS1 = -1;  /* T_e2nodeComponentInterfaceTypeS1 */
-static int hf_e2ap_e2nodeComponentInterfaceTypeX2 = -1;  /* T_e2nodeComponentInterfaceTypeX2 */
-static int hf_e2ap_gNB_CU_CP_ID = -1;             /* GNB_CU_UP_ID */
-static int hf_e2ap_gNB_DU_ID = -1;                /* GNB_DU_ID */
-static int hf_e2ap_amf_name = -1;                 /* AMFName */
-static int hf_e2ap_mme_name = -1;                 /* MMEname */
-static int hf_e2ap_global_eNB_ID = -1;            /* GlobalENB_ID */
-static int hf_e2ap_global_en_gNB_ID = -1;         /* GlobalenGNB_ID */
-static int hf_e2ap_global_NG_RAN_Node_ID = -1;    /* GlobalNG_RANNode_ID */
-static int hf_e2ap_ng_eNB_DU_ID = -1;             /* NGENB_DU_ID */
-static int hf_e2ap_macro_eNB_ID = -1;             /* BIT_STRING_SIZE_20 */
-static int hf_e2ap_home_eNB_ID = -1;              /* BIT_STRING_SIZE_28 */
-static int hf_e2ap_short_Macro_eNB_ID = -1;       /* BIT_STRING_SIZE_18 */
-static int hf_e2ap_long_Macro_eNB_ID = -1;        /* BIT_STRING_SIZE_21 */
-static int hf_e2ap_enb_ID_macro = -1;             /* BIT_STRING_SIZE_20 */
-static int hf_e2ap_enb_ID_shortmacro = -1;        /* BIT_STRING_SIZE_18 */
-static int hf_e2ap_enb_ID_longmacro = -1;         /* BIT_STRING_SIZE_21 */
-static int hf_e2ap_gNB_ID = -1;                   /* BIT_STRING_SIZE_22_32 */
-static int hf_e2ap_gNB = -1;                      /* GlobalE2node_gNB_ID */
-static int hf_e2ap_en_gNB = -1;                   /* GlobalE2node_en_gNB_ID */
-static int hf_e2ap_ng_eNB = -1;                   /* GlobalE2node_ng_eNB_ID */
-static int hf_e2ap_eNB = -1;                      /* GlobalE2node_eNB_ID */
-static int hf_e2ap_en_gNB_CU_UP_ID = -1;          /* GNB_CU_UP_ID */
-static int hf_e2ap_en_gNB_DU_ID = -1;             /* GNB_DU_ID */
-static int hf_e2ap_global_gNB_ID = -1;            /* GlobalgNB_ID */
-static int hf_e2ap_gNB_CU_UP_ID = -1;             /* GNB_CU_UP_ID */
-static int hf_e2ap_global_ng_eNB_ID = -1;         /* GlobalngeNB_ID */
-static int hf_e2ap_ngENB_DU_ID = -1;              /* NGENB_DU_ID */
-static int hf_e2ap_pLMN_Identity = -1;            /* PLMN_Identity */
-static int hf_e2ap_eNB_ID = -1;                   /* ENB_ID */
-static int hf_e2ap_gNB_ID_01 = -1;                /* ENGNB_ID */
-static int hf_e2ap_plmn_id = -1;                  /* PLMN_Identity */
-static int hf_e2ap_gnb_id = -1;                   /* T_gnb_id */
-static int hf_e2ap_enb_id = -1;                   /* ENB_ID_Choice */
-static int hf_e2ap_gNB_01 = -1;                   /* GlobalgNB_ID */
-static int hf_e2ap_ng_eNB_01 = -1;                /* GlobalngeNB_ID */
-static int hf_e2ap_ric_ID = -1;                   /* BIT_STRING_SIZE_20 */
-static int hf_e2ap_gnb_ID = -1;                   /* BIT_STRING_SIZE_22_32 */
-static int hf_e2ap_ricRequestorID_01 = -1;        /* INTEGER_0_65535 */
-static int hf_e2ap_ricInstanceID = -1;            /* INTEGER_0_65535 */
-static int hf_e2ap_ricSubsequentActionType = -1;  /* RICsubsequentActionType */
-static int hf_e2ap_ricTimeToWait = -1;            /* RICtimeToWait */
-static int hf_e2ap_tnlAddress = -1;               /* T_tnlAddress */
-static int hf_e2ap_tnlPort = -1;                  /* T_tnlPort */
-static int hf_e2ap_protocolIEs = -1;              /* ProtocolIE_Container */
-static int hf_e2ap_ricEventTriggerDefinition = -1;  /* RICeventTriggerDefinition */
-static int hf_e2ap_ricAction_ToBeSetup_List = -1;  /* RICactions_ToBeSetup_List */
-static int hf_e2ap_RICactions_ToBeSetup_List_item = -1;  /* ProtocolIE_SingleContainer */
-static int hf_e2ap_ricActionID = -1;              /* RICactionID */
-static int hf_e2ap_ricActionType = -1;            /* RICactionType */
-static int hf_e2ap_ricActionDefinition = -1;      /* RICactionDefinition */
-static int hf_e2ap_ricSubsequentAction = -1;      /* RICsubsequentAction */
-static int hf_e2ap_RICaction_Admitted_List_item = -1;  /* ProtocolIE_SingleContainer */
-static int hf_e2ap_RICaction_NotAdmitted_List_item = -1;  /* ProtocolIE_SingleContainer */
-static int hf_e2ap_cause = -1;                    /* Cause */
-static int hf_e2ap_RICsubscription_List_withCause_item = -1;  /* ProtocolIE_SingleContainer */
-static int hf_e2ap_ricRequestID = -1;             /* RICrequestID */
-static int hf_e2ap_ranFunctionID = -1;            /* RANfunctionID */
-static int hf_e2ap_E2connectionUpdate_List_item = -1;  /* ProtocolIE_SingleContainer */
-static int hf_e2ap_tnlInformation = -1;           /* TNLinformation */
-static int hf_e2ap_tnlUsage = -1;                 /* TNLusage */
-static int hf_e2ap_E2connectionUpdateRemove_List_item = -1;  /* ProtocolIE_SingleContainer */
-static int hf_e2ap_E2connectionSetupFailed_List_item = -1;  /* ProtocolIE_SingleContainer */
-static int hf_e2ap_E2nodeComponentConfigAddition_List_item = -1;  /* ProtocolIE_SingleContainer */
-static int hf_e2ap_e2nodeComponentInterfaceType = -1;  /* E2nodeComponentInterfaceType */
-static int hf_e2ap_e2nodeComponentID = -1;        /* E2nodeComponentID */
-static int hf_e2ap_e2nodeComponentConfiguration = -1;  /* E2nodeComponentConfiguration */
-static int hf_e2ap_E2nodeComponentConfigUpdate_List_item = -1;  /* ProtocolIE_SingleContainer */
-static int hf_e2ap_E2nodeComponentConfigRemoval_List_item = -1;  /* ProtocolIE_SingleContainer */
-static int hf_e2ap_E2nodeTNLassociationRemoval_List_item = -1;  /* ProtocolIE_SingleContainer */
-static int hf_e2ap_tnlInformationRIC = -1;        /* TNLinformation */
-static int hf_e2ap_E2nodeComponentConfigAdditionAck_List_item = -1;  /* ProtocolIE_SingleContainer */
-static int hf_e2ap_e2nodeComponentConfigurationAck = -1;  /* E2nodeComponentConfigurationAck */
-static int hf_e2ap_E2nodeComponentConfigUpdateAck_List_item = -1;  /* ProtocolIE_SingleContainer */
-static int hf_e2ap_E2nodeComponentConfigRemovalAck_List_item = -1;  /* ProtocolIE_SingleContainer */
-static int hf_e2ap_RANfunctions_List_item = -1;   /* ProtocolIE_SingleContainer */
-static int hf_e2ap_ranFunctionDefinition = -1;    /* RANfunctionDefinition */
-static int hf_e2ap_ranFunctionRevision = -1;      /* RANfunctionRevision */
-static int hf_e2ap_ranFunctionOID = -1;           /* RANfunctionOID */
-static int hf_e2ap_RANfunctionsID_List_item = -1;  /* ProtocolIE_SingleContainer */
-static int hf_e2ap_RANfunctionsIDcause_List_item = -1;  /* ProtocolIE_SingleContainer */
-static int hf_e2ap_initiatingMessage = -1;        /* InitiatingMessage */
-static int hf_e2ap_successfulOutcome = -1;        /* SuccessfulOutcome */
-static int hf_e2ap_unsuccessfulOutcome = -1;      /* UnsuccessfulOutcome */
-static int hf_e2ap_initiatingMessagevalue = -1;   /* InitiatingMessage_value */
-static int hf_e2ap_successfulOutcome_value = -1;  /* SuccessfulOutcome_value */
-static int hf_e2ap_unsuccessfulOutcome_value = -1;  /* UnsuccessfulOutcome_value */
-static int hf_e2ap_nR_CGI = -1;                   /* NR_CGI */
-static int hf_e2ap_eUTRA_CGI = -1;                /* EUTRA_CGI */
-static int hf_e2ap_nG = -1;                       /* InterfaceID_NG */
-static int hf_e2ap_xN = -1;                       /* InterfaceID_Xn */
-static int hf_e2ap_f1 = -1;                       /* InterfaceID_F1 */
-static int hf_e2ap_e1 = -1;                       /* InterfaceID_E1 */
-static int hf_e2ap_s1 = -1;                       /* InterfaceID_S1 */
-static int hf_e2ap_x2 = -1;                       /* InterfaceID_X2 */
-static int hf_e2ap_w1 = -1;                       /* InterfaceID_W1 */
-static int hf_e2ap_guami = -1;                    /* GUAMI */
-static int hf_e2ap_global_NG_RAN_ID = -1;         /* GlobalNGRANNodeID */
-static int hf_e2ap_globalGNB_ID = -1;             /* GlobalGNB_ID */
-static int hf_e2ap_gUMMEI = -1;                   /* GUMMEI */
-static int hf_e2ap_nodeType = -1;                 /* T_nodeType */
-static int hf_e2ap_global_ng_eNB_ID_01 = -1;      /* GlobalNgENB_ID */
-static int hf_e2ap_interfaceProcedureID = -1;     /* INTEGER */
-static int hf_e2ap_messageType = -1;              /* T_messageType */
-static int hf_e2ap_ranFunction_ShortName = -1;    /* T_ranFunction_ShortName */
-static int hf_e2ap_ranFunction_E2SM_OID = -1;     /* PrintableString_SIZE_1_1000_ */
-static int hf_e2ap_ranFunction_Description = -1;  /* PrintableString_SIZE_1_150_ */
-static int hf_e2ap_ranFunction_Instance = -1;     /* INTEGER */
-static int hf_e2ap_rrcType = -1;                  /* T_rrcType */
-static int hf_e2ap_lTE = -1;                      /* RRCclass_LTE */
-static int hf_e2ap_nR = -1;                       /* RRCclass_NR */
-static int hf_e2ap_messageID = -1;                /* INTEGER */
-static int hf_e2ap_nR_01 = -1;                    /* NR_ARFCN */
-static int hf_e2ap_eUTRA = -1;                    /* E_UTRA_ARFCN */
-static int hf_e2ap_nR_02 = -1;                    /* NR_PCI */
-static int hf_e2ap_eUTRA_01 = -1;                 /* E_UTRA_PCI */
-static int hf_e2ap_gNB_UEID = -1;                 /* UEID_GNB */
-static int hf_e2ap_gNB_DU_UEID = -1;              /* UEID_GNB_DU */
-static int hf_e2ap_gNB_CU_UP_UEID = -1;           /* UEID_GNB_CU_UP */
-static int hf_e2ap_ng_eNB_UEID = -1;              /* UEID_NG_ENB */
-static int hf_e2ap_ng_eNB_DU_UEID = -1;           /* UEID_NG_ENB_DU */
-static int hf_e2ap_en_gNB_UEID = -1;              /* UEID_EN_GNB */
-static int hf_e2ap_eNB_UEID = -1;                 /* UEID_ENB */
-static int hf_e2ap_amf_UE_NGAP_ID = -1;           /* AMF_UE_NGAP_ID */
-static int hf_e2ap_gNB_CU_UE_F1AP_ID_List = -1;   /* UEID_GNB_CU_F1AP_ID_List */
-static int hf_e2ap_gNB_CU_CP_UE_E1AP_ID_List = -1;  /* UEID_GNB_CU_CP_E1AP_ID_List */
-static int hf_e2ap_ran_UEID = -1;                 /* RANUEID */
-static int hf_e2ap_m_NG_RAN_UE_XnAP_ID = -1;      /* NG_RANnodeUEXnAPID */
-static int hf_e2ap_globalNG_RANNode_ID = -1;      /* GlobalNGRANNodeID */
-static int hf_e2ap_UEID_GNB_CU_CP_E1AP_ID_List_item = -1;  /* UEID_GNB_CU_CP_E1AP_ID_Item */
-static int hf_e2ap_gNB_CU_CP_UE_E1AP_ID = -1;     /* GNB_CU_CP_UE_E1AP_ID */
-static int hf_e2ap_UEID_GNB_CU_F1AP_ID_List_item = -1;  /* UEID_GNB_CU_CP_F1AP_ID_Item */
-static int hf_e2ap_gNB_CU_UE_F1AP_ID = -1;        /* GNB_CU_UE_F1AP_ID */
-static int hf_e2ap_ng_eNB_CU_UE_W1AP_ID = -1;     /* NGENB_CU_UE_W1AP_ID */
-static int hf_e2ap_globalNgENB_ID = -1;           /* GlobalNgENB_ID */
-static int hf_e2ap_m_eNB_UE_X2AP_ID = -1;         /* ENB_UE_X2AP_ID */
-static int hf_e2ap_m_eNB_UE_X2AP_ID_Extension = -1;  /* ENB_UE_X2AP_ID_Extension */
-static int hf_e2ap_globalENB_ID = -1;             /* GlobalENB_ID */
-static int hf_e2ap_mME_UE_S1AP_ID = -1;           /* MME_UE_S1AP_ID */
-static int hf_e2ap_pLMN_Identity_01 = -1;         /* PLMNIdentity */
-static int hf_e2ap_mME_Group_ID = -1;             /* MME_Group_ID */
-static int hf_e2ap_mME_Code = -1;                 /* MME_Code */
-static int hf_e2ap_pLMNIdentity = -1;             /* PLMNIdentity */
-static int hf_e2ap_eUTRACellIdentity = -1;        /* EUTRACellIdentity */
-static int hf_e2ap_gNB_ID_02 = -1;                /* GNB_ID */
-static int hf_e2ap_ngENB_ID = -1;                 /* NgENB_ID */
-static int hf_e2ap_aMFRegionID = -1;              /* AMFRegionID */
-static int hf_e2ap_aMFSetID = -1;                 /* AMFSetID */
-static int hf_e2ap_aMFPointer = -1;               /* AMFPointer */
-static int hf_e2ap_macroNgENB_ID = -1;            /* BIT_STRING_SIZE_20 */
-static int hf_e2ap_shortMacroNgENB_ID = -1;       /* BIT_STRING_SIZE_18 */
-static int hf_e2ap_longMacroNgENB_ID = -1;        /* BIT_STRING_SIZE_21 */
-static int hf_e2ap_sST = -1;                      /* SST */
-static int hf_e2ap_sD = -1;                       /* SD */
-static int hf_e2ap_gNB_02 = -1;                   /* GlobalGNB_ID */
-static int hf_e2ap_ng_eNB_02 = -1;                /* GlobalNgENB_ID */
-static int hf_e2ap_nRARFCN = -1;                  /* INTEGER_0_maxNRARFCN */
-static int hf_e2ap_NRFrequencyBand_List_item = -1;  /* NRFrequencyBandItem */
-static int hf_e2ap_freqBandIndicatorNr = -1;      /* INTEGER_1_1024_ */
-static int hf_e2ap_supportedSULBandList = -1;     /* SupportedSULBandList */
-static int hf_e2ap_nrARFCN = -1;                  /* NR_ARFCN */
-static int hf_e2ap_frequencyBand_List = -1;       /* NRFrequencyBand_List */
-static int hf_e2ap_frequencyShift7p5khz = -1;     /* NRFrequencyShift7p5khz */
-static int hf_e2ap_SupportedSULBandList_item = -1;  /* SupportedSULFreqBandItem */
-static int hf_e2ap_nRCellIdentity = -1;           /* NRCellIdentity */
-static int hf_e2ap_NeighborCell_List_item = -1;   /* NeighborCell_Item */
-static int hf_e2ap_ranType_Choice_NR = -1;        /* NeighborCell_Item_Choice_NR */
-static int hf_e2ap_ranType_Choice_EUTRA = -1;     /* NeighborCell_Item_Choice_E_UTRA */
-static int hf_e2ap_nR_PCI = -1;                   /* NR_PCI */
-static int hf_e2ap_fiveGS_TAC = -1;               /* FiveGS_TAC */
-static int hf_e2ap_nR_mode_info = -1;             /* T_nR_mode_info */
-static int hf_e2ap_nR_FreqInfo = -1;              /* NRFrequencyInfo */
-static int hf_e2ap_x2_Xn_established = -1;        /* T_x2_Xn_established */
-static int hf_e2ap_hO_validated = -1;             /* T_hO_validated */
-static int hf_e2ap_version = -1;                  /* INTEGER_1_65535_ */
-static int hf_e2ap_eUTRA_PCI = -1;                /* E_UTRA_PCI */
-static int hf_e2ap_eUTRA_ARFCN = -1;              /* E_UTRA_ARFCN */
-static int hf_e2ap_eUTRA_TAC = -1;                /* E_UTRA_TAC */
-static int hf_e2ap_x2_Xn_established_01 = -1;     /* T_x2_Xn_established_01 */
-static int hf_e2ap_hO_validated_01 = -1;          /* T_hO_validated_01 */
-static int hf_e2ap_servingCellPCI = -1;           /* ServingCell_PCI */
-static int hf_e2ap_servingCellARFCN = -1;         /* ServingCell_ARFCN */
-static int hf_e2ap_neighborCell_List = -1;        /* NeighborCell_List */
-static int hf_e2ap_cellInfo_List = -1;            /* SEQUENCE_SIZE_1_maxnoofCellInfo_OF_EventTrigger_Cell_Info_Item */
-static int hf_e2ap_cellInfo_List_item = -1;       /* EventTrigger_Cell_Info_Item */
-static int hf_e2ap_eventTriggerCellID = -1;       /* RIC_EventTrigger_Cell_ID */
-static int hf_e2ap_cellType = -1;                 /* T_cellType */
-static int hf_e2ap_cellType_Choice_Individual = -1;  /* EventTrigger_Cell_Info_Item_Choice_Individual */
-static int hf_e2ap_cellType_Choice_Group = -1;    /* EventTrigger_Cell_Info_Item_Choice_Group */
-static int hf_e2ap_logicalOR = -1;                /* LogicalOR */
-static int hf_e2ap_cellGlobalID = -1;             /* CGI */
-static int hf_e2ap_ranParameterTesting = -1;      /* RANParameter_Testing */
-static int hf_e2ap_ueInfo_List = -1;              /* SEQUENCE_SIZE_1_maxnoofUEInfo_OF_EventTrigger_UE_Info_Item */
-static int hf_e2ap_ueInfo_List_item = -1;         /* EventTrigger_UE_Info_Item */
-static int hf_e2ap_eventTriggerUEID = -1;         /* RIC_EventTrigger_UE_ID */
-static int hf_e2ap_ueType = -1;                   /* T_ueType */
-static int hf_e2ap_ueType_Choice_Individual = -1;  /* EventTrigger_UE_Info_Item_Choice_Individual */
-static int hf_e2ap_ueType_Choice_Group = -1;      /* EventTrigger_UE_Info_Item_Choice_Group */
-static int hf_e2ap_ueID = -1;                     /* UEID */
-static int hf_e2ap_ueEvent_List = -1;             /* SEQUENCE_SIZE_1_maxnoofUEeventInfo_OF_EventTrigger_UEevent_Info_Item */
-static int hf_e2ap_ueEvent_List_item = -1;        /* EventTrigger_UEevent_Info_Item */
-static int hf_e2ap_ueEventID = -1;                /* RIC_EventTrigger_UEevent_ID */
-static int hf_e2ap_ranParameter_Definition_Choice = -1;  /* RANParameter_Definition_Choice */
-static int hf_e2ap_choiceLIST = -1;               /* RANParameter_Definition_Choice_LIST */
-static int hf_e2ap_choiceSTRUCTURE = -1;          /* RANParameter_Definition_Choice_STRUCTURE */
-static int hf_e2ap_ranParameter_List = -1;        /* SEQUENCE_SIZE_1_maxnoofItemsinList_OF_RANParameter_Definition_Choice_LIST_Item */
-static int hf_e2ap_ranParameter_List_item = -1;   /* RANParameter_Definition_Choice_LIST_Item */
-static int hf_e2ap_ranParameter_ID = -1;          /* RANParameter_ID */
-static int hf_e2ap_ranParameter_name = -1;        /* RANParameter_Name */
-static int hf_e2ap_ranParameter_Definition = -1;  /* RANParameter_Definition */
-static int hf_e2ap_ranParameter_STRUCTURE = -1;   /* SEQUENCE_SIZE_1_maxnoofParametersinStructure_OF_RANParameter_Definition_Choice_STRUCTURE_Item */
-static int hf_e2ap_ranParameter_STRUCTURE_item = -1;  /* RANParameter_Definition_Choice_STRUCTURE_Item */
-static int hf_e2ap_valueBoolean = -1;             /* BOOLEAN */
-static int hf_e2ap_valueInt = -1;                 /* INTEGER */
-static int hf_e2ap_valueReal = -1;                /* REAL */
-static int hf_e2ap_valueBitS = -1;                /* BIT_STRING */
-static int hf_e2ap_valueOctS = -1;                /* OCTET_STRING */
-static int hf_e2ap_valuePrintableString = -1;     /* PrintableString */
-static int hf_e2ap_ranP_Choice_ElementTrue = -1;  /* RANParameter_ValueType_Choice_ElementTrue */
-static int hf_e2ap_ranP_Choice_ElementFalse = -1;  /* RANParameter_ValueType_Choice_ElementFalse */
-static int hf_e2ap_ranP_Choice_Structure = -1;    /* RANParameter_ValueType_Choice_Structure */
-static int hf_e2ap_ranP_Choice_List = -1;         /* RANParameter_ValueType_Choice_List */
-static int hf_e2ap_ranParameter_value = -1;       /* RANParameter_Value */
-static int hf_e2ap_ranParameter_Structure = -1;   /* RANParameter_STRUCTURE */
-static int hf_e2ap_ranParameter_List_01 = -1;     /* RANParameter_LIST */
-static int hf_e2ap_sequence_of_ranParameters = -1;  /* SEQUENCE_SIZE_1_maxnoofParametersinStructure_OF_RANParameter_STRUCTURE_Item */
-static int hf_e2ap_sequence_of_ranParameters_item = -1;  /* RANParameter_STRUCTURE_Item */
-static int hf_e2ap_ranParameter_valueType = -1;   /* RANParameter_ValueType */
-static int hf_e2ap_list_of_ranParameter = -1;     /* SEQUENCE_SIZE_1_maxnoofItemsinList_OF_RANParameter_STRUCTURE */
-static int hf_e2ap_list_of_ranParameter_item = -1;  /* RANParameter_STRUCTURE */
-static int hf_e2ap_RANParameter_Testing_item = -1;  /* RANParameter_Testing_Item */
-static int hf_e2ap_ranP_Choice_comparison = -1;   /* T_ranP_Choice_comparison */
-static int hf_e2ap_ranP_Choice_presence = -1;     /* T_ranP_Choice_presence */
-static int hf_e2ap_ranParameter_Type = -1;        /* T_ranParameter_Type */
-static int hf_e2ap_ranP_Choice_List_01 = -1;      /* RANParameter_Testing_Item_Choice_List */
-static int hf_e2ap_ranP_Choice_Structure_01 = -1;  /* RANParameter_Testing_Item_Choice_Structure */
-static int hf_e2ap_ranP_Choice_ElementTrue_01 = -1;  /* RANParameter_Testing_Item_Choice_ElementTrue */
-static int hf_e2ap_ranP_Choice_ElementFalse_01 = -1;  /* RANParameter_Testing_Item_Choice_ElementFalse */
-static int hf_e2ap_ranParameter_List_02 = -1;     /* RANParameter_Testing_LIST */
-static int hf_e2ap_ranParameter_Structure_01 = -1;  /* RANParameter_Testing_STRUCTURE */
-static int hf_e2ap_ranParameter_TestCondition = -1;  /* RANParameter_TestingCondition */
-static int hf_e2ap_ranParameter_Value = -1;       /* RANParameter_Value */
-static int hf_e2ap_RANParameter_Testing_LIST_item = -1;  /* RANParameter_Testing_Item */
-static int hf_e2ap_RANParameter_Testing_STRUCTURE_item = -1;  /* RANParameter_Testing_Item */
-static int hf_e2ap_ric_PolicyAction_ID = -1;      /* RIC_ControlAction_ID */
-static int hf_e2ap_ranParameters_List = -1;       /* SEQUENCE_SIZE_1_maxnoofAssociatedRANParameters_OF_RIC_PolicyAction_RANParameter_Item */
-static int hf_e2ap_ranParameters_List_item = -1;  /* RIC_PolicyAction_RANParameter_Item */
-static int hf_e2ap_ric_PolicyDecision = -1;       /* T_ric_PolicyDecision */
-static int hf_e2ap_ric_eventTrigger_formats = -1;  /* T_ric_eventTrigger_formats */
-static int hf_e2ap_eventTrigger_Format1 = -1;     /* E2SM_RC_EventTrigger_Format1 */
-static int hf_e2ap_eventTrigger_Format2 = -1;     /* E2SM_RC_EventTrigger_Format2 */
-static int hf_e2ap_eventTrigger_Format3 = -1;     /* E2SM_RC_EventTrigger_Format3 */
-static int hf_e2ap_eventTrigger_Format4 = -1;     /* E2SM_RC_EventTrigger_Format4 */
-static int hf_e2ap_eventTrigger_Format5 = -1;     /* E2SM_RC_EventTrigger_Format5 */
-static int hf_e2ap_message_List = -1;             /* SEQUENCE_SIZE_1_maxnoofMessages_OF_E2SM_RC_EventTrigger_Format1_Item */
-static int hf_e2ap_message_List_item = -1;        /* E2SM_RC_EventTrigger_Format1_Item */
-static int hf_e2ap_globalAssociatedUEInfo = -1;   /* EventTrigger_UE_Info */
-static int hf_e2ap_ric_eventTriggerCondition_ID = -1;  /* RIC_EventTriggerCondition_ID */
-static int hf_e2ap_messageType_01 = -1;           /* MessageType_Choice */
-static int hf_e2ap_messageDirection = -1;         /* T_messageDirection */
-static int hf_e2ap_associatedUEInfo = -1;         /* EventTrigger_UE_Info */
-static int hf_e2ap_associatedUEEvent = -1;        /* EventTrigger_UEevent_Info */
-static int hf_e2ap_messageType_Choice_NI = -1;    /* MessageType_Choice_NI */
-static int hf_e2ap_messageType_Choice_RRC = -1;   /* MessageType_Choice_RRC */
-static int hf_e2ap_nI_Type = -1;                  /* InterfaceType */
-static int hf_e2ap_nI_Identifier = -1;            /* InterfaceIdentifier */
-static int hf_e2ap_nI_Message = -1;               /* Interface_MessageID */
-static int hf_e2ap_rRC_Message = -1;              /* RRC_MessageID */
-static int hf_e2ap_ric_callProcessType_ID = -1;   /* RIC_CallProcessType_ID */
-static int hf_e2ap_ric_callProcessBreakpoint_ID = -1;  /* RIC_CallProcessBreakpoint_ID */
-static int hf_e2ap_associatedE2NodeInfo = -1;     /* RANParameter_Testing */
-static int hf_e2ap_e2NodeInfoChange_List = -1;    /* SEQUENCE_SIZE_1_maxnoofE2InfoChanges_OF_E2SM_RC_EventTrigger_Format3_Item */
-static int hf_e2ap_e2NodeInfoChange_List_item = -1;  /* E2SM_RC_EventTrigger_Format3_Item */
-static int hf_e2ap_e2NodeInfoChange_ID = -1;      /* INTEGER_1_512_ */
-static int hf_e2ap_associatedCellInfo = -1;       /* EventTrigger_Cell_Info */
-static int hf_e2ap_uEInfoChange_List = -1;        /* SEQUENCE_SIZE_1_maxnoofUEInfoChanges_OF_E2SM_RC_EventTrigger_Format4_Item */
-static int hf_e2ap_uEInfoChange_List_item = -1;   /* E2SM_RC_EventTrigger_Format4_Item */
-static int hf_e2ap_triggerType = -1;              /* TriggerType_Choice */
-static int hf_e2ap_triggerType_Choice_RRCstate = -1;  /* TriggerType_Choice_RRCstate */
-static int hf_e2ap_triggerType_Choice_UEID = -1;  /* TriggerType_Choice_UEID */
-static int hf_e2ap_triggerType_Choice_L2state = -1;  /* TriggerType_Choice_L2state */
-static int hf_e2ap_rrcState_List = -1;            /* SEQUENCE_SIZE_1_maxnoofRRCstate_OF_TriggerType_Choice_RRCstate_Item */
-static int hf_e2ap_rrcState_List_item = -1;       /* TriggerType_Choice_RRCstate_Item */
-static int hf_e2ap_stateChangedTo = -1;           /* RRC_State */
-static int hf_e2ap_ueIDchange_ID = -1;            /* INTEGER_1_512_ */
-static int hf_e2ap_associatedL2variables = -1;    /* RANParameter_Testing */
-static int hf_e2ap_onDemand = -1;                 /* T_onDemand */
-static int hf_e2ap_ric_Style_Type = -1;           /* RIC_Style_Type */
-static int hf_e2ap_ric_actionDefinition_formats = -1;  /* T_ric_actionDefinition_formats */
-static int hf_e2ap_actionDefinition_Format1 = -1;  /* E2SM_RC_ActionDefinition_Format1 */
-static int hf_e2ap_actionDefinition_Format2 = -1;  /* E2SM_RC_ActionDefinition_Format2 */
-static int hf_e2ap_actionDefinition_Format3 = -1;  /* E2SM_RC_ActionDefinition_Format3 */
-static int hf_e2ap_actionDefinition_Format4 = -1;  /* E2SM_RC_ActionDefinition_Format4 */
-static int hf_e2ap_ranP_ToBeReported_List = -1;   /* SEQUENCE_SIZE_1_maxnoofParametersToReport_OF_E2SM_RC_ActionDefinition_Format1_Item */
-static int hf_e2ap_ranP_ToBeReported_List_item = -1;  /* E2SM_RC_ActionDefinition_Format1_Item */
-static int hf_e2ap_ric_PolicyConditions_List = -1;  /* SEQUENCE_SIZE_1_maxnoofPolicyConditions_OF_E2SM_RC_ActionDefinition_Format2_Item */
-static int hf_e2ap_ric_PolicyConditions_List_item = -1;  /* E2SM_RC_ActionDefinition_Format2_Item */
-static int hf_e2ap_ric_PolicyAction = -1;         /* RIC_PolicyAction */
-static int hf_e2ap_ric_PolicyConditionDefinition = -1;  /* RANParameter_Testing */
-static int hf_e2ap_ric_InsertIndication_ID = -1;  /* RIC_InsertIndication_ID */
-static int hf_e2ap_ranP_InsertIndication_List = -1;  /* SEQUENCE_SIZE_1_maxnoofAssociatedRANParameters_OF_E2SM_RC_ActionDefinition_Format3_Item */
-static int hf_e2ap_ranP_InsertIndication_List_item = -1;  /* E2SM_RC_ActionDefinition_Format3_Item */
-static int hf_e2ap_ric_InsertStyle_List = -1;     /* SEQUENCE_SIZE_1_maxnoofRICStyles_OF_E2SM_RC_ActionDefinition_Format4_Style_Item */
-static int hf_e2ap_ric_InsertStyle_List_item = -1;  /* E2SM_RC_ActionDefinition_Format4_Style_Item */
-static int hf_e2ap_requested_Insert_Style_Type = -1;  /* RIC_Style_Type */
-static int hf_e2ap_ric_InsertIndication_List = -1;  /* SEQUENCE_SIZE_1_maxnoofInsertIndicationActions_OF_E2SM_RC_ActionDefinition_Format4_Indication_Item */
-static int hf_e2ap_ric_InsertIndication_List_item = -1;  /* E2SM_RC_ActionDefinition_Format4_Indication_Item */
-static int hf_e2ap_ranP_InsertIndication_List_01 = -1;  /* SEQUENCE_SIZE_1_maxnoofAssociatedRANParameters_OF_E2SM_RC_ActionDefinition_Format4_RANP_Item */
-static int hf_e2ap_ranP_InsertIndication_List_item_01 = -1;  /* E2SM_RC_ActionDefinition_Format4_RANP_Item */
-static int hf_e2ap_ric_indicationHeader_formats = -1;  /* T_ric_indicationHeader_formats */
-static int hf_e2ap_indicationHeader_Format1 = -1;  /* E2SM_RC_IndicationHeader_Format1 */
-static int hf_e2ap_indicationHeader_Format2 = -1;  /* E2SM_RC_IndicationHeader_Format2 */
-static int hf_e2ap_indicationHeader_Format3 = -1;  /* E2SM_RC_IndicationHeader_Format3 */
-static int hf_e2ap_ric_InsertStyle_Type = -1;     /* RIC_Style_Type */
-static int hf_e2ap_ric_indicationMessage_formats = -1;  /* T_ric_indicationMessage_formats */
-static int hf_e2ap_indicationMessage_Format1 = -1;  /* E2SM_RC_IndicationMessage_Format1 */
-static int hf_e2ap_indicationMessage_Format2 = -1;  /* E2SM_RC_IndicationMessage_Format2 */
-static int hf_e2ap_indicationMessage_Format3 = -1;  /* E2SM_RC_IndicationMessage_Format3 */
-static int hf_e2ap_indicationMessage_Format4 = -1;  /* E2SM_RC_IndicationMessage_Format4 */
-static int hf_e2ap_indicationMessage_Format5 = -1;  /* E2SM_RC_IndicationMessage_Format5 */
-static int hf_e2ap_indicationMessage_Format6 = -1;  /* E2SM_RC_IndicationMessage_Format6 */
-static int hf_e2ap_ranP_Reported_List = -1;       /* SEQUENCE_SIZE_1_maxnoofAssociatedRANParameters_OF_E2SM_RC_IndicationMessage_Format1_Item */
-static int hf_e2ap_ranP_Reported_List_item = -1;  /* E2SM_RC_IndicationMessage_Format1_Item */
-static int hf_e2ap_ueParameter_List = -1;         /* SEQUENCE_SIZE_1_maxnoofUEID_OF_E2SM_RC_IndicationMessage_Format2_Item */
-static int hf_e2ap_ueParameter_List_item = -1;    /* E2SM_RC_IndicationMessage_Format2_Item */
-static int hf_e2ap_ranP_List = -1;                /* SEQUENCE_SIZE_1_maxnoofAssociatedRANParameters_OF_E2SM_RC_IndicationMessage_Format2_RANParameter_Item */
-static int hf_e2ap_ranP_List_item = -1;           /* E2SM_RC_IndicationMessage_Format2_RANParameter_Item */
-static int hf_e2ap_cellInfo_List_01 = -1;         /* SEQUENCE_SIZE_1_maxnoofCellID_OF_E2SM_RC_IndicationMessage_Format3_Item */
-static int hf_e2ap_cellInfo_List_item_01 = -1;    /* E2SM_RC_IndicationMessage_Format3_Item */
-static int hf_e2ap_cellGlobal_ID = -1;            /* CGI */
-static int hf_e2ap_cellContextInfo = -1;          /* OCTET_STRING */
-static int hf_e2ap_cellDeleted = -1;              /* BOOLEAN */
-static int hf_e2ap_neighborRelation_Table = -1;   /* NeighborRelation_Info */
-static int hf_e2ap_ueInfo_List_01 = -1;           /* SEQUENCE_SIZE_0_maxnoofUEID_OF_E2SM_RC_IndicationMessage_Format4_ItemUE */
-static int hf_e2ap_ueInfo_List_item_01 = -1;      /* E2SM_RC_IndicationMessage_Format4_ItemUE */
-static int hf_e2ap_cellInfo_List_02 = -1;         /* SEQUENCE_SIZE_0_maxnoofCellID_OF_E2SM_RC_IndicationMessage_Format4_ItemCell */
-static int hf_e2ap_cellInfo_List_item_02 = -1;    /* E2SM_RC_IndicationMessage_Format4_ItemCell */
-static int hf_e2ap_ueContextInfo = -1;            /* OCTET_STRING */
-static int hf_e2ap_ranP_Requested_List = -1;      /* SEQUENCE_SIZE_0_maxnoofAssociatedRANParameters_OF_E2SM_RC_IndicationMessage_Format5_Item */
-static int hf_e2ap_ranP_Requested_List_item = -1;  /* E2SM_RC_IndicationMessage_Format5_Item */
-static int hf_e2ap_ric_InsertStyle_List_01 = -1;  /* SEQUENCE_SIZE_1_maxnoofRICStyles_OF_E2SM_RC_IndicationMessage_Format6_Style_Item */
-static int hf_e2ap_ric_InsertStyle_List_item_01 = -1;  /* E2SM_RC_IndicationMessage_Format6_Style_Item */
-static int hf_e2ap_indicated_Insert_Style_Type = -1;  /* RIC_Style_Type */
-static int hf_e2ap_ric_InsertIndication_List_01 = -1;  /* SEQUENCE_SIZE_1_maxnoofInsertIndicationActions_OF_E2SM_RC_IndicationMessage_Format6_Indication_Item */
-static int hf_e2ap_ric_InsertIndication_List_item_01 = -1;  /* E2SM_RC_IndicationMessage_Format6_Indication_Item */
-static int hf_e2ap_ranP_InsertIndication_List_02 = -1;  /* SEQUENCE_SIZE_0_maxnoofAssociatedRANParameters_OF_E2SM_RC_IndicationMessage_Format6_RANP_Item */
-static int hf_e2ap_ranP_InsertIndication_List_item_02 = -1;  /* E2SM_RC_IndicationMessage_Format6_RANP_Item */
-static int hf_e2ap_ric_callProcessID_formats = -1;  /* T_ric_callProcessID_formats */
-static int hf_e2ap_callProcessID_Format1 = -1;    /* E2SM_RC_CallProcessID_Format1 */
-static int hf_e2ap_ric_callProcess_ID = -1;       /* RAN_CallProcess_ID */
-static int hf_e2ap_ric_controlHeader_formats = -1;  /* T_ric_controlHeader_formats */
-static int hf_e2ap_controlHeader_Format1 = -1;    /* E2SM_RC_ControlHeader_Format1 */
-static int hf_e2ap_controlHeader_Format2 = -1;    /* E2SM_RC_ControlHeader_Format2 */
-static int hf_e2ap_ric_ControlAction_ID = -1;     /* RIC_ControlAction_ID */
-static int hf_e2ap_ric_ControlDecision = -1;      /* T_ric_ControlDecision */
-static int hf_e2ap_ric_ControlDecision_01 = -1;   /* T_ric_ControlDecision_01 */
-static int hf_e2ap_ric_controlMessage_formats = -1;  /* T_ric_controlMessage_formats */
-static int hf_e2ap_controlMessage_Format1 = -1;   /* E2SM_RC_ControlMessage_Format1 */
-static int hf_e2ap_controlMessage_Format2 = -1;   /* E2SM_RC_ControlMessage_Format2 */
-static int hf_e2ap_ranP_List_01 = -1;             /* SEQUENCE_SIZE_0_maxnoofAssociatedRANParameters_OF_E2SM_RC_ControlMessage_Format1_Item */
-static int hf_e2ap_ranP_List_item_01 = -1;        /* E2SM_RC_ControlMessage_Format1_Item */
-static int hf_e2ap_ric_ControlStyle_List = -1;    /* SEQUENCE_SIZE_1_maxnoofRICStyles_OF_E2SM_RC_ControlMessage_Format2_Style_Item */
-static int hf_e2ap_ric_ControlStyle_List_item = -1;  /* E2SM_RC_ControlMessage_Format2_Style_Item */
-static int hf_e2ap_indicated_Control_Style_Type = -1;  /* RIC_Style_Type */
-static int hf_e2ap_ric_ControlAction_List = -1;   /* SEQUENCE_SIZE_1_maxnoofMulCtrlActions_OF_E2SM_RC_ControlMessage_Format2_ControlAction_Item */
-static int hf_e2ap_ric_ControlAction_List_item = -1;  /* E2SM_RC_ControlMessage_Format2_ControlAction_Item */
-static int hf_e2ap_ranP_List_02 = -1;             /* E2SM_RC_ControlMessage_Format1 */
-static int hf_e2ap_ric_controlOutcome_formats = -1;  /* T_ric_controlOutcome_formats */
-static int hf_e2ap_controlOutcome_Format1 = -1;   /* E2SM_RC_ControlOutcome_Format1 */
-static int hf_e2ap_controlOutcome_Format2 = -1;   /* E2SM_RC_ControlOutcome_Format2 */
-static int hf_e2ap_controlOutcome_Format3 = -1;   /* E2SM_RC_ControlOutcome_Format3 */
-static int hf_e2ap_ranP_List_03 = -1;             /* SEQUENCE_SIZE_0_maxnoofRANOutcomeParameters_OF_E2SM_RC_ControlOutcome_Format1_Item */
-static int hf_e2ap_ranP_List_item_02 = -1;        /* E2SM_RC_ControlOutcome_Format1_Item */
-static int hf_e2ap_ric_ControlStyle_List_01 = -1;  /* SEQUENCE_SIZE_1_maxnoofRICStyles_OF_E2SM_RC_ControlOutcome_Format2_Style_Item */
-static int hf_e2ap_ric_ControlStyle_List_item_01 = -1;  /* E2SM_RC_ControlOutcome_Format2_Style_Item */
-static int hf_e2ap_ric_ControlOutcome_List = -1;  /* SEQUENCE_SIZE_1_maxnoofMulCtrlActions_OF_E2SM_RC_ControlOutcome_Format2_ControlOutcome_Item */
-static int hf_e2ap_ric_ControlOutcome_List_item = -1;  /* E2SM_RC_ControlOutcome_Format2_ControlOutcome_Item */
-static int hf_e2ap_ranP_List_04 = -1;             /* SEQUENCE_SIZE_1_maxnoofAssociatedRANParameters_OF_E2SM_RC_ControlOutcome_Format2_RANP_Item */
-static int hf_e2ap_ranP_List_item_03 = -1;        /* E2SM_RC_ControlOutcome_Format2_RANP_Item */
-static int hf_e2ap_ranP_List_05 = -1;             /* SEQUENCE_SIZE_0_maxnoofRANOutcomeParameters_OF_E2SM_RC_ControlOutcome_Format3_Item */
-static int hf_e2ap_ranP_List_item_04 = -1;        /* E2SM_RC_ControlOutcome_Format3_Item */
-static int hf_e2ap_ranFunction_Name = -1;         /* RANfunction_Name */
-static int hf_e2ap_ranFunctionDefinition_EventTrigger = -1;  /* RANFunctionDefinition_EventTrigger */
-static int hf_e2ap_ranFunctionDefinition_Report = -1;  /* RANFunctionDefinition_Report */
-static int hf_e2ap_ranFunctionDefinition_Insert = -1;  /* RANFunctionDefinition_Insert */
-static int hf_e2ap_ranFunctionDefinition_Control = -1;  /* RANFunctionDefinition_Control */
-static int hf_e2ap_ranFunctionDefinition_Policy = -1;  /* RANFunctionDefinition_Policy */
-static int hf_e2ap_ric_EventTriggerStyle_List = -1;  /* SEQUENCE_SIZE_1_maxnoofRICStyles_OF_RANFunctionDefinition_EventTrigger_Style_Item */
-static int hf_e2ap_ric_EventTriggerStyle_List_item = -1;  /* RANFunctionDefinition_EventTrigger_Style_Item */
-static int hf_e2ap_ran_L2Parameters_List = -1;    /* SEQUENCE_SIZE_1_maxnoofAssociatedRANParameters_OF_L2Parameters_RANParameter_Item */
-static int hf_e2ap_ran_L2Parameters_List_item = -1;  /* L2Parameters_RANParameter_Item */
-static int hf_e2ap_ran_CallProcessTypes_List = -1;  /* SEQUENCE_SIZE_1_maxnoofCallProcessTypes_OF_RANFunctionDefinition_EventTrigger_CallProcess_Item */
-static int hf_e2ap_ran_CallProcessTypes_List_item = -1;  /* RANFunctionDefinition_EventTrigger_CallProcess_Item */
-static int hf_e2ap_ran_UEIdentificationParameters_List = -1;  /* SEQUENCE_SIZE_1_maxnoofAssociatedRANParameters_OF_UEIdentification_RANParameter_Item */
-static int hf_e2ap_ran_UEIdentificationParameters_List_item = -1;  /* UEIdentification_RANParameter_Item */
-static int hf_e2ap_ran_CellIdentificationParameters_List = -1;  /* SEQUENCE_SIZE_1_maxnoofAssociatedRANParameters_OF_CellIdentification_RANParameter_Item */
-static int hf_e2ap_ran_CellIdentificationParameters_List_item = -1;  /* CellIdentification_RANParameter_Item */
-static int hf_e2ap_ric_EventTriggerStyle_Type = -1;  /* RIC_Style_Type */
-static int hf_e2ap_ric_EventTriggerStyle_Name = -1;  /* RIC_Style_Name */
-static int hf_e2ap_ric_EventTriggerFormat_Type = -1;  /* RIC_Format_Type */
-static int hf_e2ap_callProcessType_ID = -1;       /* RIC_CallProcessType_ID */
-static int hf_e2ap_callProcessType_Name = -1;     /* RIC_CallProcessType_Name */
-static int hf_e2ap_callProcessBreakpoints_List = -1;  /* SEQUENCE_SIZE_1_maxnoofCallProcessBreakpoints_OF_RANFunctionDefinition_EventTrigger_Breakpoint_Item */
-static int hf_e2ap_callProcessBreakpoints_List_item = -1;  /* RANFunctionDefinition_EventTrigger_Breakpoint_Item */
-static int hf_e2ap_callProcessBreakpoint_ID = -1;  /* RIC_CallProcessBreakpoint_ID */
-static int hf_e2ap_callProcessBreakpoint_Name = -1;  /* RIC_CallProcessBreakpoint_Name */
-static int hf_e2ap_ran_CallProcessBreakpointParameters_List = -1;  /* SEQUENCE_SIZE_1_maxnoofAssociatedRANParameters_OF_CallProcessBreakpoint_RANParameter_Item */
-static int hf_e2ap_ran_CallProcessBreakpointParameters_List_item = -1;  /* CallProcessBreakpoint_RANParameter_Item */
-static int hf_e2ap_ric_ReportStyle_List = -1;     /* SEQUENCE_SIZE_1_maxnoofRICStyles_OF_RANFunctionDefinition_Report_Item */
-static int hf_e2ap_ric_ReportStyle_List_item = -1;  /* RANFunctionDefinition_Report_Item */
-static int hf_e2ap_ric_ReportStyle_Type = -1;     /* RIC_Style_Type */
-static int hf_e2ap_ric_ReportStyle_Name = -1;     /* RIC_Style_Name */
-static int hf_e2ap_ric_SupportedEventTriggerStyle_Type = -1;  /* RIC_Style_Type */
-static int hf_e2ap_ric_ReportActionFormat_Type = -1;  /* RIC_Format_Type */
-static int hf_e2ap_ric_IndicationHeaderFormat_Type = -1;  /* RIC_Format_Type */
-static int hf_e2ap_ric_IndicationMessageFormat_Type = -1;  /* RIC_Format_Type */
-static int hf_e2ap_ran_ReportParameters_List = -1;  /* SEQUENCE_SIZE_1_maxnoofAssociatedRANParameters_OF_Report_RANParameter_Item */
-static int hf_e2ap_ran_ReportParameters_List_item = -1;  /* Report_RANParameter_Item */
-static int hf_e2ap_ric_InsertStyle_List_02 = -1;  /* SEQUENCE_SIZE_1_maxnoofRICStyles_OF_RANFunctionDefinition_Insert_Item */
-static int hf_e2ap_ric_InsertStyle_List_item_02 = -1;  /* RANFunctionDefinition_Insert_Item */
-static int hf_e2ap_ric_InsertStyle_Name = -1;     /* RIC_Style_Name */
-static int hf_e2ap_ric_ActionDefinitionFormat_Type = -1;  /* RIC_Format_Type */
-static int hf_e2ap_ric_InsertIndication_List_02 = -1;  /* SEQUENCE_SIZE_1_maxnoofInsertIndication_OF_RANFunctionDefinition_Insert_Indication_Item */
-static int hf_e2ap_ric_InsertIndication_List_item_02 = -1;  /* RANFunctionDefinition_Insert_Indication_Item */
-static int hf_e2ap_ric_CallProcessIDFormat_Type = -1;  /* RIC_Format_Type */
-static int hf_e2ap_ric_InsertIndication_Name = -1;  /* RIC_InsertIndication_Name */
-static int hf_e2ap_ran_InsertIndicationParameters_List = -1;  /* SEQUENCE_SIZE_1_maxnoofAssociatedRANParameters_OF_InsertIndication_RANParameter_Item */
-static int hf_e2ap_ran_InsertIndicationParameters_List_item = -1;  /* InsertIndication_RANParameter_Item */
-static int hf_e2ap_ric_ControlStyle_List_02 = -1;  /* SEQUENCE_SIZE_1_maxnoofRICStyles_OF_RANFunctionDefinition_Control_Item */
-static int hf_e2ap_ric_ControlStyle_List_item_02 = -1;  /* RANFunctionDefinition_Control_Item */
-static int hf_e2ap_ric_ControlStyle_Type = -1;    /* RIC_Style_Type */
-static int hf_e2ap_ric_ControlStyle_Name = -1;    /* RIC_Style_Name */
-static int hf_e2ap_ric_ControlAction_List_01 = -1;  /* SEQUENCE_SIZE_1_maxnoofControlAction_OF_RANFunctionDefinition_Control_Action_Item */
-static int hf_e2ap_ric_ControlAction_List_item_01 = -1;  /* RANFunctionDefinition_Control_Action_Item */
-static int hf_e2ap_ric_ControlHeaderFormat_Type = -1;  /* RIC_Format_Type */
-static int hf_e2ap_ric_ControlMessageFormat_Type = -1;  /* RIC_Format_Type */
-static int hf_e2ap_ric_ControlOutcomeFormat_Type = -1;  /* RIC_Format_Type */
-static int hf_e2ap_ran_ControlOutcomeParameters_List = -1;  /* SEQUENCE_SIZE_1_maxnoofRANOutcomeParameters_OF_ControlOutcome_RANParameter_Item */
-static int hf_e2ap_ran_ControlOutcomeParameters_List_item = -1;  /* ControlOutcome_RANParameter_Item */
-static int hf_e2ap_ric_ControlAction_Name = -1;   /* RIC_ControlAction_Name */
-static int hf_e2ap_ran_ControlActionParameters_List = -1;  /* SEQUENCE_SIZE_1_maxnoofAssociatedRANParameters_OF_ControlAction_RANParameter_Item */
-static int hf_e2ap_ran_ControlActionParameters_List_item = -1;  /* ControlAction_RANParameter_Item */
-static int hf_e2ap_ric_PolicyStyle_List = -1;     /* SEQUENCE_SIZE_1_maxnoofRICStyles_OF_RANFunctionDefinition_Policy_Item */
-static int hf_e2ap_ric_PolicyStyle_List_item = -1;  /* RANFunctionDefinition_Policy_Item */
-static int hf_e2ap_ric_PolicyStyle_Type = -1;     /* RIC_Style_Type */
-static int hf_e2ap_ric_PolicyStyle_Name = -1;     /* RIC_Style_Name */
-static int hf_e2ap_ric_PolicyAction_List = -1;    /* SEQUENCE_SIZE_1_maxnoofPolicyAction_OF_RANFunctionDefinition_Policy_Action_Item */
-static int hf_e2ap_ric_PolicyAction_List_item = -1;  /* RANFunctionDefinition_Policy_Action_Item */
-static int hf_e2ap_ric_PolicyAction_Name = -1;    /* RIC_ControlAction_Name */
-static int hf_e2ap_ran_PolicyActionParameters_List = -1;  /* SEQUENCE_SIZE_1_maxnoofAssociatedRANParameters_OF_PolicyAction_RANParameter_Item */
-static int hf_e2ap_ran_PolicyActionParameters_List_item = -1;  /* PolicyAction_RANParameter_Item */
-static int hf_e2ap_ran_PolicyConditionParameters_List = -1;  /* SEQUENCE_SIZE_1_maxnoofAssociatedRANParameters_OF_PolicyCondition_RANParameter_Item */
-static int hf_e2ap_ran_PolicyConditionParameters_List_item = -1;  /* PolicyCondition_RANParameter_Item */
-static int hf_e2ap_measName = -1;                 /* MeasurementTypeName */
-static int hf_e2ap_measID = -1;                   /* MeasurementTypeID */
-static int hf_e2ap_noLabel = -1;                  /* T_noLabel */
-static int hf_e2ap_plmnID = -1;                   /* PLMN_Identity */
-static int hf_e2ap_sliceID = -1;                  /* S_NSSAI */
-static int hf_e2ap_fiveQI = -1;                   /* FiveQI */
-static int hf_e2ap_qFI = -1;                      /* QosFlowIdentifier */
-static int hf_e2ap_qCI = -1;                      /* QCI */
-static int hf_e2ap_qCImax = -1;                   /* QCI */
-static int hf_e2ap_qCImin = -1;                   /* QCI */
-static int hf_e2ap_aRPmax = -1;                   /* INTEGER_1_15_ */
-static int hf_e2ap_aRPmin = -1;                   /* INTEGER_1_15_ */
-static int hf_e2ap_bitrateRange = -1;             /* INTEGER_1_65535_ */
-static int hf_e2ap_layerMU_MIMO = -1;             /* INTEGER_1_65535_ */
-static int hf_e2ap_sUM = -1;                      /* T_sUM */
-static int hf_e2ap_distBinX = -1;                 /* INTEGER_1_65535_ */
-static int hf_e2ap_distBinY = -1;                 /* INTEGER_1_65535_ */
-static int hf_e2ap_distBinZ = -1;                 /* INTEGER_1_65535_ */
-static int hf_e2ap_preLabelOverride = -1;         /* T_preLabelOverride */
-static int hf_e2ap_startEndInd = -1;              /* T_startEndInd */
-static int hf_e2ap_min = -1;                      /* T_min */
-static int hf_e2ap_max = -1;                      /* T_max */
-static int hf_e2ap_avg = -1;                      /* T_avg */
-static int hf_e2ap_testType = -1;                 /* TestCond_Type */
-static int hf_e2ap_testExpr = -1;                 /* TestCond_Expression */
-static int hf_e2ap_testValue = -1;                /* TestCond_Value */
-static int hf_e2ap_gBR = -1;                      /* T_gBR */
-static int hf_e2ap_aMBR = -1;                     /* T_aMBR */
-static int hf_e2ap_isStat = -1;                   /* T_isStat */
-static int hf_e2ap_isCatM = -1;                   /* T_isCatM */
-static int hf_e2ap_rSRP = -1;                     /* T_rSRP */
-static int hf_e2ap_rSRQ = -1;                     /* T_rSRQ */
-static int hf_e2ap_ul_rSRP = -1;                  /* T_ul_rSRP */
-static int hf_e2ap_cQI = -1;                      /* T_cQI */
-static int hf_e2ap_fiveQI_01 = -1;                /* T_fiveQI */
-static int hf_e2ap_qCI_01 = -1;                   /* T_qCI */
-static int hf_e2ap_sNSSAI = -1;                   /* T_sNSSAI */
-static int hf_e2ap_valueEnum = -1;                /* INTEGER */
-static int hf_e2ap_valueBool = -1;                /* BOOLEAN */
-static int hf_e2ap_valuePrtS = -1;                /* PrintableString */
-static int hf_e2ap_MeasurementInfoList_item = -1;  /* MeasurementInfoItem */
-static int hf_e2ap_measType = -1;                 /* MeasurementType */
-static int hf_e2ap_labelInfoList = -1;            /* LabelInfoList */
-static int hf_e2ap_LabelInfoList_item = -1;       /* LabelInfoItem */
-static int hf_e2ap_measLabel = -1;                /* MeasurementLabel */
-static int hf_e2ap_MeasurementData_item = -1;     /* MeasurementDataItem */
-static int hf_e2ap_measRecord = -1;               /* MeasurementRecord */
-static int hf_e2ap_incompleteFlag = -1;           /* T_incompleteFlag */
-static int hf_e2ap_MeasurementRecord_item = -1;   /* MeasurementRecordItem */
-static int hf_e2ap_integer = -1;                  /* INTEGER_0_4294967295 */
-static int hf_e2ap_real = -1;                     /* REAL */
-static int hf_e2ap_noValue = -1;                  /* NULL */
-static int hf_e2ap_MeasurementInfo_Action_List_item = -1;  /* MeasurementInfo_Action_Item */
-static int hf_e2ap_MeasurementCondList_item = -1;  /* MeasurementCondItem */
-static int hf_e2ap_matchingCond = -1;             /* MatchingCondList */
-static int hf_e2ap_MeasurementCondUEidList_item = -1;  /* MeasurementCondUEidItem */
-static int hf_e2ap_matchingUEidList = -1;         /* MatchingUEidList */
-static int hf_e2ap_MatchingCondList_item = -1;    /* MatchingCondItem */
-static int hf_e2ap_testCondInfo = -1;             /* TestCondInfo */
-static int hf_e2ap_MatchingUEidList_item = -1;    /* MatchingUEidItem */
-static int hf_e2ap_MatchingUeCondPerSubList_item = -1;  /* MatchingUeCondPerSubItem */
-static int hf_e2ap_MatchingUEidPerSubList_item = -1;  /* MatchingUEidPerSubItem */
-static int hf_e2ap_UEMeasurementReportList_item = -1;  /* UEMeasurementReportItem */
-static int hf_e2ap_measReport = -1;               /* E2SM_KPM_IndicationMessage_Format1 */
-static int hf_e2ap_eventDefinition_formats = -1;  /* T_eventDefinition_formats */
-static int hf_e2ap_eventDefinition_Format1 = -1;  /* E2SM_KPM_EventTriggerDefinition_Format1 */
-static int hf_e2ap_reportingPeriod = -1;          /* INTEGER_1_4294967295 */
-static int hf_e2ap_actionDefinition_formats = -1;  /* T_actionDefinition_formats */
-static int hf_e2ap_actionDefinition_Format1_01 = -1;  /* E2SM_KPM_ActionDefinition_Format1 */
-static int hf_e2ap_actionDefinition_Format2_01 = -1;  /* E2SM_KPM_ActionDefinition_Format2 */
-static int hf_e2ap_actionDefinition_Format3_01 = -1;  /* E2SM_KPM_ActionDefinition_Format3 */
-static int hf_e2ap_actionDefinition_Format4_01 = -1;  /* E2SM_KPM_ActionDefinition_Format4 */
-static int hf_e2ap_actionDefinition_Format5 = -1;  /* E2SM_KPM_ActionDefinition_Format5 */
-static int hf_e2ap_measInfoList = -1;             /* MeasurementInfoList */
-static int hf_e2ap_granulPeriod = -1;             /* GranularityPeriod */
-static int hf_e2ap_subscriptInfo = -1;            /* E2SM_KPM_ActionDefinition_Format1 */
-static int hf_e2ap_measCondList = -1;             /* MeasurementCondList */
-static int hf_e2ap_matchingUeCondList = -1;       /* MatchingUeCondPerSubList */
-static int hf_e2ap_subscriptionInfo = -1;         /* E2SM_KPM_ActionDefinition_Format1 */
-static int hf_e2ap_matchingUEidList_01 = -1;      /* MatchingUEidPerSubList */
-static int hf_e2ap_indicationHeader_formats = -1;  /* T_indicationHeader_formats */
-static int hf_e2ap_indicationHeader_Format1_01 = -1;  /* E2SM_KPM_IndicationHeader_Format1 */
-static int hf_e2ap_colletStartTime = -1;          /* TimeStamp */
-static int hf_e2ap_fileFormatversion = -1;        /* PrintableString_SIZE_0_15_ */
-static int hf_e2ap_senderName = -1;               /* PrintableString_SIZE_0_400_ */
-static int hf_e2ap_senderType = -1;               /* PrintableString_SIZE_0_8_ */
-static int hf_e2ap_vendorName = -1;               /* PrintableString_SIZE_0_32_ */
-static int hf_e2ap_indicationMessage_formats = -1;  /* T_indicationMessage_formats */
-static int hf_e2ap_indicationMessage_Format1_01 = -1;  /* E2SM_KPM_IndicationMessage_Format1 */
-static int hf_e2ap_indicationMessage_Format2_01 = -1;  /* E2SM_KPM_IndicationMessage_Format2 */
-static int hf_e2ap_indicationMessage_Format3_01 = -1;  /* E2SM_KPM_IndicationMessage_Format3 */
-static int hf_e2ap_measData = -1;                 /* MeasurementData */
-static int hf_e2ap_measCondUEidList = -1;         /* MeasurementCondUEidList */
-static int hf_e2ap_ueMeasReportList = -1;         /* UEMeasurementReportList */
-static int hf_e2ap_ric_EventTriggerStyle_List_01 = -1;  /* SEQUENCE_SIZE_1_maxnoofRICStyles_OF_RIC_EventTriggerStyle_Item */
-static int hf_e2ap_ric_EventTriggerStyle_List_item_01 = -1;  /* RIC_EventTriggerStyle_Item */
-static int hf_e2ap_ric_ReportStyle_List_01 = -1;  /* SEQUENCE_SIZE_1_maxnoofRICStyles_OF_RIC_ReportStyle_Item */
-static int hf_e2ap_ric_ReportStyle_List_item_01 = -1;  /* RIC_ReportStyle_Item */
-static int hf_e2ap_ric_ActionFormat_Type = -1;    /* RIC_Format_Type */
-static int hf_e2ap_measInfo_Action_List = -1;     /* MeasurementInfo_Action_List */
-static int hf_e2ap_eventDefinition_Format1_01 = -1;  /* E2SM_NI_EventTriggerDefinition_Format1 */
-static int hf_e2ap_interface_type = -1;           /* NI_Type */
-static int hf_e2ap_interface_ID = -1;             /* NI_Identifier */
-static int hf_e2ap_interfaceDirection = -1;       /* NI_Direction */
-static int hf_e2ap_interfaceMessageType = -1;     /* NI_MessageType */
-static int hf_e2ap_interfaceProtocolIE_List = -1;  /* SEQUENCE_SIZE_1_maxofInterfaceProtocolTests_OF_NI_ProtocolIE_Item */
-static int hf_e2ap_interfaceProtocolIE_List_item = -1;  /* NI_ProtocolIE_Item */
-static int hf_e2ap_action_Definition_Format = -1;  /* E2SM_NI_ActionDefinitionFormat */
-static int hf_e2ap_actionDefinition_Format1_02 = -1;  /* E2SM_NI_ActionDefinition_Format1 */
-static int hf_e2ap_actionDefinition_Format2_02 = -1;  /* E2SM_NI_ActionDefinition_Format2 */
-static int hf_e2ap_actionParameter_List = -1;     /* SEQUENCE_SIZE_1_maxofActionParameters_OF_RANparameter_Item */
-static int hf_e2ap_actionParameter_List_item = -1;  /* RANparameter_Item */
-static int hf_e2ap_ranUEgroup_List = -1;          /* SEQUENCE_SIZE_1_maxofRANueGroups_OF_RANueGroup_Item */
-static int hf_e2ap_ranUEgroup_List_item = -1;     /* RANueGroup_Item */
-static int hf_e2ap_indicationHeader_Format1_02 = -1;  /* E2SM_NI_IndicationHeader_Format1 */
-static int hf_e2ap_timestamp = -1;                /* NI_TimeStamp */
-static int hf_e2ap_indicationMessage_Format1_02 = -1;  /* E2SM_NI_IndicationMessage_Format1 */
-static int hf_e2ap_interfaceMessage = -1;         /* NI_Message */
-static int hf_e2ap_callProcessID_Format1_01 = -1;  /* E2SM_NI_CallProcessID_Format1 */
-static int hf_e2ap_callProcessID_Format2 = -1;    /* E2SM_NI_CallProcessID_Format2 */
-static int hf_e2ap_callProcess_ID = -1;           /* RANcallProcess_ID_number */
-static int hf_e2ap_callProcess_ID_01 = -1;        /* RANcallProcess_ID_string */
-static int hf_e2ap_controlHeader_Format1_01 = -1;  /* E2SM_NI_ControlHeader_Format1 */
-static int hf_e2ap_interface_Direction = -1;      /* NI_Direction */
-static int hf_e2ap_ric_Control_Message_Priority = -1;  /* RIC_Control_Message_Priority */
-static int hf_e2ap_controlMessage_Format1_01 = -1;  /* E2SM_NI_ControlMessage_Format1 */
-static int hf_e2ap_controlOutcome_Format1_01 = -1;  /* E2SM_NI_ControlOutcome_Format1 */
-static int hf_e2ap_outcomeElement_List = -1;      /* SEQUENCE_SIZE_1_maxofRANparameters_OF_RANparameter_Item */
-static int hf_e2ap_outcomeElement_List_item = -1;  /* RANparameter_Item */
-static int hf_e2ap_ni_Type_List = -1;             /* SEQUENCE_SIZE_1_maxofNItypes_OF_E2SM_NI_RANfunction_Item */
-static int hf_e2ap_ni_Type_List_item = -1;        /* E2SM_NI_RANfunction_Item */
-static int hf_e2ap_ric_EventTriggerStyle_List_02 = -1;  /* SEQUENCE_SIZE_1_maxofRICstyles_OF_RIC_EventTriggerStyle_List */
-static int hf_e2ap_ric_EventTriggerStyle_List_item_02 = -1;  /* RIC_EventTriggerStyle_List */
-static int hf_e2ap_ric_ReportStyle_List_02 = -1;  /* SEQUENCE_SIZE_1_maxofRICstyles_OF_RIC_ReportStyle_List */
-static int hf_e2ap_ric_ReportStyle_List_item_02 = -1;  /* RIC_ReportStyle_List */
-static int hf_e2ap_ric_InsertStyle_List_03 = -1;  /* SEQUENCE_SIZE_1_maxofRICstyles_OF_RIC_InsertStyle_List */
-static int hf_e2ap_ric_InsertStyle_List_item_03 = -1;  /* RIC_InsertStyle_List */
-static int hf_e2ap_ric_ControlStyle_List_03 = -1;  /* SEQUENCE_SIZE_1_maxofRICstyles_OF_RIC_ControlStyle_List */
-static int hf_e2ap_ric_ControlStyle_List_item_03 = -1;  /* RIC_ControlStyle_List */
-static int hf_e2ap_ric_PolicyStyle_List_01 = -1;  /* SEQUENCE_SIZE_1_maxofRICstyles_OF_RIC_PolicyStyle_List */
-static int hf_e2ap_ric_PolicyStyle_List_item_01 = -1;  /* RIC_PolicyStyle_List */
-static int hf_e2ap_global_ng_RAN_ID = -1;         /* Global_ng_RAN_ID */
-static int hf_e2ap_global_eNB_ID_01 = -1;         /* Global_eNB_ID */
-static int hf_e2ap_global_en_gNB_ID_01 = -1;      /* Global_en_gNB_ID */
-static int hf_e2ap_global_gNB_DU_ID = -1;         /* Global_gNB_DU_ID */
-static int hf_e2ap_global_gNB_CU_UP_ID = -1;      /* Global_gNB_CU_UP_ID */
-static int hf_e2ap_s1MessageType = -1;            /* NI_MessageTypeS1 */
-static int hf_e2ap_x2MessageType = -1;            /* NI_MessageTypeX2 */
-static int hf_e2ap_ngMessageType = -1;            /* NI_MessageTypeNG */
-static int hf_e2ap_xnMessageType = -1;            /* NI_MessageTypeXn */
-static int hf_e2ap_f1MessageType = -1;            /* NI_MessageTypeF1 */
-static int hf_e2ap_e1MessageType = -1;            /* NI_MessageTypeE1 */
-static int hf_e2ap_typeOfMessage = -1;            /* TypeOfMessage */
-static int hf_e2ap_interfaceProtocolIE_ID = -1;   /* NI_ProtocolIE_ID */
-static int hf_e2ap_interfaceProtocolIE_Test = -1;  /* NI_ProtocolIE_Test */
-static int hf_e2ap_interfaceProtocolIE_Value = -1;  /* NI_ProtocolIE_Value */
-static int hf_e2ap_ranImperativePolicy_List = -1;  /* SEQUENCE_SIZE_1_maxofRANparameters_OF_RANparameter_Item */
-static int hf_e2ap_ranImperativePolicy_List_item = -1;  /* RANparameter_Item */
-static int hf_e2ap_ranParameter_ID_01 = -1;       /* RANparameter_ID */
-static int hf_e2ap_ranParameter_Value_01 = -1;    /* RANparameter_Value */
-static int hf_e2ap_ranParameter_Name = -1;        /* RANparameter_Name */
-static int hf_e2ap_ranParameter_Type_01 = -1;     /* RANparameter_Type */
-static int hf_e2ap_ranUEgroupID = -1;             /* RANueGroupID */
-static int hf_e2ap_ranUEgroupDefinition = -1;     /* RANueGroupDefinition */
-static int hf_e2ap_ranPolicy = -1;                /* RANimperativePolicy */
-static int hf_e2ap_ranUEgroupDef_List = -1;       /* SEQUENCE_SIZE_1_maxofRANparameters_OF_RANueGroupDef_Item */
-static int hf_e2ap_ranUEgroupDef_List_item = -1;  /* RANueGroupDef_Item */
-static int hf_e2ap_ranParameter_Test = -1;        /* RANparameter_Test_Condition */
-static int hf_e2ap_ric_ControlFormat_Type = -1;   /* RIC_Format_Type */
-static int hf_e2ap_ric_ControlOutcomeRanParaDef_List = -1;  /* SEQUENCE_SIZE_1_maxofRANparameters_OF_RANparameterDef_Item */
-static int hf_e2ap_ric_ControlOutcomeRanParaDef_List_item = -1;  /* RANparameterDef_Item */
-static int hf_e2ap_ric_InsertActionFormat_Type = -1;  /* RIC_Format_Type */
-static int hf_e2ap_ric_InsertRanParameterDef_List = -1;  /* SEQUENCE_SIZE_1_maxofRANparameters_OF_RANparameterDef_Item */
-static int hf_e2ap_ric_InsertRanParameterDef_List_item = -1;  /* RANparameterDef_Item */
-static int hf_e2ap_ric_PolicyActionFormat_Type = -1;  /* RIC_Format_Type */
-static int hf_e2ap_ric_PolicyRanParameterDef_List = -1;  /* SEQUENCE_SIZE_1_maxofRANparameters_OF_RANparameterDef_Item */
-static int hf_e2ap_ric_PolicyRanParameterDef_List_item = -1;  /* RANparameterDef_Item */
-static int hf_e2ap_ric_ReportRanParameterDef_List = -1;  /* SEQUENCE_SIZE_1_maxofRANparameters_OF_RANparameterDef_Item */
-static int hf_e2ap_ric_ReportRanParameterDef_List_item = -1;  /* RANparameterDef_Item */
+static int proto_e2ap;
+static int hf_e2ap_Cause_PDU;                     /* Cause */
+static int hf_e2ap_CriticalityDiagnostics_PDU;    /* CriticalityDiagnostics */
+static int hf_e2ap_GlobalE2node_ID_PDU;           /* GlobalE2node_ID */
+static int hf_e2ap_GlobalRIC_ID_PDU;              /* GlobalRIC_ID */
+static int hf_e2ap_RANfunctionID_PDU;             /* RANfunctionID */
+static int hf_e2ap_RICactionID_PDU;               /* RICactionID */
+static int hf_e2ap_RICcallProcessID_PDU;          /* RICcallProcessID */
+static int hf_e2ap_RICcontrolAckRequest_PDU;      /* RICcontrolAckRequest */
+static int hf_e2ap_RICcontrolHeader_PDU;          /* RICcontrolHeader */
+static int hf_e2ap_RICcontrolMessage_PDU;         /* RICcontrolMessage */
+static int hf_e2ap_RICcontrolOutcome_PDU;         /* RICcontrolOutcome */
+static int hf_e2ap_RICeventTriggerDefinition_PDU;  /* RICeventTriggerDefinition */
+static int hf_e2ap_RICindicationHeader_PDU;       /* RICindicationHeader */
+static int hf_e2ap_RICindicationMessage_PDU;      /* RICindicationMessage */
+static int hf_e2ap_RICindicationSN_PDU;           /* RICindicationSN */
+static int hf_e2ap_RICindicationType_PDU;         /* RICindicationType */
+static int hf_e2ap_RICrequestID_PDU;              /* RICrequestID */
+static int hf_e2ap_RICsubscriptionTime_PDU;       /* RICsubscriptionTime */
+static int hf_e2ap_RICqueryHeader_PDU;            /* RICqueryHeader */
+static int hf_e2ap_RICqueryDefinition_PDU;        /* RICqueryDefinition */
+static int hf_e2ap_RICqueryOutcome_PDU;           /* RICqueryOutcome */
+static int hf_e2ap_TimeToWait_PDU;                /* TimeToWait */
+static int hf_e2ap_TNLinformation_PDU;            /* TNLinformation */
+static int hf_e2ap_TransactionID_PDU;             /* TransactionID */
+static int hf_e2ap_RICsubscriptionRequest_PDU;    /* RICsubscriptionRequest */
+static int hf_e2ap_RICsubscriptionDetails_PDU;    /* RICsubscriptionDetails */
+static int hf_e2ap_RICaction_ToBeSetup_Item_PDU;  /* RICaction_ToBeSetup_Item */
+static int hf_e2ap_RICsubscriptionResponse_PDU;   /* RICsubscriptionResponse */
+static int hf_e2ap_RICaction_Admitted_List_PDU;   /* RICaction_Admitted_List */
+static int hf_e2ap_RICaction_Admitted_Item_PDU;   /* RICaction_Admitted_Item */
+static int hf_e2ap_RICaction_NotAdmitted_List_PDU;  /* RICaction_NotAdmitted_List */
+static int hf_e2ap_RICaction_NotAdmitted_Item_PDU;  /* RICaction_NotAdmitted_Item */
+static int hf_e2ap_RICsubscriptionFailure_PDU;    /* RICsubscriptionFailure */
+static int hf_e2ap_RICsubscriptionDeleteRequest_PDU;  /* RICsubscriptionDeleteRequest */
+static int hf_e2ap_RICsubscriptionDeleteResponse_PDU;  /* RICsubscriptionDeleteResponse */
+static int hf_e2ap_RICsubscriptionDeleteFailure_PDU;  /* RICsubscriptionDeleteFailure */
+static int hf_e2ap_RICsubscriptionDeleteRequired_PDU;  /* RICsubscriptionDeleteRequired */
+static int hf_e2ap_RICsubscription_List_withCause_PDU;  /* RICsubscription_List_withCause */
+static int hf_e2ap_RICsubscription_withCause_Item_PDU;  /* RICsubscription_withCause_Item */
+static int hf_e2ap_RICsubscriptionModificationRequest_PDU;  /* RICsubscriptionModificationRequest */
+static int hf_e2ap_RICactions_ToBeRemovedForModification_List_PDU;  /* RICactions_ToBeRemovedForModification_List */
+static int hf_e2ap_RICaction_ToBeRemovedForModification_Item_PDU;  /* RICaction_ToBeRemovedForModification_Item */
+static int hf_e2ap_RICactions_ToBeModifiedForModification_List_PDU;  /* RICactions_ToBeModifiedForModification_List */
+static int hf_e2ap_RICaction_ToBeModifiedForModification_Item_PDU;  /* RICaction_ToBeModifiedForModification_Item */
+static int hf_e2ap_RICactions_ToBeAddedForModification_List_PDU;  /* RICactions_ToBeAddedForModification_List */
+static int hf_e2ap_RICaction_ToBeAddedForModification_Item_PDU;  /* RICaction_ToBeAddedForModification_Item */
+static int hf_e2ap_RICsubscriptionModificationResponse_PDU;  /* RICsubscriptionModificationResponse */
+static int hf_e2ap_RICactions_RemovedForModification_List_PDU;  /* RICactions_RemovedForModification_List */
+static int hf_e2ap_RICaction_RemovedForModification_Item_PDU;  /* RICaction_RemovedForModification_Item */
+static int hf_e2ap_RICactions_FailedToBeRemovedForModification_List_PDU;  /* RICactions_FailedToBeRemovedForModification_List */
+static int hf_e2ap_RICaction_FailedToBeRemovedForModification_Item_PDU;  /* RICaction_FailedToBeRemovedForModification_Item */
+static int hf_e2ap_RICactions_ModifiedForModification_List_PDU;  /* RICactions_ModifiedForModification_List */
+static int hf_e2ap_RICaction_ModifiedForModification_Item_PDU;  /* RICaction_ModifiedForModification_Item */
+static int hf_e2ap_RICactions_FailedToBeModifiedForModification_List_PDU;  /* RICactions_FailedToBeModifiedForModification_List */
+static int hf_e2ap_RICaction_FailedToBeModifiedForModification_Item_PDU;  /* RICaction_FailedToBeModifiedForModification_Item */
+static int hf_e2ap_RICactions_AddedForModification_List_PDU;  /* RICactions_AddedForModification_List */
+static int hf_e2ap_RICaction_AddedForModification_Item_PDU;  /* RICaction_AddedForModification_Item */
+static int hf_e2ap_RICactions_FailedToBeAddedForModification_List_PDU;  /* RICactions_FailedToBeAddedForModification_List */
+static int hf_e2ap_RICaction_FailedToBeAddedForModification_Item_PDU;  /* RICaction_FailedToBeAddedForModification_Item */
+static int hf_e2ap_RICsubscriptionModificationFailure_PDU;  /* RICsubscriptionModificationFailure */
+static int hf_e2ap_RICsubscriptionModificationRequired_PDU;  /* RICsubscriptionModificationRequired */
+static int hf_e2ap_RICactions_RequiredToBeModified_List_PDU;  /* RICactions_RequiredToBeModified_List */
+static int hf_e2ap_RICaction_RequiredToBeModified_Item_PDU;  /* RICaction_RequiredToBeModified_Item */
+static int hf_e2ap_RICactions_RequiredToBeRemoved_List_PDU;  /* RICactions_RequiredToBeRemoved_List */
+static int hf_e2ap_RICaction_RequiredToBeRemoved_Item_PDU;  /* RICaction_RequiredToBeRemoved_Item */
+static int hf_e2ap_RICsubscriptionModificationConfirm_PDU;  /* RICsubscriptionModificationConfirm */
+static int hf_e2ap_RICactions_ConfirmedForModification_List_PDU;  /* RICactions_ConfirmedForModification_List */
+static int hf_e2ap_RICaction_ConfirmedForModification_Item_PDU;  /* RICaction_ConfirmedForModification_Item */
+static int hf_e2ap_RICactions_RefusedToBeModified_List_PDU;  /* RICactions_RefusedToBeModified_List */
+static int hf_e2ap_RICaction_RefusedToBeModified_Item_PDU;  /* RICaction_RefusedToBeModified_Item */
+static int hf_e2ap_RICactions_ConfirmedForRemoval_List_PDU;  /* RICactions_ConfirmedForRemoval_List */
+static int hf_e2ap_RICaction_ConfirmedForRemoval_Item_PDU;  /* RICaction_ConfirmedForRemoval_Item */
+static int hf_e2ap_RICactions_RefusedToBeRemoved_List_PDU;  /* RICactions_RefusedToBeRemoved_List */
+static int hf_e2ap_RICaction_RefusedToBeRemoved_Item_PDU;  /* RICaction_RefusedToBeRemoved_Item */
+static int hf_e2ap_RICsubscriptionModificationRefuse_PDU;  /* RICsubscriptionModificationRefuse */
+static int hf_e2ap_RICindication_PDU;             /* RICindication */
+static int hf_e2ap_RICcontrolRequest_PDU;         /* RICcontrolRequest */
+static int hf_e2ap_RICcontrolAcknowledge_PDU;     /* RICcontrolAcknowledge */
+static int hf_e2ap_RICcontrolFailure_PDU;         /* RICcontrolFailure */
+static int hf_e2ap_RICQueryRequest_PDU;           /* RICQueryRequest */
+static int hf_e2ap_RICQueryResponse_PDU;          /* RICQueryResponse */
+static int hf_e2ap_RICQueryFailure_PDU;           /* RICQueryFailure */
+static int hf_e2ap_ErrorIndication_PDU;           /* ErrorIndication */
+static int hf_e2ap_E2setupRequest_PDU;            /* E2setupRequest */
+static int hf_e2ap_E2setupResponse_PDU;           /* E2setupResponse */
+static int hf_e2ap_E2setupFailure_PDU;            /* E2setupFailure */
+static int hf_e2ap_E2connectionUpdate_PDU;        /* E2connectionUpdate */
+static int hf_e2ap_E2connectionUpdate_List_PDU;   /* E2connectionUpdate_List */
+static int hf_e2ap_E2connectionUpdate_Item_PDU;   /* E2connectionUpdate_Item */
+static int hf_e2ap_E2connectionUpdateRemove_List_PDU;  /* E2connectionUpdateRemove_List */
+static int hf_e2ap_E2connectionUpdateRemove_Item_PDU;  /* E2connectionUpdateRemove_Item */
+static int hf_e2ap_E2connectionUpdateAcknowledge_PDU;  /* E2connectionUpdateAcknowledge */
+static int hf_e2ap_E2connectionSetupFailed_List_PDU;  /* E2connectionSetupFailed_List */
+static int hf_e2ap_E2connectionSetupFailed_Item_PDU;  /* E2connectionSetupFailed_Item */
+static int hf_e2ap_E2connectionUpdateFailure_PDU;  /* E2connectionUpdateFailure */
+static int hf_e2ap_E2nodeConfigurationUpdate_PDU;  /* E2nodeConfigurationUpdate */
+static int hf_e2ap_E2nodeComponentConfigAddition_List_PDU;  /* E2nodeComponentConfigAddition_List */
+static int hf_e2ap_E2nodeComponentConfigAddition_Item_PDU;  /* E2nodeComponentConfigAddition_Item */
+static int hf_e2ap_E2nodeComponentConfigUpdate_List_PDU;  /* E2nodeComponentConfigUpdate_List */
+static int hf_e2ap_E2nodeComponentConfigUpdate_Item_PDU;  /* E2nodeComponentConfigUpdate_Item */
+static int hf_e2ap_E2nodeComponentConfigRemoval_List_PDU;  /* E2nodeComponentConfigRemoval_List */
+static int hf_e2ap_E2nodeComponentConfigRemoval_Item_PDU;  /* E2nodeComponentConfigRemoval_Item */
+static int hf_e2ap_E2nodeTNLassociationRemoval_List_PDU;  /* E2nodeTNLassociationRemoval_List */
+static int hf_e2ap_E2nodeTNLassociationRemoval_Item_PDU;  /* E2nodeTNLassociationRemoval_Item */
+static int hf_e2ap_E2nodeConfigurationUpdateAcknowledge_PDU;  /* E2nodeConfigurationUpdateAcknowledge */
+static int hf_e2ap_E2nodeComponentConfigAdditionAck_List_PDU;  /* E2nodeComponentConfigAdditionAck_List */
+static int hf_e2ap_E2nodeComponentConfigAdditionAck_Item_PDU;  /* E2nodeComponentConfigAdditionAck_Item */
+static int hf_e2ap_E2nodeComponentConfigUpdateAck_List_PDU;  /* E2nodeComponentConfigUpdateAck_List */
+static int hf_e2ap_E2nodeComponentConfigUpdateAck_Item_PDU;  /* E2nodeComponentConfigUpdateAck_Item */
+static int hf_e2ap_E2nodeComponentConfigRemovalAck_List_PDU;  /* E2nodeComponentConfigRemovalAck_List */
+static int hf_e2ap_E2nodeComponentConfigRemovalAck_Item_PDU;  /* E2nodeComponentConfigRemovalAck_Item */
+static int hf_e2ap_E2nodeConfigurationUpdateFailure_PDU;  /* E2nodeConfigurationUpdateFailure */
+static int hf_e2ap_ResetRequest_PDU;              /* ResetRequest */
+static int hf_e2ap_ResetResponse_PDU;             /* ResetResponse */
+static int hf_e2ap_RICserviceUpdate_PDU;          /* RICserviceUpdate */
+static int hf_e2ap_RANfunctions_List_PDU;         /* RANfunctions_List */
+static int hf_e2ap_RANfunction_Item_PDU;          /* RANfunction_Item */
+static int hf_e2ap_RANfunctionsID_List_PDU;       /* RANfunctionsID_List */
+static int hf_e2ap_RANfunctionID_Item_PDU;        /* RANfunctionID_Item */
+static int hf_e2ap_RICserviceUpdateAcknowledge_PDU;  /* RICserviceUpdateAcknowledge */
+static int hf_e2ap_RANfunctionsIDcause_List_PDU;  /* RANfunctionsIDcause_List */
+static int hf_e2ap_RANfunctionIDcause_Item_PDU;   /* RANfunctionIDcause_Item */
+static int hf_e2ap_RICserviceUpdateFailure_PDU;   /* RICserviceUpdateFailure */
+static int hf_e2ap_RICserviceQuery_PDU;           /* RICserviceQuery */
+static int hf_e2ap_E2RemovalRequest_PDU;          /* E2RemovalRequest */
+static int hf_e2ap_E2RemovalResponse_PDU;         /* E2RemovalResponse */
+static int hf_e2ap_E2RemovalFailure_PDU;          /* E2RemovalFailure */
+static int hf_e2ap_E2AP_PDU_PDU;                  /* E2AP_PDU */
+static int hf_e2ap_E2SM_RC_EventTrigger_PDU;      /* E2SM_RC_EventTrigger */
+static int hf_e2ap_E2SM_RC_ActionDefinition_PDU;  /* E2SM_RC_ActionDefinition */
+static int hf_e2ap_E2SM_RC_IndicationHeader_PDU;  /* E2SM_RC_IndicationHeader */
+static int hf_e2ap_E2SM_RC_IndicationMessage_PDU;  /* E2SM_RC_IndicationMessage */
+static int hf_e2ap_E2SM_RC_CallProcessID_PDU;     /* E2SM_RC_CallProcessID */
+static int hf_e2ap_E2SM_RC_ControlHeader_PDU;     /* E2SM_RC_ControlHeader */
+static int hf_e2ap_E2SM_RC_ControlMessage_PDU;    /* E2SM_RC_ControlMessage */
+static int hf_e2ap_E2SM_RC_ControlOutcome_PDU;    /* E2SM_RC_ControlOutcome */
+static int hf_e2ap_E2SM_RC_RANFunctionDefinition_PDU;  /* E2SM_RC_RANFunctionDefinition */
+static int hf_e2ap_E2SM_KPM_EventTriggerDefinition_PDU;  /* E2SM_KPM_EventTriggerDefinition */
+static int hf_e2ap_E2SM_KPM_ActionDefinition_PDU;  /* E2SM_KPM_ActionDefinition */
+static int hf_e2ap_E2SM_KPM_IndicationHeader_PDU;  /* E2SM_KPM_IndicationHeader */
+static int hf_e2ap_E2SM_KPM_IndicationMessage_PDU;  /* E2SM_KPM_IndicationMessage */
+static int hf_e2ap_E2SM_KPM_RANfunction_Description_PDU;  /* E2SM_KPM_RANfunction_Description */
+static int hf_e2ap_E2SM_NI_EventTriggerDefinition_PDU;  /* E2SM_NI_EventTriggerDefinition */
+static int hf_e2ap_E2SM_NI_ActionDefinition_PDU;  /* E2SM_NI_ActionDefinition */
+static int hf_e2ap_E2SM_NI_IndicationHeader_PDU;  /* E2SM_NI_IndicationHeader */
+static int hf_e2ap_E2SM_NI_IndicationMessage_PDU;  /* E2SM_NI_IndicationMessage */
+static int hf_e2ap_E2SM_NI_CallProcessID_PDU;     /* E2SM_NI_CallProcessID */
+static int hf_e2ap_E2SM_NI_ControlHeader_PDU;     /* E2SM_NI_ControlHeader */
+static int hf_e2ap_E2SM_NI_ControlMessage_PDU;    /* E2SM_NI_ControlMessage */
+static int hf_e2ap_E2SM_NI_ControlOutcome_PDU;    /* E2SM_NI_ControlOutcome */
+static int hf_e2ap_E2SM_NI_RANfunction_Description_PDU;  /* E2SM_NI_RANfunction_Description */
+static int hf_e2ap_ProtocolIE_Container_item;     /* ProtocolIE_Field */
+static int hf_e2ap_id;                            /* ProtocolIE_ID */
+static int hf_e2ap_criticality;                   /* Criticality */
+static int hf_e2ap_value;                         /* T_value */
+static int hf_e2ap_ricRequest;                    /* CauseRICrequest */
+static int hf_e2ap_ricService;                    /* CauseRICservice */
+static int hf_e2ap_e2Node;                        /* CauseE2node */
+static int hf_e2ap_transport;                     /* CauseTransport */
+static int hf_e2ap_protocol;                      /* CauseProtocol */
+static int hf_e2ap_misc;                          /* CauseMisc */
+static int hf_e2ap_procedureCode;                 /* ProcedureCode */
+static int hf_e2ap_triggeringMessage;             /* TriggeringMessage */
+static int hf_e2ap_procedureCriticality;          /* Criticality */
+static int hf_e2ap_ricRequestorID;                /* RICrequestID */
+static int hf_e2ap_iEsCriticalityDiagnostics;     /* CriticalityDiagnostics_IE_List */
+static int hf_e2ap_CriticalityDiagnostics_IE_List_item;  /* CriticalityDiagnostics_IE_Item */
+static int hf_e2ap_iECriticality;                 /* Criticality */
+static int hf_e2ap_iE_ID;                         /* ProtocolIE_ID */
+static int hf_e2ap_typeOfError;                   /* TypeOfError */
+static int hf_e2ap_e2nodeComponentRequestPart;    /* T_e2nodeComponentRequestPart */
+static int hf_e2ap_e2nodeComponentResponsePart;   /* T_e2nodeComponentResponsePart */
+static int hf_e2ap_updateOutcome;                 /* T_updateOutcome */
+static int hf_e2ap_failureCause;                  /* Cause */
+static int hf_e2ap_e2nodeComponentInterfaceTypeNG;  /* T_e2nodeComponentInterfaceTypeNG */
+static int hf_e2ap_e2nodeComponentInterfaceTypeXn;  /* T_e2nodeComponentInterfaceTypeXn */
+static int hf_e2ap_e2nodeComponentInterfaceTypeE1;  /* T_e2nodeComponentInterfaceTypeE1 */
+static int hf_e2ap_e2nodeComponentInterfaceTypeF1;  /* T_e2nodeComponentInterfaceTypeF1 */
+static int hf_e2ap_e2nodeComponentInterfaceTypeW1;  /* E2nodeComponentInterfaceW1 */
+static int hf_e2ap_e2nodeComponentInterfaceTypeS1;  /* T_e2nodeComponentInterfaceTypeS1 */
+static int hf_e2ap_e2nodeComponentInterfaceTypeX2;  /* T_e2nodeComponentInterfaceTypeX2 */
+static int hf_e2ap_gNB_CU_UP_ID;                  /* GNB_CU_UP_ID */
+static int hf_e2ap_gNB_DU_ID;                     /* GNB_DU_ID */
+static int hf_e2ap_amf_name;                      /* AMFName */
+static int hf_e2ap_mme_name;                      /* MMEname */
+static int hf_e2ap_global_eNB_ID;                 /* GlobalENB_ID */
+static int hf_e2ap_global_en_gNB_ID;              /* GlobalenGNB_ID */
+static int hf_e2ap_global_NG_RAN_Node_ID;         /* GlobalNG_RANNode_ID */
+static int hf_e2ap_ng_eNB_DU_ID;                  /* NGENB_DU_ID */
+static int hf_e2ap_macro_eNB_ID;                  /* BIT_STRING_SIZE_20 */
+static int hf_e2ap_home_eNB_ID;                   /* BIT_STRING_SIZE_28 */
+static int hf_e2ap_short_Macro_eNB_ID;            /* BIT_STRING_SIZE_18 */
+static int hf_e2ap_long_Macro_eNB_ID;             /* BIT_STRING_SIZE_21 */
+static int hf_e2ap_enb_ID_macro;                  /* BIT_STRING_SIZE_20 */
+static int hf_e2ap_enb_ID_shortmacro;             /* BIT_STRING_SIZE_18 */
+static int hf_e2ap_enb_ID_longmacro;              /* BIT_STRING_SIZE_21 */
+static int hf_e2ap_gNB_ID;                        /* BIT_STRING_SIZE_22_32 */
+static int hf_e2ap_gNB;                           /* GlobalE2node_gNB_ID */
+static int hf_e2ap_en_gNB;                        /* GlobalE2node_en_gNB_ID */
+static int hf_e2ap_ng_eNB;                        /* GlobalE2node_ng_eNB_ID */
+static int hf_e2ap_eNB;                           /* GlobalE2node_eNB_ID */
+static int hf_e2ap_en_gNB_CU_UP_ID;               /* GNB_CU_UP_ID */
+static int hf_e2ap_en_gNB_DU_ID;                  /* GNB_DU_ID */
+static int hf_e2ap_global_gNB_ID;                 /* GlobalgNB_ID */
+static int hf_e2ap_global_ng_eNB_ID;              /* GlobalngeNB_ID */
+static int hf_e2ap_ngENB_DU_ID;                   /* NGENB_DU_ID */
+static int hf_e2ap_pLMN_Identity;                 /* PLMN_Identity */
+static int hf_e2ap_eNB_ID;                        /* ENB_ID */
+static int hf_e2ap_gNB_ID_01;                     /* ENGNB_ID */
+static int hf_e2ap_plmn_id;                       /* PLMN_Identity */
+static int hf_e2ap_gnb_id;                        /* T_gnb_id */
+static int hf_e2ap_enb_id;                        /* ENB_ID_Choice */
+static int hf_e2ap_gNB_01;                        /* GlobalgNB_ID */
+static int hf_e2ap_ng_eNB_01;                     /* GlobalngeNB_ID */
+static int hf_e2ap_ric_ID;                        /* BIT_STRING_SIZE_20 */
+static int hf_e2ap_gnb_ID;                        /* BIT_STRING_SIZE_22_32 */
+static int hf_e2ap_ricRequestorID_01;             /* INTEGER_0_65535 */
+static int hf_e2ap_ricInstanceID;                 /* INTEGER_0_65535 */
+static int hf_e2ap_ricSubsequentActionType;       /* RICsubsequentActionType */
+static int hf_e2ap_ricTimeToWait;                 /* RICtimeToWait */
+static int hf_e2ap_tnlAddress;                    /* T_tnlAddress */
+static int hf_e2ap_tnlPort;                       /* T_tnlPort */
+static int hf_e2ap_protocolIEs;                   /* ProtocolIE_Container */
+static int hf_e2ap_ricEventTriggerDefinition;     /* RICeventTriggerDefinition */
+static int hf_e2ap_ricAction_ToBeSetup_List;      /* RICactions_ToBeSetup_List */
+static int hf_e2ap_RICactions_ToBeSetup_List_item;  /* ProtocolIE_SingleContainer */
+static int hf_e2ap_ricActionID;                   /* RICactionID */
+static int hf_e2ap_ricActionType;                 /* RICactionType */
+static int hf_e2ap_ricActionDefinition;           /* RICactionDefinition */
+static int hf_e2ap_ricSubsequentAction;           /* RICsubsequentAction */
+static int hf_e2ap_ricActionExecutionOrder;       /* RICactionExecutionOrder */
+static int hf_e2ap_RICaction_Admitted_List_item;  /* ProtocolIE_SingleContainer */
+static int hf_e2ap_RICaction_NotAdmitted_List_item;  /* ProtocolIE_SingleContainer */
+static int hf_e2ap_cause;                         /* Cause */
+static int hf_e2ap_RICsubscription_List_withCause_item;  /* ProtocolIE_SingleContainer */
+static int hf_e2ap_ricRequestID;                  /* RICrequestID */
+static int hf_e2ap_ranFunctionID;                 /* RANfunctionID */
+static int hf_e2ap_RICactions_ToBeRemovedForModification_List_item;  /* ProtocolIE_SingleContainer */
+static int hf_e2ap_RICactions_ToBeModifiedForModification_List_item;  /* ProtocolIE_SingleContainer */
+static int hf_e2ap_RICactions_ToBeAddedForModification_List_item;  /* ProtocolIE_SingleContainer */
+static int hf_e2ap_RICactions_RemovedForModification_List_item;  /* ProtocolIE_SingleContainer */
+static int hf_e2ap_RICactions_FailedToBeRemovedForModification_List_item;  /* ProtocolIE_SingleContainer */
+static int hf_e2ap_RICactions_ModifiedForModification_List_item;  /* ProtocolIE_SingleContainer */
+static int hf_e2ap_RICactions_FailedToBeModifiedForModification_List_item;  /* ProtocolIE_SingleContainer */
+static int hf_e2ap_RICactions_AddedForModification_List_item;  /* ProtocolIE_SingleContainer */
+static int hf_e2ap_RICactions_FailedToBeAddedForModification_List_item;  /* ProtocolIE_SingleContainer */
+static int hf_e2ap_RICactions_RequiredToBeModified_List_item;  /* ProtocolIE_SingleContainer */
+static int hf_e2ap_RICactions_RequiredToBeRemoved_List_item;  /* ProtocolIE_SingleContainer */
+static int hf_e2ap_RICactions_ConfirmedForModification_List_item;  /* ProtocolIE_SingleContainer */
+static int hf_e2ap_RICactions_RefusedToBeModified_List_item;  /* ProtocolIE_SingleContainer */
+static int hf_e2ap_RICactions_ConfirmedForRemoval_List_item;  /* ProtocolIE_SingleContainer */
+static int hf_e2ap_RICactions_RefusedToBeRemoved_List_item;  /* ProtocolIE_SingleContainer */
+static int hf_e2ap_E2connectionUpdate_List_item;  /* ProtocolIE_SingleContainer */
+static int hf_e2ap_tnlInformation;                /* TNLinformation */
+static int hf_e2ap_tnlUsage;                      /* TNLusage */
+static int hf_e2ap_E2connectionUpdateRemove_List_item;  /* ProtocolIE_SingleContainer */
+static int hf_e2ap_E2connectionSetupFailed_List_item;  /* ProtocolIE_SingleContainer */
+static int hf_e2ap_E2nodeComponentConfigAddition_List_item;  /* ProtocolIE_SingleContainer */
+static int hf_e2ap_e2nodeComponentInterfaceType;  /* E2nodeComponentInterfaceType */
+static int hf_e2ap_e2nodeComponentID;             /* E2nodeComponentID */
+static int hf_e2ap_e2nodeComponentConfiguration;  /* E2nodeComponentConfiguration */
+static int hf_e2ap_E2nodeComponentConfigUpdate_List_item;  /* ProtocolIE_SingleContainer */
+static int hf_e2ap_E2nodeComponentConfigRemoval_List_item;  /* ProtocolIE_SingleContainer */
+static int hf_e2ap_E2nodeTNLassociationRemoval_List_item;  /* ProtocolIE_SingleContainer */
+static int hf_e2ap_tnlInformationRIC;             /* TNLinformation */
+static int hf_e2ap_E2nodeComponentConfigAdditionAck_List_item;  /* ProtocolIE_SingleContainer */
+static int hf_e2ap_e2nodeComponentConfigurationAck;  /* E2nodeComponentConfigurationAck */
+static int hf_e2ap_E2nodeComponentConfigUpdateAck_List_item;  /* ProtocolIE_SingleContainer */
+static int hf_e2ap_E2nodeComponentConfigRemovalAck_List_item;  /* ProtocolIE_SingleContainer */
+static int hf_e2ap_RANfunctions_List_item;        /* ProtocolIE_SingleContainer */
+static int hf_e2ap_ranFunctionDefinition;         /* RANfunctionDefinition */
+static int hf_e2ap_ranFunctionRevision;           /* RANfunctionRevision */
+static int hf_e2ap_ranFunctionOID;                /* RANfunctionOID */
+static int hf_e2ap_RANfunctionsID_List_item;      /* ProtocolIE_SingleContainer */
+static int hf_e2ap_RANfunctionsIDcause_List_item;  /* ProtocolIE_SingleContainer */
+static int hf_e2ap_initiatingMessage;             /* InitiatingMessage */
+static int hf_e2ap_successfulOutcome;             /* SuccessfulOutcome */
+static int hf_e2ap_unsuccessfulOutcome;           /* UnsuccessfulOutcome */
+static int hf_e2ap_initiatingMessagevalue;        /* InitiatingMessage_value */
+static int hf_e2ap_successfulOutcome_value;       /* SuccessfulOutcome_value */
+static int hf_e2ap_unsuccessfulOutcome_value;     /* UnsuccessfulOutcome_value */
+static int hf_e2ap_nR_CGI;                        /* NR_CGI */
+static int hf_e2ap_eUTRA_CGI;                     /* EUTRA_CGI */
+static int hf_e2ap_nG;                            /* InterfaceID_NG */
+static int hf_e2ap_xN;                            /* InterfaceID_Xn */
+static int hf_e2ap_f1;                            /* InterfaceID_F1 */
+static int hf_e2ap_e1;                            /* InterfaceID_E1 */
+static int hf_e2ap_s1;                            /* InterfaceID_S1 */
+static int hf_e2ap_x2;                            /* InterfaceID_X2 */
+static int hf_e2ap_w1;                            /* InterfaceID_W1 */
+static int hf_e2ap_guami;                         /* GUAMI */
+static int hf_e2ap_global_NG_RAN_ID;              /* GlobalNGRANNodeID */
+static int hf_e2ap_globalGNB_ID;                  /* GlobalGNB_ID */
+static int hf_e2ap_gUMMEI;                        /* GUMMEI */
+static int hf_e2ap_nodeType;                      /* T_nodeType */
+static int hf_e2ap_global_ng_eNB_ID_01;           /* GlobalNgENB_ID */
+static int hf_e2ap_interfaceProcedureID;          /* INTEGER */
+static int hf_e2ap_messageType;                   /* T_messageType */
+static int hf_e2ap_ranFunction_ShortName;         /* T_ranFunction_ShortName */
+static int hf_e2ap_ranFunction_E2SM_OID;          /* PrintableString_SIZE_1_1000_ */
+static int hf_e2ap_ranFunction_Description;       /* PrintableString_SIZE_1_150_ */
+static int hf_e2ap_ranFunction_Instance;          /* INTEGER */
+static int hf_e2ap_rrcType;                       /* T_rrcType */
+static int hf_e2ap_lTE;                           /* RRCclass_LTE */
+static int hf_e2ap_nR;                            /* RRCclass_NR */
+static int hf_e2ap_messageID;                     /* INTEGER */
+static int hf_e2ap_nR_01;                         /* NR_ARFCN */
+static int hf_e2ap_eUTRA;                         /* E_UTRA_ARFCN */
+static int hf_e2ap_nR_02;                         /* NR_PCI */
+static int hf_e2ap_eUTRA_01;                      /* E_UTRA_PCI */
+static int hf_e2ap_gNB_UEID;                      /* UEID_GNB */
+static int hf_e2ap_gNB_DU_UEID;                   /* UEID_GNB_DU */
+static int hf_e2ap_gNB_CU_UP_UEID;                /* UEID_GNB_CU_UP */
+static int hf_e2ap_ng_eNB_UEID;                   /* UEID_NG_ENB */
+static int hf_e2ap_ng_eNB_DU_UEID;                /* UEID_NG_ENB_DU */
+static int hf_e2ap_en_gNB_UEID;                   /* UEID_EN_GNB */
+static int hf_e2ap_eNB_UEID;                      /* UEID_ENB */
+static int hf_e2ap_amf_UE_NGAP_ID;                /* AMF_UE_NGAP_ID */
+static int hf_e2ap_gNB_CU_UE_F1AP_ID_List;        /* UEID_GNB_CU_F1AP_ID_List */
+static int hf_e2ap_gNB_CU_CP_UE_E1AP_ID_List;     /* UEID_GNB_CU_CP_E1AP_ID_List */
+static int hf_e2ap_ran_UEID;                      /* RANUEID */
+static int hf_e2ap_m_NG_RAN_UE_XnAP_ID;           /* NG_RANnodeUEXnAPID */
+static int hf_e2ap_globalNG_RANNode_ID;           /* GlobalNGRANNodeID */
+static int hf_e2ap_UEID_GNB_CU_CP_E1AP_ID_List_item;  /* UEID_GNB_CU_CP_E1AP_ID_Item */
+static int hf_e2ap_gNB_CU_CP_UE_E1AP_ID;          /* GNB_CU_CP_UE_E1AP_ID */
+static int hf_e2ap_UEID_GNB_CU_F1AP_ID_List_item;  /* UEID_GNB_CU_CP_F1AP_ID_Item */
+static int hf_e2ap_gNB_CU_UE_F1AP_ID;             /* GNB_CU_UE_F1AP_ID */
+static int hf_e2ap_ng_eNB_CU_UE_W1AP_ID;          /* NGENB_CU_UE_W1AP_ID */
+static int hf_e2ap_globalNgENB_ID;                /* GlobalNgENB_ID */
+static int hf_e2ap_m_eNB_UE_X2AP_ID;              /* ENB_UE_X2AP_ID */
+static int hf_e2ap_m_eNB_UE_X2AP_ID_Extension;    /* ENB_UE_X2AP_ID_Extension */
+static int hf_e2ap_globalENB_ID;                  /* GlobalENB_ID */
+static int hf_e2ap_mME_UE_S1AP_ID;                /* MME_UE_S1AP_ID */
+static int hf_e2ap_pLMN_Identity_01;              /* PLMNIdentity */
+static int hf_e2ap_mME_Group_ID;                  /* MME_Group_ID */
+static int hf_e2ap_mME_Code;                      /* MME_Code */
+static int hf_e2ap_pLMNIdentity;                  /* PLMNIdentity */
+static int hf_e2ap_eUTRACellIdentity;             /* EUTRACellIdentity */
+static int hf_e2ap_gNB_ID_02;                     /* GNB_ID */
+static int hf_e2ap_ngENB_ID;                      /* NgENB_ID */
+static int hf_e2ap_aMFRegionID;                   /* AMFRegionID */
+static int hf_e2ap_aMFSetID;                      /* AMFSetID */
+static int hf_e2ap_aMFPointer;                    /* AMFPointer */
+static int hf_e2ap_macroNgENB_ID;                 /* BIT_STRING_SIZE_20 */
+static int hf_e2ap_shortMacroNgENB_ID;            /* BIT_STRING_SIZE_18 */
+static int hf_e2ap_longMacroNgENB_ID;             /* BIT_STRING_SIZE_21 */
+static int hf_e2ap_nRCellIdentity;                /* NRCellIdentity */
+static int hf_e2ap_sST;                           /* SST */
+static int hf_e2ap_sD;                            /* SD */
+static int hf_e2ap_gNB_02;                        /* GlobalGNB_ID */
+static int hf_e2ap_ng_eNB_02;                     /* GlobalNgENB_ID */
+static int hf_e2ap_nRARFCN;                       /* INTEGER_0_maxNRARFCN */
+static int hf_e2ap_NRFrequencyBand_List_item;     /* NRFrequencyBandItem */
+static int hf_e2ap_freqBandIndicatorNr;           /* INTEGER_1_1024_ */
+static int hf_e2ap_supportedSULBandList;          /* SupportedSULBandList */
+static int hf_e2ap_nrARFCN;                       /* NR_ARFCN */
+static int hf_e2ap_frequencyBand_List;            /* NRFrequencyBand_List */
+static int hf_e2ap_frequencyShift7p5khz;          /* NRFrequencyShift7p5khz */
+static int hf_e2ap_SupportedSULBandList_item;     /* SupportedSULFreqBandItem */
+static int hf_e2ap_NeighborCell_List_item;        /* NeighborCell_Item */
+static int hf_e2ap_ranType_Choice_NR;             /* NeighborCell_Item_Choice_NR */
+static int hf_e2ap_ranType_Choice_EUTRA;          /* NeighborCell_Item_Choice_E_UTRA */
+static int hf_e2ap_nR_PCI;                        /* NR_PCI */
+static int hf_e2ap_fiveGS_TAC;                    /* FiveGS_TAC */
+static int hf_e2ap_nR_mode_info;                  /* T_nR_mode_info */
+static int hf_e2ap_nR_FreqInfo;                   /* NRFrequencyInfo */
+static int hf_e2ap_x2_Xn_established;             /* T_x2_Xn_established */
+static int hf_e2ap_hO_validated;                  /* T_hO_validated */
+static int hf_e2ap_version;                       /* INTEGER_1_65535_ */
+static int hf_e2ap_eUTRA_PCI;                     /* E_UTRA_PCI */
+static int hf_e2ap_eUTRA_ARFCN;                   /* E_UTRA_ARFCN */
+static int hf_e2ap_eUTRA_TAC;                     /* E_UTRA_TAC */
+static int hf_e2ap_x2_Xn_established_01;          /* T_x2_Xn_established_01 */
+static int hf_e2ap_hO_validated_01;               /* T_hO_validated_01 */
+static int hf_e2ap_servingCellPCI;                /* ServingCell_PCI */
+static int hf_e2ap_servingCellARFCN;              /* ServingCell_ARFCN */
+static int hf_e2ap_neighborCell_List;             /* NeighborCell_List */
+static int hf_e2ap_cellInfo_List;                 /* SEQUENCE_SIZE_1_maxnoofCellInfo_OF_EventTrigger_Cell_Info_Item */
+static int hf_e2ap_cellInfo_List_item;            /* EventTrigger_Cell_Info_Item */
+static int hf_e2ap_eventTriggerCellID;            /* RIC_EventTrigger_Cell_ID */
+static int hf_e2ap_cellType;                      /* T_cellType */
+static int hf_e2ap_cellType_Choice_Individual;    /* EventTrigger_Cell_Info_Item_Choice_Individual */
+static int hf_e2ap_cellType_Choice_Group;         /* EventTrigger_Cell_Info_Item_Choice_Group */
+static int hf_e2ap_logicalOR;                     /* LogicalOR */
+static int hf_e2ap_cellGlobalID;                  /* CGI */
+static int hf_e2ap_ranParameterTesting;           /* RANParameter_Testing */
+static int hf_e2ap_ueInfo_List;                   /* SEQUENCE_SIZE_1_maxnoofUEInfo_OF_EventTrigger_UE_Info_Item */
+static int hf_e2ap_ueInfo_List_item;              /* EventTrigger_UE_Info_Item */
+static int hf_e2ap_eventTriggerUEID;              /* RIC_EventTrigger_UE_ID */
+static int hf_e2ap_ueType;                        /* T_ueType */
+static int hf_e2ap_ueType_Choice_Individual;      /* EventTrigger_UE_Info_Item_Choice_Individual */
+static int hf_e2ap_ueType_Choice_Group;           /* EventTrigger_UE_Info_Item_Choice_Group */
+static int hf_e2ap_ueID;                          /* UEID */
+static int hf_e2ap_ueEvent_List;                  /* SEQUENCE_SIZE_1_maxnoofUEeventInfo_OF_EventTrigger_UEevent_Info_Item */
+static int hf_e2ap_ueEvent_List_item;             /* EventTrigger_UEevent_Info_Item */
+static int hf_e2ap_ueEventID;                     /* RIC_EventTrigger_UEevent_ID */
+static int hf_e2ap_ranParameter_Definition_Choice;  /* RANParameter_Definition_Choice */
+static int hf_e2ap_choiceLIST;                    /* RANParameter_Definition_Choice_LIST */
+static int hf_e2ap_choiceSTRUCTURE;               /* RANParameter_Definition_Choice_STRUCTURE */
+static int hf_e2ap_ranParameter_List;             /* SEQUENCE_SIZE_1_maxnoofItemsinList_OF_RANParameter_Definition_Choice_LIST_Item */
+static int hf_e2ap_ranParameter_List_item;        /* RANParameter_Definition_Choice_LIST_Item */
+static int hf_e2ap_ranParameter_ID;               /* RANParameter_ID */
+static int hf_e2ap_ranParameter_name;             /* RANParameter_Name */
+static int hf_e2ap_ranParameter_Definition;       /* RANParameter_Definition */
+static int hf_e2ap_ranParameter_STRUCTURE;        /* SEQUENCE_SIZE_1_maxnoofParametersinStructure_OF_RANParameter_Definition_Choice_STRUCTURE_Item */
+static int hf_e2ap_ranParameter_STRUCTURE_item;   /* RANParameter_Definition_Choice_STRUCTURE_Item */
+static int hf_e2ap_valueBoolean;                  /* BOOLEAN */
+static int hf_e2ap_valueInt;                      /* INTEGER */
+static int hf_e2ap_valueReal;                     /* REAL */
+static int hf_e2ap_valueBitS;                     /* BIT_STRING */
+static int hf_e2ap_valueOctS;                     /* OCTET_STRING */
+static int hf_e2ap_valuePrintableString;          /* PrintableString */
+static int hf_e2ap_ranP_Choice_ElementTrue;       /* RANParameter_ValueType_Choice_ElementTrue */
+static int hf_e2ap_ranP_Choice_ElementFalse;      /* RANParameter_ValueType_Choice_ElementFalse */
+static int hf_e2ap_ranP_Choice_Structure;         /* RANParameter_ValueType_Choice_Structure */
+static int hf_e2ap_ranP_Choice_List;              /* RANParameter_ValueType_Choice_List */
+static int hf_e2ap_ranParameter_value;            /* RANParameter_Value */
+static int hf_e2ap_ranParameter_Structure;        /* RANParameter_STRUCTURE */
+static int hf_e2ap_ranParameter_List_01;          /* RANParameter_LIST */
+static int hf_e2ap_sequence_of_ranParameters;     /* SEQUENCE_SIZE_1_maxnoofParametersinStructure_OF_RANParameter_STRUCTURE_Item */
+static int hf_e2ap_sequence_of_ranParameters_item;  /* RANParameter_STRUCTURE_Item */
+static int hf_e2ap_ranParameter_valueType;        /* RANParameter_ValueType */
+static int hf_e2ap_list_of_ranParameter;          /* SEQUENCE_SIZE_1_maxnoofItemsinList_OF_RANParameter_STRUCTURE */
+static int hf_e2ap_list_of_ranParameter_item;     /* RANParameter_STRUCTURE */
+static int hf_e2ap_RANParameter_Testing_item;     /* RANParameter_Testing_Item */
+static int hf_e2ap_ranP_Choice_comparison;        /* T_ranP_Choice_comparison */
+static int hf_e2ap_ranP_Choice_presence;          /* T_ranP_Choice_presence */
+static int hf_e2ap_ranParameter_Type;             /* T_ranParameter_Type */
+static int hf_e2ap_ranP_Choice_List_01;           /* RANParameter_Testing_Item_Choice_List */
+static int hf_e2ap_ranP_Choice_Structure_01;      /* RANParameter_Testing_Item_Choice_Structure */
+static int hf_e2ap_ranP_Choice_ElementTrue_01;    /* RANParameter_Testing_Item_Choice_ElementTrue */
+static int hf_e2ap_ranP_Choice_ElementFalse_01;   /* RANParameter_Testing_Item_Choice_ElementFalse */
+static int hf_e2ap_ranParameter_List_02;          /* RANParameter_Testing_LIST */
+static int hf_e2ap_ranParameter_Structure_01;     /* RANParameter_Testing_STRUCTURE */
+static int hf_e2ap_ranParameter_TestCondition;    /* RANParameter_TestingCondition */
+static int hf_e2ap_ranParameter_Value;            /* RANParameter_Value */
+static int hf_e2ap_RANParameter_Testing_LIST_item;  /* RANParameter_Testing_Item */
+static int hf_e2ap_RANParameter_Testing_STRUCTURE_item;  /* RANParameter_Testing_Item */
+static int hf_e2ap_ric_PolicyAction_ID;           /* RIC_ControlAction_ID */
+static int hf_e2ap_ranParameters_List;            /* SEQUENCE_SIZE_1_maxnoofAssociatedRANParameters_OF_RIC_PolicyAction_RANParameter_Item */
+static int hf_e2ap_ranParameters_List_item;       /* RIC_PolicyAction_RANParameter_Item */
+static int hf_e2ap_ric_PolicyDecision;            /* T_ric_PolicyDecision */
+static int hf_e2ap_ric_eventTrigger_formats;      /* T_ric_eventTrigger_formats */
+static int hf_e2ap_eventTrigger_Format1;          /* E2SM_RC_EventTrigger_Format1 */
+static int hf_e2ap_eventTrigger_Format2;          /* E2SM_RC_EventTrigger_Format2 */
+static int hf_e2ap_eventTrigger_Format3;          /* E2SM_RC_EventTrigger_Format3 */
+static int hf_e2ap_eventTrigger_Format4;          /* E2SM_RC_EventTrigger_Format4 */
+static int hf_e2ap_eventTrigger_Format5;          /* E2SM_RC_EventTrigger_Format5 */
+static int hf_e2ap_message_List;                  /* SEQUENCE_SIZE_1_maxnoofMessages_OF_E2SM_RC_EventTrigger_Format1_Item */
+static int hf_e2ap_message_List_item;             /* E2SM_RC_EventTrigger_Format1_Item */
+static int hf_e2ap_globalAssociatedUEInfo;        /* EventTrigger_UE_Info */
+static int hf_e2ap_ric_eventTriggerCondition_ID;  /* RIC_EventTriggerCondition_ID */
+static int hf_e2ap_messageType_01;                /* MessageType_Choice */
+static int hf_e2ap_messageDirection;              /* T_messageDirection */
+static int hf_e2ap_associatedUEInfo;              /* EventTrigger_UE_Info */
+static int hf_e2ap_associatedUEEvent;             /* EventTrigger_UEevent_Info */
+static int hf_e2ap_messageType_Choice_NI;         /* MessageType_Choice_NI */
+static int hf_e2ap_messageType_Choice_RRC;        /* MessageType_Choice_RRC */
+static int hf_e2ap_nI_Type;                       /* InterfaceType */
+static int hf_e2ap_nI_Identifier;                 /* InterfaceIdentifier */
+static int hf_e2ap_nI_Message;                    /* Interface_MessageID */
+static int hf_e2ap_rRC_Message;                   /* RRC_MessageID */
+static int hf_e2ap_ric_callProcessType_ID;        /* RIC_CallProcessType_ID */
+static int hf_e2ap_ric_callProcessBreakpoint_ID;  /* RIC_CallProcessBreakpoint_ID */
+static int hf_e2ap_associatedE2NodeInfo;          /* RANParameter_Testing */
+static int hf_e2ap_e2NodeInfoChange_List;         /* SEQUENCE_SIZE_1_maxnoofE2InfoChanges_OF_E2SM_RC_EventTrigger_Format3_Item */
+static int hf_e2ap_e2NodeInfoChange_List_item;    /* E2SM_RC_EventTrigger_Format3_Item */
+static int hf_e2ap_e2NodeInfoChange_ID;           /* INTEGER_1_512_ */
+static int hf_e2ap_associatedCellInfo;            /* EventTrigger_Cell_Info */
+static int hf_e2ap_uEInfoChange_List;             /* SEQUENCE_SIZE_1_maxnoofUEInfoChanges_OF_E2SM_RC_EventTrigger_Format4_Item */
+static int hf_e2ap_uEInfoChange_List_item;        /* E2SM_RC_EventTrigger_Format4_Item */
+static int hf_e2ap_triggerType;                   /* TriggerType_Choice */
+static int hf_e2ap_triggerType_Choice_RRCstate;   /* TriggerType_Choice_RRCstate */
+static int hf_e2ap_triggerType_Choice_UEID;       /* TriggerType_Choice_UEID */
+static int hf_e2ap_triggerType_Choice_L2state;    /* TriggerType_Choice_L2state */
+static int hf_e2ap_rrcState_List;                 /* SEQUENCE_SIZE_1_maxnoofRRCstate_OF_TriggerType_Choice_RRCstate_Item */
+static int hf_e2ap_rrcState_List_item;            /* TriggerType_Choice_RRCstate_Item */
+static int hf_e2ap_stateChangedTo;                /* RRC_State */
+static int hf_e2ap_ueIDchange_ID;                 /* INTEGER_1_512_ */
+static int hf_e2ap_associatedL2variables;         /* RANParameter_Testing */
+static int hf_e2ap_onDemand;                      /* T_onDemand */
+static int hf_e2ap_ric_Style_Type;                /* RIC_Style_Type */
+static int hf_e2ap_ric_actionDefinition_formats;  /* T_ric_actionDefinition_formats */
+static int hf_e2ap_actionDefinition_Format1;      /* E2SM_RC_ActionDefinition_Format1 */
+static int hf_e2ap_actionDefinition_Format2;      /* E2SM_RC_ActionDefinition_Format2 */
+static int hf_e2ap_actionDefinition_Format3;      /* E2SM_RC_ActionDefinition_Format3 */
+static int hf_e2ap_actionDefinition_Format4;      /* E2SM_RC_ActionDefinition_Format4 */
+static int hf_e2ap_ranP_ToBeReported_List;        /* SEQUENCE_SIZE_1_maxnoofParametersToReport_OF_E2SM_RC_ActionDefinition_Format1_Item */
+static int hf_e2ap_ranP_ToBeReported_List_item;   /* E2SM_RC_ActionDefinition_Format1_Item */
+static int hf_e2ap_ric_PolicyConditions_List;     /* SEQUENCE_SIZE_1_maxnoofPolicyConditions_OF_E2SM_RC_ActionDefinition_Format2_Item */
+static int hf_e2ap_ric_PolicyConditions_List_item;  /* E2SM_RC_ActionDefinition_Format2_Item */
+static int hf_e2ap_ric_PolicyAction;              /* RIC_PolicyAction */
+static int hf_e2ap_ric_PolicyConditionDefinition;  /* RANParameter_Testing */
+static int hf_e2ap_ric_InsertIndication_ID;       /* RIC_InsertIndication_ID */
+static int hf_e2ap_ranP_InsertIndication_List;    /* SEQUENCE_SIZE_1_maxnoofAssociatedRANParameters_OF_E2SM_RC_ActionDefinition_Format3_Item */
+static int hf_e2ap_ranP_InsertIndication_List_item;  /* E2SM_RC_ActionDefinition_Format3_Item */
+static int hf_e2ap_ric_InsertStyle_List;          /* SEQUENCE_SIZE_1_maxnoofRICStyles_OF_E2SM_RC_ActionDefinition_Format4_Style_Item */
+static int hf_e2ap_ric_InsertStyle_List_item;     /* E2SM_RC_ActionDefinition_Format4_Style_Item */
+static int hf_e2ap_requested_Insert_Style_Type;   /* RIC_Style_Type */
+static int hf_e2ap_ric_InsertIndication_List;     /* SEQUENCE_SIZE_1_maxnoofInsertIndicationActions_OF_E2SM_RC_ActionDefinition_Format4_Indication_Item */
+static int hf_e2ap_ric_InsertIndication_List_item;  /* E2SM_RC_ActionDefinition_Format4_Indication_Item */
+static int hf_e2ap_ranP_InsertIndication_List_01;  /* SEQUENCE_SIZE_1_maxnoofAssociatedRANParameters_OF_E2SM_RC_ActionDefinition_Format4_RANP_Item */
+static int hf_e2ap_ranP_InsertIndication_List_item_01;  /* E2SM_RC_ActionDefinition_Format4_RANP_Item */
+static int hf_e2ap_ric_indicationHeader_formats;  /* T_ric_indicationHeader_formats */
+static int hf_e2ap_indicationHeader_Format1;      /* E2SM_RC_IndicationHeader_Format1 */
+static int hf_e2ap_indicationHeader_Format2;      /* E2SM_RC_IndicationHeader_Format2 */
+static int hf_e2ap_indicationHeader_Format3;      /* E2SM_RC_IndicationHeader_Format3 */
+static int hf_e2ap_ric_InsertStyle_Type;          /* RIC_Style_Type */
+static int hf_e2ap_ric_indicationMessage_formats;  /* T_ric_indicationMessage_formats */
+static int hf_e2ap_indicationMessage_Format1;     /* E2SM_RC_IndicationMessage_Format1 */
+static int hf_e2ap_indicationMessage_Format2;     /* E2SM_RC_IndicationMessage_Format2 */
+static int hf_e2ap_indicationMessage_Format3;     /* E2SM_RC_IndicationMessage_Format3 */
+static int hf_e2ap_indicationMessage_Format4;     /* E2SM_RC_IndicationMessage_Format4 */
+static int hf_e2ap_indicationMessage_Format5;     /* E2SM_RC_IndicationMessage_Format5 */
+static int hf_e2ap_indicationMessage_Format6;     /* E2SM_RC_IndicationMessage_Format6 */
+static int hf_e2ap_ranP_Reported_List;            /* SEQUENCE_SIZE_1_maxnoofAssociatedRANParameters_OF_E2SM_RC_IndicationMessage_Format1_Item */
+static int hf_e2ap_ranP_Reported_List_item;       /* E2SM_RC_IndicationMessage_Format1_Item */
+static int hf_e2ap_ueParameter_List;              /* SEQUENCE_SIZE_1_maxnoofUEID_OF_E2SM_RC_IndicationMessage_Format2_Item */
+static int hf_e2ap_ueParameter_List_item;         /* E2SM_RC_IndicationMessage_Format2_Item */
+static int hf_e2ap_ranP_List;                     /* SEQUENCE_SIZE_1_maxnoofAssociatedRANParameters_OF_E2SM_RC_IndicationMessage_Format2_RANParameter_Item */
+static int hf_e2ap_ranP_List_item;                /* E2SM_RC_IndicationMessage_Format2_RANParameter_Item */
+static int hf_e2ap_cellInfo_List_01;              /* SEQUENCE_SIZE_1_maxnoofCellID_OF_E2SM_RC_IndicationMessage_Format3_Item */
+static int hf_e2ap_cellInfo_List_item_01;         /* E2SM_RC_IndicationMessage_Format3_Item */
+static int hf_e2ap_cellGlobal_ID;                 /* CGI */
+static int hf_e2ap_cellContextInfo;               /* OCTET_STRING */
+static int hf_e2ap_cellDeleted;                   /* BOOLEAN */
+static int hf_e2ap_neighborRelation_Table;        /* NeighborRelation_Info */
+static int hf_e2ap_ueInfo_List_01;                /* SEQUENCE_SIZE_0_maxnoofUEID_OF_E2SM_RC_IndicationMessage_Format4_ItemUE */
+static int hf_e2ap_ueInfo_List_item_01;           /* E2SM_RC_IndicationMessage_Format4_ItemUE */
+static int hf_e2ap_cellInfo_List_02;              /* SEQUENCE_SIZE_0_maxnoofCellID_OF_E2SM_RC_IndicationMessage_Format4_ItemCell */
+static int hf_e2ap_cellInfo_List_item_02;         /* E2SM_RC_IndicationMessage_Format4_ItemCell */
+static int hf_e2ap_ueContextInfo;                 /* OCTET_STRING */
+static int hf_e2ap_ranP_Requested_List;           /* SEQUENCE_SIZE_0_maxnoofAssociatedRANParameters_OF_E2SM_RC_IndicationMessage_Format5_Item */
+static int hf_e2ap_ranP_Requested_List_item;      /* E2SM_RC_IndicationMessage_Format5_Item */
+static int hf_e2ap_ric_InsertStyle_List_01;       /* SEQUENCE_SIZE_1_maxnoofRICStyles_OF_E2SM_RC_IndicationMessage_Format6_Style_Item */
+static int hf_e2ap_ric_InsertStyle_List_item_01;  /* E2SM_RC_IndicationMessage_Format6_Style_Item */
+static int hf_e2ap_indicated_Insert_Style_Type;   /* RIC_Style_Type */
+static int hf_e2ap_ric_InsertIndication_List_01;  /* SEQUENCE_SIZE_1_maxnoofInsertIndicationActions_OF_E2SM_RC_IndicationMessage_Format6_Indication_Item */
+static int hf_e2ap_ric_InsertIndication_List_item_01;  /* E2SM_RC_IndicationMessage_Format6_Indication_Item */
+static int hf_e2ap_ranP_InsertIndication_List_02;  /* SEQUENCE_SIZE_0_maxnoofAssociatedRANParameters_OF_E2SM_RC_IndicationMessage_Format6_RANP_Item */
+static int hf_e2ap_ranP_InsertIndication_List_item_02;  /* E2SM_RC_IndicationMessage_Format6_RANP_Item */
+static int hf_e2ap_ric_callProcessID_formats;     /* T_ric_callProcessID_formats */
+static int hf_e2ap_callProcessID_Format1;         /* E2SM_RC_CallProcessID_Format1 */
+static int hf_e2ap_ric_callProcess_ID;            /* RAN_CallProcess_ID */
+static int hf_e2ap_ric_controlHeader_formats;     /* T_ric_controlHeader_formats */
+static int hf_e2ap_controlHeader_Format1;         /* E2SM_RC_ControlHeader_Format1 */
+static int hf_e2ap_controlHeader_Format2;         /* E2SM_RC_ControlHeader_Format2 */
+static int hf_e2ap_ric_ControlAction_ID;          /* RIC_ControlAction_ID */
+static int hf_e2ap_ric_ControlDecision;           /* T_ric_ControlDecision */
+static int hf_e2ap_ric_ControlDecision_01;        /* T_ric_ControlDecision_01 */
+static int hf_e2ap_ric_controlMessage_formats;    /* T_ric_controlMessage_formats */
+static int hf_e2ap_controlMessage_Format1;        /* E2SM_RC_ControlMessage_Format1 */
+static int hf_e2ap_controlMessage_Format2;        /* E2SM_RC_ControlMessage_Format2 */
+static int hf_e2ap_ranP_List_01;                  /* SEQUENCE_SIZE_0_maxnoofAssociatedRANParameters_OF_E2SM_RC_ControlMessage_Format1_Item */
+static int hf_e2ap_ranP_List_item_01;             /* E2SM_RC_ControlMessage_Format1_Item */
+static int hf_e2ap_ric_ControlStyle_List;         /* SEQUENCE_SIZE_1_maxnoofRICStyles_OF_E2SM_RC_ControlMessage_Format2_Style_Item */
+static int hf_e2ap_ric_ControlStyle_List_item;    /* E2SM_RC_ControlMessage_Format2_Style_Item */
+static int hf_e2ap_indicated_Control_Style_Type;  /* RIC_Style_Type */
+static int hf_e2ap_ric_ControlAction_List;        /* SEQUENCE_SIZE_1_maxnoofMulCtrlActions_OF_E2SM_RC_ControlMessage_Format2_ControlAction_Item */
+static int hf_e2ap_ric_ControlAction_List_item;   /* E2SM_RC_ControlMessage_Format2_ControlAction_Item */
+static int hf_e2ap_ranP_List_02;                  /* E2SM_RC_ControlMessage_Format1 */
+static int hf_e2ap_ric_controlOutcome_formats;    /* T_ric_controlOutcome_formats */
+static int hf_e2ap_controlOutcome_Format1;        /* E2SM_RC_ControlOutcome_Format1 */
+static int hf_e2ap_controlOutcome_Format2;        /* E2SM_RC_ControlOutcome_Format2 */
+static int hf_e2ap_controlOutcome_Format3;        /* E2SM_RC_ControlOutcome_Format3 */
+static int hf_e2ap_ranP_List_03;                  /* SEQUENCE_SIZE_0_maxnoofRANOutcomeParameters_OF_E2SM_RC_ControlOutcome_Format1_Item */
+static int hf_e2ap_ranP_List_item_02;             /* E2SM_RC_ControlOutcome_Format1_Item */
+static int hf_e2ap_ric_ControlStyle_List_01;      /* SEQUENCE_SIZE_1_maxnoofRICStyles_OF_E2SM_RC_ControlOutcome_Format2_Style_Item */
+static int hf_e2ap_ric_ControlStyle_List_item_01;  /* E2SM_RC_ControlOutcome_Format2_Style_Item */
+static int hf_e2ap_ric_ControlOutcome_List;       /* SEQUENCE_SIZE_1_maxnoofMulCtrlActions_OF_E2SM_RC_ControlOutcome_Format2_ControlOutcome_Item */
+static int hf_e2ap_ric_ControlOutcome_List_item;  /* E2SM_RC_ControlOutcome_Format2_ControlOutcome_Item */
+static int hf_e2ap_ranP_List_04;                  /* SEQUENCE_SIZE_1_maxnoofAssociatedRANParameters_OF_E2SM_RC_ControlOutcome_Format2_RANP_Item */
+static int hf_e2ap_ranP_List_item_03;             /* E2SM_RC_ControlOutcome_Format2_RANP_Item */
+static int hf_e2ap_ranP_List_05;                  /* SEQUENCE_SIZE_0_maxnoofRANOutcomeParameters_OF_E2SM_RC_ControlOutcome_Format3_Item */
+static int hf_e2ap_ranP_List_item_04;             /* E2SM_RC_ControlOutcome_Format3_Item */
+static int hf_e2ap_ranFunction_Name;              /* RANfunction_Name */
+static int hf_e2ap_ranFunctionDefinition_EventTrigger;  /* RANFunctionDefinition_EventTrigger */
+static int hf_e2ap_ranFunctionDefinition_Report;  /* RANFunctionDefinition_Report */
+static int hf_e2ap_ranFunctionDefinition_Insert;  /* RANFunctionDefinition_Insert */
+static int hf_e2ap_ranFunctionDefinition_Control;  /* RANFunctionDefinition_Control */
+static int hf_e2ap_ranFunctionDefinition_Policy;  /* RANFunctionDefinition_Policy */
+static int hf_e2ap_ric_EventTriggerStyle_List;    /* SEQUENCE_SIZE_1_maxnoofRICStyles_OF_RANFunctionDefinition_EventTrigger_Style_Item */
+static int hf_e2ap_ric_EventTriggerStyle_List_item;  /* RANFunctionDefinition_EventTrigger_Style_Item */
+static int hf_e2ap_ran_L2Parameters_List;         /* SEQUENCE_SIZE_1_maxnoofAssociatedRANParameters_OF_L2Parameters_RANParameter_Item */
+static int hf_e2ap_ran_L2Parameters_List_item;    /* L2Parameters_RANParameter_Item */
+static int hf_e2ap_ran_CallProcessTypes_List;     /* SEQUENCE_SIZE_1_maxnoofCallProcessTypes_OF_RANFunctionDefinition_EventTrigger_CallProcess_Item */
+static int hf_e2ap_ran_CallProcessTypes_List_item;  /* RANFunctionDefinition_EventTrigger_CallProcess_Item */
+static int hf_e2ap_ran_UEIdentificationParameters_List;  /* SEQUENCE_SIZE_1_maxnoofAssociatedRANParameters_OF_UEIdentification_RANParameter_Item */
+static int hf_e2ap_ran_UEIdentificationParameters_List_item;  /* UEIdentification_RANParameter_Item */
+static int hf_e2ap_ran_CellIdentificationParameters_List;  /* SEQUENCE_SIZE_1_maxnoofAssociatedRANParameters_OF_CellIdentification_RANParameter_Item */
+static int hf_e2ap_ran_CellIdentificationParameters_List_item;  /* CellIdentification_RANParameter_Item */
+static int hf_e2ap_ric_EventTriggerStyle_Type;    /* RIC_Style_Type */
+static int hf_e2ap_ric_EventTriggerStyle_Name;    /* RIC_Style_Name */
+static int hf_e2ap_ric_EventTriggerFormat_Type;   /* RIC_Format_Type */
+static int hf_e2ap_callProcessType_ID;            /* RIC_CallProcessType_ID */
+static int hf_e2ap_callProcessType_Name;          /* RIC_CallProcessType_Name */
+static int hf_e2ap_callProcessBreakpoints_List;   /* SEQUENCE_SIZE_1_maxnoofCallProcessBreakpoints_OF_RANFunctionDefinition_EventTrigger_Breakpoint_Item */
+static int hf_e2ap_callProcessBreakpoints_List_item;  /* RANFunctionDefinition_EventTrigger_Breakpoint_Item */
+static int hf_e2ap_callProcessBreakpoint_ID;      /* RIC_CallProcessBreakpoint_ID */
+static int hf_e2ap_callProcessBreakpoint_Name;    /* RIC_CallProcessBreakpoint_Name */
+static int hf_e2ap_ran_CallProcessBreakpointParameters_List;  /* SEQUENCE_SIZE_1_maxnoofAssociatedRANParameters_OF_CallProcessBreakpoint_RANParameter_Item */
+static int hf_e2ap_ran_CallProcessBreakpointParameters_List_item;  /* CallProcessBreakpoint_RANParameter_Item */
+static int hf_e2ap_ric_ReportStyle_List;          /* SEQUENCE_SIZE_1_maxnoofRICStyles_OF_RANFunctionDefinition_Report_Item */
+static int hf_e2ap_ric_ReportStyle_List_item;     /* RANFunctionDefinition_Report_Item */
+static int hf_e2ap_ric_ReportStyle_Type;          /* RIC_Style_Type */
+static int hf_e2ap_ric_ReportStyle_Name;          /* RIC_Style_Name */
+static int hf_e2ap_ric_SupportedEventTriggerStyle_Type;  /* RIC_Style_Type */
+static int hf_e2ap_ric_ReportActionFormat_Type;   /* RIC_Format_Type */
+static int hf_e2ap_ric_IndicationHeaderFormat_Type;  /* RIC_Format_Type */
+static int hf_e2ap_ric_IndicationMessageFormat_Type;  /* RIC_Format_Type */
+static int hf_e2ap_ran_ReportParameters_List;     /* SEQUENCE_SIZE_1_maxnoofAssociatedRANParameters_OF_Report_RANParameter_Item */
+static int hf_e2ap_ran_ReportParameters_List_item;  /* Report_RANParameter_Item */
+static int hf_e2ap_ric_InsertStyle_List_02;       /* SEQUENCE_SIZE_1_maxnoofRICStyles_OF_RANFunctionDefinition_Insert_Item */
+static int hf_e2ap_ric_InsertStyle_List_item_02;  /* RANFunctionDefinition_Insert_Item */
+static int hf_e2ap_ric_InsertStyle_Name;          /* RIC_Style_Name */
+static int hf_e2ap_ric_ActionDefinitionFormat_Type;  /* RIC_Format_Type */
+static int hf_e2ap_ric_InsertIndication_List_02;  /* SEQUENCE_SIZE_1_maxnoofInsertIndication_OF_RANFunctionDefinition_Insert_Indication_Item */
+static int hf_e2ap_ric_InsertIndication_List_item_02;  /* RANFunctionDefinition_Insert_Indication_Item */
+static int hf_e2ap_ric_CallProcessIDFormat_Type;  /* RIC_Format_Type */
+static int hf_e2ap_ric_InsertIndication_Name;     /* RIC_InsertIndication_Name */
+static int hf_e2ap_ran_InsertIndicationParameters_List;  /* SEQUENCE_SIZE_1_maxnoofAssociatedRANParameters_OF_InsertIndication_RANParameter_Item */
+static int hf_e2ap_ran_InsertIndicationParameters_List_item;  /* InsertIndication_RANParameter_Item */
+static int hf_e2ap_ric_ControlStyle_List_02;      /* SEQUENCE_SIZE_1_maxnoofRICStyles_OF_RANFunctionDefinition_Control_Item */
+static int hf_e2ap_ric_ControlStyle_List_item_02;  /* RANFunctionDefinition_Control_Item */
+static int hf_e2ap_ric_ControlStyle_Type;         /* RIC_Style_Type */
+static int hf_e2ap_ric_ControlStyle_Name;         /* RIC_Style_Name */
+static int hf_e2ap_ric_ControlAction_List_01;     /* SEQUENCE_SIZE_1_maxnoofControlAction_OF_RANFunctionDefinition_Control_Action_Item */
+static int hf_e2ap_ric_ControlAction_List_item_01;  /* RANFunctionDefinition_Control_Action_Item */
+static int hf_e2ap_ric_ControlHeaderFormat_Type;  /* RIC_Format_Type */
+static int hf_e2ap_ric_ControlMessageFormat_Type;  /* RIC_Format_Type */
+static int hf_e2ap_ric_ControlOutcomeFormat_Type;  /* RIC_Format_Type */
+static int hf_e2ap_ran_ControlOutcomeParameters_List;  /* SEQUENCE_SIZE_1_maxnoofRANOutcomeParameters_OF_ControlOutcome_RANParameter_Item */
+static int hf_e2ap_ran_ControlOutcomeParameters_List_item;  /* ControlOutcome_RANParameter_Item */
+static int hf_e2ap_ric_ControlAction_Name;        /* RIC_ControlAction_Name */
+static int hf_e2ap_ran_ControlActionParameters_List;  /* SEQUENCE_SIZE_1_maxnoofAssociatedRANParameters_OF_ControlAction_RANParameter_Item */
+static int hf_e2ap_ran_ControlActionParameters_List_item;  /* ControlAction_RANParameter_Item */
+static int hf_e2ap_ric_PolicyStyle_List;          /* SEQUENCE_SIZE_1_maxnoofRICStyles_OF_RANFunctionDefinition_Policy_Item */
+static int hf_e2ap_ric_PolicyStyle_List_item;     /* RANFunctionDefinition_Policy_Item */
+static int hf_e2ap_ric_PolicyStyle_Type;          /* RIC_Style_Type */
+static int hf_e2ap_ric_PolicyStyle_Name;          /* RIC_Style_Name */
+static int hf_e2ap_ric_PolicyAction_List;         /* SEQUENCE_SIZE_1_maxnoofPolicyAction_OF_RANFunctionDefinition_Policy_Action_Item */
+static int hf_e2ap_ric_PolicyAction_List_item;    /* RANFunctionDefinition_Policy_Action_Item */
+static int hf_e2ap_ric_PolicyAction_Name;         /* RIC_ControlAction_Name */
+static int hf_e2ap_ran_PolicyActionParameters_List;  /* SEQUENCE_SIZE_1_maxnoofAssociatedRANParameters_OF_PolicyAction_RANParameter_Item */
+static int hf_e2ap_ran_PolicyActionParameters_List_item;  /* PolicyAction_RANParameter_Item */
+static int hf_e2ap_ran_PolicyConditionParameters_List;  /* SEQUENCE_SIZE_1_maxnoofAssociatedRANParameters_OF_PolicyCondition_RANParameter_Item */
+static int hf_e2ap_ran_PolicyConditionParameters_List_item;  /* PolicyCondition_RANParameter_Item */
+static int hf_e2ap_measName;                      /* MeasurementTypeName */
+static int hf_e2ap_measID;                        /* MeasurementTypeID */
+static int hf_e2ap_noLabel;                       /* T_noLabel */
+static int hf_e2ap_plmnID;                        /* PLMNIdentity */
+static int hf_e2ap_sliceID;                       /* S_NSSAI */
+static int hf_e2ap_fiveQI;                        /* FiveQI */
+static int hf_e2ap_qFI;                           /* QosFlowIdentifier */
+static int hf_e2ap_qCI;                           /* QCI */
+static int hf_e2ap_qCImax;                        /* QCI */
+static int hf_e2ap_qCImin;                        /* QCI */
+static int hf_e2ap_aRPmax;                        /* INTEGER_1_15_ */
+static int hf_e2ap_aRPmin;                        /* INTEGER_1_15_ */
+static int hf_e2ap_bitrateRange;                  /* INTEGER_1_65535_ */
+static int hf_e2ap_layerMU_MIMO;                  /* INTEGER_1_65535_ */
+static int hf_e2ap_sUM;                           /* T_sUM */
+static int hf_e2ap_distBinX;                      /* INTEGER_1_65535_ */
+static int hf_e2ap_distBinY;                      /* INTEGER_1_65535_ */
+static int hf_e2ap_distBinZ;                      /* INTEGER_1_65535_ */
+static int hf_e2ap_preLabelOverride;              /* T_preLabelOverride */
+static int hf_e2ap_startEndInd;                   /* T_startEndInd */
+static int hf_e2ap_min;                           /* T_min */
+static int hf_e2ap_max;                           /* T_max */
+static int hf_e2ap_avg;                           /* T_avg */
+static int hf_e2ap_ssbIndex;                      /* INTEGER_1_65535_ */
+static int hf_e2ap_nonGoB_BFmode_Index;           /* INTEGER_1_65535_ */
+static int hf_e2ap_mIMO_mode_Index;               /* INTEGER_1_2_ */
+static int hf_e2ap_testType;                      /* TestCond_Type */
+static int hf_e2ap_testExpr;                      /* TestCond_Expression */
+static int hf_e2ap_testValue;                     /* TestCond_Value */
+static int hf_e2ap_gBR;                           /* T_gBR */
+static int hf_e2ap_aMBR;                          /* T_aMBR */
+static int hf_e2ap_isStat;                        /* T_isStat */
+static int hf_e2ap_isCatM;                        /* T_isCatM */
+static int hf_e2ap_rSRP;                          /* T_rSRP */
+static int hf_e2ap_rSRQ;                          /* T_rSRQ */
+static int hf_e2ap_ul_rSRP;                       /* T_ul_rSRP */
+static int hf_e2ap_cQI;                           /* T_cQI */
+static int hf_e2ap_fiveQI_01;                     /* T_fiveQI */
+static int hf_e2ap_qCI_01;                        /* T_qCI */
+static int hf_e2ap_sNSSAI;                        /* T_sNSSAI */
+static int hf_e2ap_valueEnum;                     /* INTEGER */
+static int hf_e2ap_valueBool;                     /* BOOLEAN */
+static int hf_e2ap_valuePrtS;                     /* PrintableString */
+static int hf_e2ap_binRangeListX;                 /* BinRangeList */
+static int hf_e2ap_binRangeListY;                 /* BinRangeList */
+static int hf_e2ap_binRangeListZ;                 /* BinRangeList */
+static int hf_e2ap_BinRangeList_item;             /* BinRangeItem */
+static int hf_e2ap_binIndex;                      /* BinIndex */
+static int hf_e2ap_startValue;                    /* BinRangeValue */
+static int hf_e2ap_endValue;                      /* BinRangeValue */
+static int hf_e2ap_DistMeasurementBinRangeList_item;  /* DistMeasurementBinRangeItem */
+static int hf_e2ap_measType;                      /* MeasurementType */
+static int hf_e2ap_binRangeDef;                   /* BinRangeDefinition */
+static int hf_e2ap_MeasurementInfoList_item;      /* MeasurementInfoItem */
+static int hf_e2ap_labelInfoList;                 /* LabelInfoList */
+static int hf_e2ap_LabelInfoList_item;            /* LabelInfoItem */
+static int hf_e2ap_measLabel;                     /* MeasurementLabel */
+static int hf_e2ap_MeasurementData_item;          /* MeasurementDataItem */
+static int hf_e2ap_measRecord;                    /* MeasurementRecord */
+static int hf_e2ap_incompleteFlag;                /* T_incompleteFlag */
+static int hf_e2ap_MeasurementRecord_item;        /* MeasurementRecordItem */
+static int hf_e2ap_integer;                       /* INTEGER_0_4294967295 */
+static int hf_e2ap_real;                          /* REAL */
+static int hf_e2ap_noValue;                       /* NULL */
+static int hf_e2ap_MeasurementInfo_Action_List_item;  /* MeasurementInfo_Action_Item */
+static int hf_e2ap_MeasurementCondList_item;      /* MeasurementCondItem */
+static int hf_e2ap_matchingCond;                  /* MatchingCondList */
+static int hf_e2ap_MeasurementCondUEidList_item;  /* MeasurementCondUEidItem */
+static int hf_e2ap_matchingUEidList;              /* MatchingUEidList */
+static int hf_e2ap_matchingUEidPerGP;             /* MatchingUEidPerGP */
+static int hf_e2ap_MatchingCondList_item;         /* MatchingCondItem */
+static int hf_e2ap_matchingCondChoice;            /* MatchingCondItem_Choice */
+static int hf_e2ap_testCondInfo;                  /* TestCondInfo */
+static int hf_e2ap_MatchingUEidList_item;         /* MatchingUEidItem */
+static int hf_e2ap_MatchingUEidPerGP_item;        /* MatchingUEidPerGP_Item */
+static int hf_e2ap_matchedPerGP;                  /* T_matchedPerGP */
+static int hf_e2ap_noUEmatched;                   /* T_noUEmatched */
+static int hf_e2ap_oneOrMoreUEmatched;            /* MatchingUEidList_PerGP */
+static int hf_e2ap_MatchingUEidList_PerGP_item;   /* MatchingUEidItem_PerGP */
+static int hf_e2ap_MatchingUeCondPerSubList_item;  /* MatchingUeCondPerSubItem */
+static int hf_e2ap_MatchingUEidPerSubList_item;   /* MatchingUEidPerSubItem */
+static int hf_e2ap_UEMeasurementReportList_item;  /* UEMeasurementReportItem */
+static int hf_e2ap_measReport;                    /* E2SM_KPM_IndicationMessage_Format1 */
+static int hf_e2ap_eventDefinition_formats;       /* T_eventDefinition_formats */
+static int hf_e2ap_eventDefinition_Format1;       /* E2SM_KPM_EventTriggerDefinition_Format1 */
+static int hf_e2ap_reportingPeriod;               /* INTEGER_1_4294967295 */
+static int hf_e2ap_actionDefinition_formats;      /* T_actionDefinition_formats */
+static int hf_e2ap_actionDefinition_Format1_01;   /* E2SM_KPM_ActionDefinition_Format1 */
+static int hf_e2ap_actionDefinition_Format2_01;   /* E2SM_KPM_ActionDefinition_Format2 */
+static int hf_e2ap_actionDefinition_Format3_01;   /* E2SM_KPM_ActionDefinition_Format3 */
+static int hf_e2ap_actionDefinition_Format4_01;   /* E2SM_KPM_ActionDefinition_Format4 */
+static int hf_e2ap_actionDefinition_Format5;      /* E2SM_KPM_ActionDefinition_Format5 */
+static int hf_e2ap_measInfoList;                  /* MeasurementInfoList */
+static int hf_e2ap_granulPeriod;                  /* GranularityPeriod */
+static int hf_e2ap_distMeasBinRangeInfo;          /* DistMeasurementBinRangeList */
+static int hf_e2ap_subscriptInfo;                 /* E2SM_KPM_ActionDefinition_Format1 */
+static int hf_e2ap_measCondList;                  /* MeasurementCondList */
+static int hf_e2ap_matchingUeCondList;            /* MatchingUeCondPerSubList */
+static int hf_e2ap_subscriptionInfo;              /* E2SM_KPM_ActionDefinition_Format1 */
+static int hf_e2ap_matchingUEidList_01;           /* MatchingUEidPerSubList */
+static int hf_e2ap_indicationHeader_formats;      /* T_indicationHeader_formats */
+static int hf_e2ap_indicationHeader_Format1_01;   /* E2SM_KPM_IndicationHeader_Format1 */
+static int hf_e2ap_colletStartTime;               /* T_colletStartTime */
+static int hf_e2ap_fileFormatversion;             /* PrintableString_SIZE_0_15_ */
+static int hf_e2ap_senderName;                    /* PrintableString_SIZE_0_400_ */
+static int hf_e2ap_senderType;                    /* PrintableString_SIZE_0_8_ */
+static int hf_e2ap_vendorName;                    /* PrintableString_SIZE_0_32_ */
+static int hf_e2ap_indicationMessage_formats;     /* T_indicationMessage_formats */
+static int hf_e2ap_indicationMessage_Format1_01;  /* E2SM_KPM_IndicationMessage_Format1 */
+static int hf_e2ap_indicationMessage_Format2_01;  /* E2SM_KPM_IndicationMessage_Format2 */
+static int hf_e2ap_indicationMessage_Format3_01;  /* E2SM_KPM_IndicationMessage_Format3 */
+static int hf_e2ap_measData;                      /* MeasurementData */
+static int hf_e2ap_measCondUEidList;              /* MeasurementCondUEidList */
+static int hf_e2ap_ueMeasReportList;              /* UEMeasurementReportList */
+static int hf_e2ap_ric_EventTriggerStyle_List_01;  /* SEQUENCE_SIZE_1_maxnoofRICStyles_OF_RIC_EventTriggerStyle_Item */
+static int hf_e2ap_ric_EventTriggerStyle_List_item_01;  /* RIC_EventTriggerStyle_Item */
+static int hf_e2ap_ric_ReportStyle_List_01;       /* SEQUENCE_SIZE_1_maxnoofRICStyles_OF_RIC_ReportStyle_Item */
+static int hf_e2ap_ric_ReportStyle_List_item_01;  /* RIC_ReportStyle_Item */
+static int hf_e2ap_ric_ActionFormat_Type;         /* RIC_Format_Type */
+static int hf_e2ap_measInfo_Action_List;          /* MeasurementInfo_Action_List */
+static int hf_e2ap_eventDefinition_Format1_01;    /* E2SM_NI_EventTriggerDefinition_Format1 */
+static int hf_e2ap_interface_type;                /* NI_Type */
+static int hf_e2ap_interface_ID;                  /* NI_Identifier */
+static int hf_e2ap_interfaceDirection;            /* NI_Direction */
+static int hf_e2ap_interfaceMessageType;          /* NI_MessageType */
+static int hf_e2ap_interfaceProtocolIE_List;      /* SEQUENCE_SIZE_1_maxofInterfaceProtocolTests_OF_NI_ProtocolIE_Item */
+static int hf_e2ap_interfaceProtocolIE_List_item;  /* NI_ProtocolIE_Item */
+static int hf_e2ap_action_Definition_Format;      /* E2SM_NI_ActionDefinitionFormat */
+static int hf_e2ap_actionDefinition_Format1_02;   /* E2SM_NI_ActionDefinition_Format1 */
+static int hf_e2ap_actionDefinition_Format2_02;   /* E2SM_NI_ActionDefinition_Format2 */
+static int hf_e2ap_actionParameter_List;          /* SEQUENCE_SIZE_1_maxofActionParameters_OF_RANparameter_Item */
+static int hf_e2ap_actionParameter_List_item;     /* RANparameter_Item */
+static int hf_e2ap_ranUEgroup_List;               /* SEQUENCE_SIZE_1_maxofRANueGroups_OF_RANueGroup_Item */
+static int hf_e2ap_ranUEgroup_List_item;          /* RANueGroup_Item */
+static int hf_e2ap_indicationHeader_Format1_02;   /* E2SM_NI_IndicationHeader_Format1 */
+static int hf_e2ap_timestamp;                     /* NI_TimeStamp */
+static int hf_e2ap_indicationMessage_Format1_02;  /* E2SM_NI_IndicationMessage_Format1 */
+static int hf_e2ap_interfaceMessage;              /* NI_Message */
+static int hf_e2ap_callProcessID_Format1_01;      /* E2SM_NI_CallProcessID_Format1 */
+static int hf_e2ap_callProcessID_Format2;         /* E2SM_NI_CallProcessID_Format2 */
+static int hf_e2ap_callProcess_ID;                /* RANcallProcess_ID_number */
+static int hf_e2ap_callProcess_ID_01;             /* RANcallProcess_ID_string */
+static int hf_e2ap_controlHeader_Format1_01;      /* E2SM_NI_ControlHeader_Format1 */
+static int hf_e2ap_interface_Direction;           /* NI_Direction */
+static int hf_e2ap_ric_Control_Message_Priority;  /* RIC_Control_Message_Priority */
+static int hf_e2ap_controlMessage_Format1_01;     /* E2SM_NI_ControlMessage_Format1 */
+static int hf_e2ap_controlOutcome_Format1_01;     /* E2SM_NI_ControlOutcome_Format1 */
+static int hf_e2ap_outcomeElement_List;           /* SEQUENCE_SIZE_1_maxofRANparameters_OF_RANparameter_Item */
+static int hf_e2ap_outcomeElement_List_item;      /* RANparameter_Item */
+static int hf_e2ap_ni_Type_List;                  /* SEQUENCE_SIZE_1_maxofNItypes_OF_E2SM_NI_RANfunction_Item */
+static int hf_e2ap_ni_Type_List_item;             /* E2SM_NI_RANfunction_Item */
+static int hf_e2ap_ric_EventTriggerStyle_List_02;  /* SEQUENCE_SIZE_1_maxofRICstyles_OF_RIC_EventTriggerStyle_List */
+static int hf_e2ap_ric_EventTriggerStyle_List_item_02;  /* RIC_EventTriggerStyle_List */
+static int hf_e2ap_ric_ReportStyle_List_02;       /* SEQUENCE_SIZE_1_maxofRICstyles_OF_RIC_ReportStyle_List */
+static int hf_e2ap_ric_ReportStyle_List_item_02;  /* RIC_ReportStyle_List */
+static int hf_e2ap_ric_InsertStyle_List_03;       /* SEQUENCE_SIZE_1_maxofRICstyles_OF_RIC_InsertStyle_List */
+static int hf_e2ap_ric_InsertStyle_List_item_03;  /* RIC_InsertStyle_List */
+static int hf_e2ap_ric_ControlStyle_List_03;      /* SEQUENCE_SIZE_1_maxofRICstyles_OF_RIC_ControlStyle_List */
+static int hf_e2ap_ric_ControlStyle_List_item_03;  /* RIC_ControlStyle_List */
+static int hf_e2ap_ric_PolicyStyle_List_01;       /* SEQUENCE_SIZE_1_maxofRICstyles_OF_RIC_PolicyStyle_List */
+static int hf_e2ap_ric_PolicyStyle_List_item_01;  /* RIC_PolicyStyle_List */
+static int hf_e2ap_global_ng_RAN_ID;              /* Global_ng_RAN_ID */
+static int hf_e2ap_global_eNB_ID_01;              /* Global_eNB_ID */
+static int hf_e2ap_global_en_gNB_ID_01;           /* Global_en_gNB_ID */
+static int hf_e2ap_global_gNB_DU_ID;              /* Global_gNB_DU_ID */
+static int hf_e2ap_global_gNB_CU_UP_ID;           /* Global_gNB_CU_UP_ID */
+static int hf_e2ap_s1MessageType;                 /* NI_MessageTypeS1 */
+static int hf_e2ap_x2MessageType;                 /* NI_MessageTypeX2 */
+static int hf_e2ap_ngMessageType;                 /* NI_MessageTypeNG */
+static int hf_e2ap_xnMessageType;                 /* NI_MessageTypeXn */
+static int hf_e2ap_f1MessageType;                 /* NI_MessageTypeF1 */
+static int hf_e2ap_e1MessageType;                 /* NI_MessageTypeE1 */
+static int hf_e2ap_typeOfMessage;                 /* TypeOfMessage */
+static int hf_e2ap_interfaceProtocolIE_ID;        /* NI_ProtocolIE_ID */
+static int hf_e2ap_interfaceProtocolIE_Test;      /* NI_ProtocolIE_Test */
+static int hf_e2ap_interfaceProtocolIE_Value;     /* NI_ProtocolIE_Value */
+static int hf_e2ap_ranImperativePolicy_List;      /* SEQUENCE_SIZE_1_maxofRANparameters_OF_RANparameter_Item */
+static int hf_e2ap_ranImperativePolicy_List_item;  /* RANparameter_Item */
+static int hf_e2ap_ranParameter_ID_01;            /* RANparameter_ID */
+static int hf_e2ap_ranParameter_Value_01;         /* RANparameter_Value */
+static int hf_e2ap_ranParameter_Name;             /* RANparameter_Name */
+static int hf_e2ap_ranParameter_Type_01;          /* RANparameter_Type */
+static int hf_e2ap_ranUEgroupID;                  /* RANueGroupID */
+static int hf_e2ap_ranUEgroupDefinition;          /* RANueGroupDefinition */
+static int hf_e2ap_ranPolicy;                     /* RANimperativePolicy */
+static int hf_e2ap_ranUEgroupDef_List;            /* SEQUENCE_SIZE_1_maxofRANparameters_OF_RANueGroupDef_Item */
+static int hf_e2ap_ranUEgroupDef_List_item;       /* RANueGroupDef_Item */
+static int hf_e2ap_ranParameter_Test;             /* RANparameter_Test_Condition */
+static int hf_e2ap_ric_ControlFormat_Type;        /* RIC_Format_Type */
+static int hf_e2ap_ric_ControlOutcomeRanParaDef_List;  /* SEQUENCE_SIZE_1_maxofRANparameters_OF_RANparameterDef_Item */
+static int hf_e2ap_ric_ControlOutcomeRanParaDef_List_item;  /* RANparameterDef_Item */
+static int hf_e2ap_ric_InsertActionFormat_Type;   /* RIC_Format_Type */
+static int hf_e2ap_ric_InsertRanParameterDef_List;  /* SEQUENCE_SIZE_1_maxofRANparameters_OF_RANparameterDef_Item */
+static int hf_e2ap_ric_InsertRanParameterDef_List_item;  /* RANparameterDef_Item */
+static int hf_e2ap_ric_PolicyActionFormat_Type;   /* RIC_Format_Type */
+static int hf_e2ap_ric_PolicyRanParameterDef_List;  /* SEQUENCE_SIZE_1_maxofRANparameters_OF_RANparameterDef_Item */
+static int hf_e2ap_ric_PolicyRanParameterDef_List_item;  /* RANparameterDef_Item */
+static int hf_e2ap_ric_ReportRanParameterDef_List;  /* SEQUENCE_SIZE_1_maxofRANparameters_OF_RANparameterDef_Item */
+static int hf_e2ap_ric_ReportRanParameterDef_List_item;  /* RANparameterDef_Item */
 
-static int hf_e2ap_unmapped_ran_function_id = -1;
-static int hf_e2ap_ran_function_name_not_recognised = -1;
-static int hf_e2ap_ran_function_setup_frame = -1;
+static int hf_e2ap_unmapped_ran_function_id;
+static int hf_e2ap_ran_function_name_not_recognised;
+static int hf_e2ap_ran_function_setup_frame;
+/* TODO: for each RAN Function, also link forward to where setup is referenced (if at all?).  Maybe just first usage? */
 
+static int hf_e2ap_dissector_version;
+static int hf_e2ap_frame_version;
+
+static int hf_e2ap_timestamp_string;
 
 
 /* Initialize the subtree pointers */
-static gint ett_e2ap = -1;
+static int ett_e2ap;
 
-static expert_field ei_e2ap_ran_function_names_no_match = EI_INIT;
-static expert_field ei_e2ap_ran_function_id_not_mapped = EI_INIT;
+static expert_field ei_e2ap_ran_function_names_no_match;
+static expert_field ei_e2ap_ran_function_id_not_mapped;
+static expert_field ei_e2ap_ran_function_dissector_mismatch;
+static expert_field ei_e2ap_ran_function_max_dissectors_registered;
 
-static gint ett_e2ap_ProtocolIE_Container = -1;
-static gint ett_e2ap_ProtocolIE_Field = -1;
-static gint ett_e2ap_Cause = -1;
-static gint ett_e2ap_CriticalityDiagnostics = -1;
-static gint ett_e2ap_CriticalityDiagnostics_IE_List = -1;
-static gint ett_e2ap_CriticalityDiagnostics_IE_Item = -1;
-static gint ett_e2ap_E2nodeComponentConfiguration = -1;
-static gint ett_e2ap_E2nodeComponentConfigurationAck = -1;
-static gint ett_e2ap_E2nodeComponentID = -1;
-static gint ett_e2ap_E2nodeComponentInterfaceE1 = -1;
-static gint ett_e2ap_E2nodeComponentInterfaceF1 = -1;
-static gint ett_e2ap_E2nodeComponentInterfaceNG = -1;
-static gint ett_e2ap_E2nodeComponentInterfaceS1 = -1;
-static gint ett_e2ap_E2nodeComponentInterfaceX2 = -1;
-static gint ett_e2ap_E2nodeComponentInterfaceXn = -1;
-static gint ett_e2ap_E2nodeComponentInterfaceW1 = -1;
-static gint ett_e2ap_ENB_ID = -1;
-static gint ett_e2ap_ENB_ID_Choice = -1;
-static gint ett_e2ap_ENGNB_ID = -1;
-static gint ett_e2ap_GlobalE2node_ID = -1;
-static gint ett_e2ap_GlobalE2node_en_gNB_ID = -1;
-static gint ett_e2ap_GlobalE2node_eNB_ID = -1;
-static gint ett_e2ap_GlobalE2node_gNB_ID = -1;
-static gint ett_e2ap_GlobalE2node_ng_eNB_ID = -1;
-static gint ett_e2ap_GlobalENB_ID = -1;
-static gint ett_e2ap_GlobalenGNB_ID = -1;
-static gint ett_e2ap_GlobalgNB_ID = -1;
-static gint ett_e2ap_GlobalngeNB_ID = -1;
-static gint ett_e2ap_GlobalNG_RANNode_ID = -1;
-static gint ett_e2ap_GlobalRIC_ID = -1;
-static gint ett_e2ap_GNB_ID_Choice = -1;
-static gint ett_e2ap_RICrequestID = -1;
-static gint ett_e2ap_RICsubsequentAction = -1;
-static gint ett_e2ap_TNLinformation = -1;
-static gint ett_e2ap_RICsubscriptionRequest = -1;
-static gint ett_e2ap_RICsubscriptionDetails = -1;
-static gint ett_e2ap_RICactions_ToBeSetup_List = -1;
-static gint ett_e2ap_RICaction_ToBeSetup_Item = -1;
-static gint ett_e2ap_RICsubscriptionResponse = -1;
-static gint ett_e2ap_RICaction_Admitted_List = -1;
-static gint ett_e2ap_RICaction_Admitted_Item = -1;
-static gint ett_e2ap_RICaction_NotAdmitted_List = -1;
-static gint ett_e2ap_RICaction_NotAdmitted_Item = -1;
-static gint ett_e2ap_RICsubscriptionFailure = -1;
-static gint ett_e2ap_RICsubscriptionDeleteRequest = -1;
-static gint ett_e2ap_RICsubscriptionDeleteResponse = -1;
-static gint ett_e2ap_RICsubscriptionDeleteFailure = -1;
-static gint ett_e2ap_RICsubscriptionDeleteRequired = -1;
-static gint ett_e2ap_RICsubscription_List_withCause = -1;
-static gint ett_e2ap_RICsubscription_withCause_Item = -1;
-static gint ett_e2ap_RICindication = -1;
-static gint ett_e2ap_RICcontrolRequest = -1;
-static gint ett_e2ap_RICcontrolAcknowledge = -1;
-static gint ett_e2ap_RICcontrolFailure = -1;
-static gint ett_e2ap_ErrorIndication = -1;
-static gint ett_e2ap_E2setupRequest = -1;
-static gint ett_e2ap_E2setupResponse = -1;
-static gint ett_e2ap_E2setupFailure = -1;
-static gint ett_e2ap_E2connectionUpdate = -1;
-static gint ett_e2ap_E2connectionUpdate_List = -1;
-static gint ett_e2ap_E2connectionUpdate_Item = -1;
-static gint ett_e2ap_E2connectionUpdateRemove_List = -1;
-static gint ett_e2ap_E2connectionUpdateRemove_Item = -1;
-static gint ett_e2ap_E2connectionUpdateAcknowledge = -1;
-static gint ett_e2ap_E2connectionSetupFailed_List = -1;
-static gint ett_e2ap_E2connectionSetupFailed_Item = -1;
-static gint ett_e2ap_E2connectionUpdateFailure = -1;
-static gint ett_e2ap_E2nodeConfigurationUpdate = -1;
-static gint ett_e2ap_E2nodeComponentConfigAddition_List = -1;
-static gint ett_e2ap_E2nodeComponentConfigAddition_Item = -1;
-static gint ett_e2ap_E2nodeComponentConfigUpdate_List = -1;
-static gint ett_e2ap_E2nodeComponentConfigUpdate_Item = -1;
-static gint ett_e2ap_E2nodeComponentConfigRemoval_List = -1;
-static gint ett_e2ap_E2nodeComponentConfigRemoval_Item = -1;
-static gint ett_e2ap_E2nodeTNLassociationRemoval_List = -1;
-static gint ett_e2ap_E2nodeTNLassociationRemoval_Item = -1;
-static gint ett_e2ap_E2nodeConfigurationUpdateAcknowledge = -1;
-static gint ett_e2ap_E2nodeComponentConfigAdditionAck_List = -1;
-static gint ett_e2ap_E2nodeComponentConfigAdditionAck_Item = -1;
-static gint ett_e2ap_E2nodeComponentConfigUpdateAck_List = -1;
-static gint ett_e2ap_E2nodeComponentConfigUpdateAck_Item = -1;
-static gint ett_e2ap_E2nodeComponentConfigRemovalAck_List = -1;
-static gint ett_e2ap_E2nodeComponentConfigRemovalAck_Item = -1;
-static gint ett_e2ap_E2nodeConfigurationUpdateFailure = -1;
-static gint ett_e2ap_ResetRequest = -1;
-static gint ett_e2ap_ResetResponse = -1;
-static gint ett_e2ap_RICserviceUpdate = -1;
-static gint ett_e2ap_RANfunctions_List = -1;
-static gint ett_e2ap_RANfunction_Item = -1;
-static gint ett_e2ap_RANfunctionsID_List = -1;
-static gint ett_e2ap_RANfunctionID_Item = -1;
-static gint ett_e2ap_RICserviceUpdateAcknowledge = -1;
-static gint ett_e2ap_RANfunctionsIDcause_List = -1;
-static gint ett_e2ap_RANfunctionIDcause_Item = -1;
-static gint ett_e2ap_RICserviceUpdateFailure = -1;
-static gint ett_e2ap_RICserviceQuery = -1;
-static gint ett_e2ap_E2RemovalRequest = -1;
-static gint ett_e2ap_E2RemovalResponse = -1;
-static gint ett_e2ap_E2RemovalFailure = -1;
-static gint ett_e2ap_E2AP_PDU = -1;
-static gint ett_e2ap_InitiatingMessage = -1;
-static gint ett_e2ap_SuccessfulOutcome = -1;
-static gint ett_e2ap_UnsuccessfulOutcome = -1;
-static gint ett_e2ap_CGI = -1;
-static gint ett_e2ap_InterfaceIdentifier = -1;
-static gint ett_e2ap_InterfaceID_NG = -1;
-static gint ett_e2ap_InterfaceID_Xn = -1;
-static gint ett_e2ap_InterfaceID_F1 = -1;
-static gint ett_e2ap_InterfaceID_E1 = -1;
-static gint ett_e2ap_InterfaceID_S1 = -1;
-static gint ett_e2ap_InterfaceID_X2 = -1;
-static gint ett_e2ap_T_nodeType = -1;
-static gint ett_e2ap_InterfaceID_W1 = -1;
-static gint ett_e2ap_Interface_MessageID = -1;
-static gint ett_e2ap_RANfunction_Name = -1;
-static gint ett_e2ap_RRC_MessageID = -1;
-static gint ett_e2ap_T_rrcType = -1;
-static gint ett_e2ap_ServingCell_ARFCN = -1;
-static gint ett_e2ap_ServingCell_PCI = -1;
-static gint ett_e2ap_UEID = -1;
-static gint ett_e2ap_UEID_GNB = -1;
-static gint ett_e2ap_UEID_GNB_CU_CP_E1AP_ID_List = -1;
-static gint ett_e2ap_UEID_GNB_CU_CP_E1AP_ID_Item = -1;
-static gint ett_e2ap_UEID_GNB_CU_F1AP_ID_List = -1;
-static gint ett_e2ap_UEID_GNB_CU_CP_F1AP_ID_Item = -1;
-static gint ett_e2ap_UEID_GNB_DU = -1;
-static gint ett_e2ap_UEID_GNB_CU_UP = -1;
-static gint ett_e2ap_UEID_NG_ENB = -1;
-static gint ett_e2ap_UEID_NG_ENB_DU = -1;
-static gint ett_e2ap_UEID_EN_GNB = -1;
-static gint ett_e2ap_UEID_ENB = -1;
-static gint ett_e2ap_GUMMEI = -1;
-static gint ett_e2ap_EUTRA_CGI = -1;
-static gint ett_e2ap_GlobalGNB_ID = -1;
-static gint ett_e2ap_GlobalNgENB_ID = -1;
-static gint ett_e2ap_GNB_ID = -1;
-static gint ett_e2ap_GUAMI = -1;
-static gint ett_e2ap_NgENB_ID = -1;
-static gint ett_e2ap_S_NSSAI = -1;
-static gint ett_e2ap_GlobalNGRANNodeID = -1;
-static gint ett_e2ap_NR_ARFCN = -1;
-static gint ett_e2ap_NRFrequencyBand_List = -1;
-static gint ett_e2ap_NRFrequencyBandItem = -1;
-static gint ett_e2ap_NRFrequencyInfo = -1;
-static gint ett_e2ap_SupportedSULBandList = -1;
-static gint ett_e2ap_SupportedSULFreqBandItem = -1;
-static gint ett_e2ap_NR_CGI = -1;
-static gint ett_e2ap_NeighborCell_List = -1;
-static gint ett_e2ap_NeighborCell_Item = -1;
-static gint ett_e2ap_NeighborCell_Item_Choice_NR = -1;
-static gint ett_e2ap_NeighborCell_Item_Choice_E_UTRA = -1;
-static gint ett_e2ap_NeighborRelation_Info = -1;
-static gint ett_e2ap_EventTrigger_Cell_Info = -1;
-static gint ett_e2ap_SEQUENCE_SIZE_1_maxnoofCellInfo_OF_EventTrigger_Cell_Info_Item = -1;
-static gint ett_e2ap_EventTrigger_Cell_Info_Item = -1;
-static gint ett_e2ap_T_cellType = -1;
-static gint ett_e2ap_EventTrigger_Cell_Info_Item_Choice_Individual = -1;
-static gint ett_e2ap_EventTrigger_Cell_Info_Item_Choice_Group = -1;
-static gint ett_e2ap_EventTrigger_UE_Info = -1;
-static gint ett_e2ap_SEQUENCE_SIZE_1_maxnoofUEInfo_OF_EventTrigger_UE_Info_Item = -1;
-static gint ett_e2ap_EventTrigger_UE_Info_Item = -1;
-static gint ett_e2ap_T_ueType = -1;
-static gint ett_e2ap_EventTrigger_UE_Info_Item_Choice_Individual = -1;
-static gint ett_e2ap_EventTrigger_UE_Info_Item_Choice_Group = -1;
-static gint ett_e2ap_EventTrigger_UEevent_Info = -1;
-static gint ett_e2ap_SEQUENCE_SIZE_1_maxnoofUEeventInfo_OF_EventTrigger_UEevent_Info_Item = -1;
-static gint ett_e2ap_EventTrigger_UEevent_Info_Item = -1;
-static gint ett_e2ap_RANParameter_Definition = -1;
-static gint ett_e2ap_RANParameter_Definition_Choice = -1;
-static gint ett_e2ap_RANParameter_Definition_Choice_LIST = -1;
-static gint ett_e2ap_SEQUENCE_SIZE_1_maxnoofItemsinList_OF_RANParameter_Definition_Choice_LIST_Item = -1;
-static gint ett_e2ap_RANParameter_Definition_Choice_LIST_Item = -1;
-static gint ett_e2ap_RANParameter_Definition_Choice_STRUCTURE = -1;
-static gint ett_e2ap_SEQUENCE_SIZE_1_maxnoofParametersinStructure_OF_RANParameter_Definition_Choice_STRUCTURE_Item = -1;
-static gint ett_e2ap_RANParameter_Definition_Choice_STRUCTURE_Item = -1;
-static gint ett_e2ap_RANParameter_Value = -1;
-static gint ett_e2ap_RANParameter_ValueType = -1;
-static gint ett_e2ap_RANParameter_ValueType_Choice_ElementTrue = -1;
-static gint ett_e2ap_RANParameter_ValueType_Choice_ElementFalse = -1;
-static gint ett_e2ap_RANParameter_ValueType_Choice_Structure = -1;
-static gint ett_e2ap_RANParameter_ValueType_Choice_List = -1;
-static gint ett_e2ap_RANParameter_STRUCTURE = -1;
-static gint ett_e2ap_SEQUENCE_SIZE_1_maxnoofParametersinStructure_OF_RANParameter_STRUCTURE_Item = -1;
-static gint ett_e2ap_RANParameter_STRUCTURE_Item = -1;
-static gint ett_e2ap_RANParameter_LIST = -1;
-static gint ett_e2ap_SEQUENCE_SIZE_1_maxnoofItemsinList_OF_RANParameter_STRUCTURE = -1;
-static gint ett_e2ap_RANParameter_Testing = -1;
-static gint ett_e2ap_RANParameter_TestingCondition = -1;
-static gint ett_e2ap_RANParameter_Testing_Item = -1;
-static gint ett_e2ap_T_ranParameter_Type = -1;
-static gint ett_e2ap_RANParameter_Testing_Item_Choice_List = -1;
-static gint ett_e2ap_RANParameter_Testing_Item_Choice_Structure = -1;
-static gint ett_e2ap_RANParameter_Testing_Item_Choice_ElementTrue = -1;
-static gint ett_e2ap_RANParameter_Testing_Item_Choice_ElementFalse = -1;
-static gint ett_e2ap_RANParameter_Testing_LIST = -1;
-static gint ett_e2ap_RANParameter_Testing_STRUCTURE = -1;
-static gint ett_e2ap_RIC_PolicyAction = -1;
-static gint ett_e2ap_SEQUENCE_SIZE_1_maxnoofAssociatedRANParameters_OF_RIC_PolicyAction_RANParameter_Item = -1;
-static gint ett_e2ap_RIC_PolicyAction_RANParameter_Item = -1;
-static gint ett_e2ap_E2SM_RC_EventTrigger = -1;
-static gint ett_e2ap_T_ric_eventTrigger_formats = -1;
-static gint ett_e2ap_E2SM_RC_EventTrigger_Format1 = -1;
-static gint ett_e2ap_SEQUENCE_SIZE_1_maxnoofMessages_OF_E2SM_RC_EventTrigger_Format1_Item = -1;
-static gint ett_e2ap_E2SM_RC_EventTrigger_Format1_Item = -1;
-static gint ett_e2ap_MessageType_Choice = -1;
-static gint ett_e2ap_MessageType_Choice_NI = -1;
-static gint ett_e2ap_MessageType_Choice_RRC = -1;
-static gint ett_e2ap_E2SM_RC_EventTrigger_Format2 = -1;
-static gint ett_e2ap_E2SM_RC_EventTrigger_Format3 = -1;
-static gint ett_e2ap_SEQUENCE_SIZE_1_maxnoofE2InfoChanges_OF_E2SM_RC_EventTrigger_Format3_Item = -1;
-static gint ett_e2ap_E2SM_RC_EventTrigger_Format3_Item = -1;
-static gint ett_e2ap_E2SM_RC_EventTrigger_Format4 = -1;
-static gint ett_e2ap_SEQUENCE_SIZE_1_maxnoofUEInfoChanges_OF_E2SM_RC_EventTrigger_Format4_Item = -1;
-static gint ett_e2ap_E2SM_RC_EventTrigger_Format4_Item = -1;
-static gint ett_e2ap_TriggerType_Choice = -1;
-static gint ett_e2ap_TriggerType_Choice_RRCstate = -1;
-static gint ett_e2ap_SEQUENCE_SIZE_1_maxnoofRRCstate_OF_TriggerType_Choice_RRCstate_Item = -1;
-static gint ett_e2ap_TriggerType_Choice_RRCstate_Item = -1;
-static gint ett_e2ap_TriggerType_Choice_UEID = -1;
-static gint ett_e2ap_TriggerType_Choice_L2state = -1;
-static gint ett_e2ap_E2SM_RC_EventTrigger_Format5 = -1;
-static gint ett_e2ap_E2SM_RC_ActionDefinition = -1;
-static gint ett_e2ap_T_ric_actionDefinition_formats = -1;
-static gint ett_e2ap_E2SM_RC_ActionDefinition_Format1 = -1;
-static gint ett_e2ap_SEQUENCE_SIZE_1_maxnoofParametersToReport_OF_E2SM_RC_ActionDefinition_Format1_Item = -1;
-static gint ett_e2ap_E2SM_RC_ActionDefinition_Format1_Item = -1;
-static gint ett_e2ap_E2SM_RC_ActionDefinition_Format2 = -1;
-static gint ett_e2ap_SEQUENCE_SIZE_1_maxnoofPolicyConditions_OF_E2SM_RC_ActionDefinition_Format2_Item = -1;
-static gint ett_e2ap_E2SM_RC_ActionDefinition_Format2_Item = -1;
-static gint ett_e2ap_E2SM_RC_ActionDefinition_Format3 = -1;
-static gint ett_e2ap_SEQUENCE_SIZE_1_maxnoofAssociatedRANParameters_OF_E2SM_RC_ActionDefinition_Format3_Item = -1;
-static gint ett_e2ap_E2SM_RC_ActionDefinition_Format3_Item = -1;
-static gint ett_e2ap_E2SM_RC_ActionDefinition_Format4 = -1;
-static gint ett_e2ap_SEQUENCE_SIZE_1_maxnoofRICStyles_OF_E2SM_RC_ActionDefinition_Format4_Style_Item = -1;
-static gint ett_e2ap_E2SM_RC_ActionDefinition_Format4_Style_Item = -1;
-static gint ett_e2ap_SEQUENCE_SIZE_1_maxnoofInsertIndicationActions_OF_E2SM_RC_ActionDefinition_Format4_Indication_Item = -1;
-static gint ett_e2ap_E2SM_RC_ActionDefinition_Format4_Indication_Item = -1;
-static gint ett_e2ap_SEQUENCE_SIZE_1_maxnoofAssociatedRANParameters_OF_E2SM_RC_ActionDefinition_Format4_RANP_Item = -1;
-static gint ett_e2ap_E2SM_RC_ActionDefinition_Format4_RANP_Item = -1;
-static gint ett_e2ap_E2SM_RC_IndicationHeader = -1;
-static gint ett_e2ap_T_ric_indicationHeader_formats = -1;
-static gint ett_e2ap_E2SM_RC_IndicationHeader_Format1 = -1;
-static gint ett_e2ap_E2SM_RC_IndicationHeader_Format2 = -1;
-static gint ett_e2ap_E2SM_RC_IndicationHeader_Format3 = -1;
-static gint ett_e2ap_E2SM_RC_IndicationMessage = -1;
-static gint ett_e2ap_T_ric_indicationMessage_formats = -1;
-static gint ett_e2ap_E2SM_RC_IndicationMessage_Format1 = -1;
-static gint ett_e2ap_SEQUENCE_SIZE_1_maxnoofAssociatedRANParameters_OF_E2SM_RC_IndicationMessage_Format1_Item = -1;
-static gint ett_e2ap_E2SM_RC_IndicationMessage_Format1_Item = -1;
-static gint ett_e2ap_E2SM_RC_IndicationMessage_Format2 = -1;
-static gint ett_e2ap_SEQUENCE_SIZE_1_maxnoofUEID_OF_E2SM_RC_IndicationMessage_Format2_Item = -1;
-static gint ett_e2ap_E2SM_RC_IndicationMessage_Format2_Item = -1;
-static gint ett_e2ap_SEQUENCE_SIZE_1_maxnoofAssociatedRANParameters_OF_E2SM_RC_IndicationMessage_Format2_RANParameter_Item = -1;
-static gint ett_e2ap_E2SM_RC_IndicationMessage_Format2_RANParameter_Item = -1;
-static gint ett_e2ap_E2SM_RC_IndicationMessage_Format3 = -1;
-static gint ett_e2ap_SEQUENCE_SIZE_1_maxnoofCellID_OF_E2SM_RC_IndicationMessage_Format3_Item = -1;
-static gint ett_e2ap_E2SM_RC_IndicationMessage_Format3_Item = -1;
-static gint ett_e2ap_E2SM_RC_IndicationMessage_Format4 = -1;
-static gint ett_e2ap_SEQUENCE_SIZE_0_maxnoofUEID_OF_E2SM_RC_IndicationMessage_Format4_ItemUE = -1;
-static gint ett_e2ap_SEQUENCE_SIZE_0_maxnoofCellID_OF_E2SM_RC_IndicationMessage_Format4_ItemCell = -1;
-static gint ett_e2ap_E2SM_RC_IndicationMessage_Format4_ItemUE = -1;
-static gint ett_e2ap_E2SM_RC_IndicationMessage_Format4_ItemCell = -1;
-static gint ett_e2ap_E2SM_RC_IndicationMessage_Format5 = -1;
-static gint ett_e2ap_SEQUENCE_SIZE_0_maxnoofAssociatedRANParameters_OF_E2SM_RC_IndicationMessage_Format5_Item = -1;
-static gint ett_e2ap_E2SM_RC_IndicationMessage_Format5_Item = -1;
-static gint ett_e2ap_E2SM_RC_IndicationMessage_Format6 = -1;
-static gint ett_e2ap_SEQUENCE_SIZE_1_maxnoofRICStyles_OF_E2SM_RC_IndicationMessage_Format6_Style_Item = -1;
-static gint ett_e2ap_E2SM_RC_IndicationMessage_Format6_Style_Item = -1;
-static gint ett_e2ap_SEQUENCE_SIZE_1_maxnoofInsertIndicationActions_OF_E2SM_RC_IndicationMessage_Format6_Indication_Item = -1;
-static gint ett_e2ap_E2SM_RC_IndicationMessage_Format6_Indication_Item = -1;
-static gint ett_e2ap_SEQUENCE_SIZE_0_maxnoofAssociatedRANParameters_OF_E2SM_RC_IndicationMessage_Format6_RANP_Item = -1;
-static gint ett_e2ap_E2SM_RC_IndicationMessage_Format6_RANP_Item = -1;
-static gint ett_e2ap_E2SM_RC_CallProcessID = -1;
-static gint ett_e2ap_T_ric_callProcessID_formats = -1;
-static gint ett_e2ap_E2SM_RC_CallProcessID_Format1 = -1;
-static gint ett_e2ap_E2SM_RC_ControlHeader = -1;
-static gint ett_e2ap_T_ric_controlHeader_formats = -1;
-static gint ett_e2ap_E2SM_RC_ControlHeader_Format1 = -1;
-static gint ett_e2ap_E2SM_RC_ControlHeader_Format2 = -1;
-static gint ett_e2ap_E2SM_RC_ControlMessage = -1;
-static gint ett_e2ap_T_ric_controlMessage_formats = -1;
-static gint ett_e2ap_E2SM_RC_ControlMessage_Format1 = -1;
-static gint ett_e2ap_SEQUENCE_SIZE_0_maxnoofAssociatedRANParameters_OF_E2SM_RC_ControlMessage_Format1_Item = -1;
-static gint ett_e2ap_E2SM_RC_ControlMessage_Format1_Item = -1;
-static gint ett_e2ap_E2SM_RC_ControlMessage_Format2 = -1;
-static gint ett_e2ap_SEQUENCE_SIZE_1_maxnoofRICStyles_OF_E2SM_RC_ControlMessage_Format2_Style_Item = -1;
-static gint ett_e2ap_E2SM_RC_ControlMessage_Format2_Style_Item = -1;
-static gint ett_e2ap_SEQUENCE_SIZE_1_maxnoofMulCtrlActions_OF_E2SM_RC_ControlMessage_Format2_ControlAction_Item = -1;
-static gint ett_e2ap_E2SM_RC_ControlMessage_Format2_ControlAction_Item = -1;
-static gint ett_e2ap_E2SM_RC_ControlOutcome = -1;
-static gint ett_e2ap_T_ric_controlOutcome_formats = -1;
-static gint ett_e2ap_E2SM_RC_ControlOutcome_Format1 = -1;
-static gint ett_e2ap_SEQUENCE_SIZE_0_maxnoofRANOutcomeParameters_OF_E2SM_RC_ControlOutcome_Format1_Item = -1;
-static gint ett_e2ap_E2SM_RC_ControlOutcome_Format1_Item = -1;
-static gint ett_e2ap_E2SM_RC_ControlOutcome_Format2 = -1;
-static gint ett_e2ap_SEQUENCE_SIZE_1_maxnoofRICStyles_OF_E2SM_RC_ControlOutcome_Format2_Style_Item = -1;
-static gint ett_e2ap_E2SM_RC_ControlOutcome_Format2_Style_Item = -1;
-static gint ett_e2ap_SEQUENCE_SIZE_1_maxnoofMulCtrlActions_OF_E2SM_RC_ControlOutcome_Format2_ControlOutcome_Item = -1;
-static gint ett_e2ap_E2SM_RC_ControlOutcome_Format2_ControlOutcome_Item = -1;
-static gint ett_e2ap_SEQUENCE_SIZE_1_maxnoofAssociatedRANParameters_OF_E2SM_RC_ControlOutcome_Format2_RANP_Item = -1;
-static gint ett_e2ap_E2SM_RC_ControlOutcome_Format2_RANP_Item = -1;
-static gint ett_e2ap_E2SM_RC_ControlOutcome_Format3 = -1;
-static gint ett_e2ap_SEQUENCE_SIZE_0_maxnoofRANOutcomeParameters_OF_E2SM_RC_ControlOutcome_Format3_Item = -1;
-static gint ett_e2ap_E2SM_RC_ControlOutcome_Format3_Item = -1;
-static gint ett_e2ap_E2SM_RC_RANFunctionDefinition = -1;
-static gint ett_e2ap_RANFunctionDefinition_EventTrigger = -1;
-static gint ett_e2ap_SEQUENCE_SIZE_1_maxnoofRICStyles_OF_RANFunctionDefinition_EventTrigger_Style_Item = -1;
-static gint ett_e2ap_SEQUENCE_SIZE_1_maxnoofAssociatedRANParameters_OF_L2Parameters_RANParameter_Item = -1;
-static gint ett_e2ap_SEQUENCE_SIZE_1_maxnoofCallProcessTypes_OF_RANFunctionDefinition_EventTrigger_CallProcess_Item = -1;
-static gint ett_e2ap_SEQUENCE_SIZE_1_maxnoofAssociatedRANParameters_OF_UEIdentification_RANParameter_Item = -1;
-static gint ett_e2ap_SEQUENCE_SIZE_1_maxnoofAssociatedRANParameters_OF_CellIdentification_RANParameter_Item = -1;
-static gint ett_e2ap_RANFunctionDefinition_EventTrigger_Style_Item = -1;
-static gint ett_e2ap_L2Parameters_RANParameter_Item = -1;
-static gint ett_e2ap_UEIdentification_RANParameter_Item = -1;
-static gint ett_e2ap_CellIdentification_RANParameter_Item = -1;
-static gint ett_e2ap_RANFunctionDefinition_EventTrigger_CallProcess_Item = -1;
-static gint ett_e2ap_SEQUENCE_SIZE_1_maxnoofCallProcessBreakpoints_OF_RANFunctionDefinition_EventTrigger_Breakpoint_Item = -1;
-static gint ett_e2ap_RANFunctionDefinition_EventTrigger_Breakpoint_Item = -1;
-static gint ett_e2ap_SEQUENCE_SIZE_1_maxnoofAssociatedRANParameters_OF_CallProcessBreakpoint_RANParameter_Item = -1;
-static gint ett_e2ap_CallProcessBreakpoint_RANParameter_Item = -1;
-static gint ett_e2ap_RANFunctionDefinition_Report = -1;
-static gint ett_e2ap_SEQUENCE_SIZE_1_maxnoofRICStyles_OF_RANFunctionDefinition_Report_Item = -1;
-static gint ett_e2ap_RANFunctionDefinition_Report_Item = -1;
-static gint ett_e2ap_SEQUENCE_SIZE_1_maxnoofAssociatedRANParameters_OF_Report_RANParameter_Item = -1;
-static gint ett_e2ap_Report_RANParameter_Item = -1;
-static gint ett_e2ap_RANFunctionDefinition_Insert = -1;
-static gint ett_e2ap_SEQUENCE_SIZE_1_maxnoofRICStyles_OF_RANFunctionDefinition_Insert_Item = -1;
-static gint ett_e2ap_RANFunctionDefinition_Insert_Item = -1;
-static gint ett_e2ap_SEQUENCE_SIZE_1_maxnoofInsertIndication_OF_RANFunctionDefinition_Insert_Indication_Item = -1;
-static gint ett_e2ap_RANFunctionDefinition_Insert_Indication_Item = -1;
-static gint ett_e2ap_SEQUENCE_SIZE_1_maxnoofAssociatedRANParameters_OF_InsertIndication_RANParameter_Item = -1;
-static gint ett_e2ap_InsertIndication_RANParameter_Item = -1;
-static gint ett_e2ap_RANFunctionDefinition_Control = -1;
-static gint ett_e2ap_SEQUENCE_SIZE_1_maxnoofRICStyles_OF_RANFunctionDefinition_Control_Item = -1;
-static gint ett_e2ap_RANFunctionDefinition_Control_Item = -1;
-static gint ett_e2ap_SEQUENCE_SIZE_1_maxnoofControlAction_OF_RANFunctionDefinition_Control_Action_Item = -1;
-static gint ett_e2ap_SEQUENCE_SIZE_1_maxnoofRANOutcomeParameters_OF_ControlOutcome_RANParameter_Item = -1;
-static gint ett_e2ap_ControlOutcome_RANParameter_Item = -1;
-static gint ett_e2ap_RANFunctionDefinition_Control_Action_Item = -1;
-static gint ett_e2ap_SEQUENCE_SIZE_1_maxnoofAssociatedRANParameters_OF_ControlAction_RANParameter_Item = -1;
-static gint ett_e2ap_ControlAction_RANParameter_Item = -1;
-static gint ett_e2ap_RANFunctionDefinition_Policy = -1;
-static gint ett_e2ap_SEQUENCE_SIZE_1_maxnoofRICStyles_OF_RANFunctionDefinition_Policy_Item = -1;
-static gint ett_e2ap_RANFunctionDefinition_Policy_Item = -1;
-static gint ett_e2ap_SEQUENCE_SIZE_1_maxnoofPolicyAction_OF_RANFunctionDefinition_Policy_Action_Item = -1;
-static gint ett_e2ap_RANFunctionDefinition_Policy_Action_Item = -1;
-static gint ett_e2ap_SEQUENCE_SIZE_1_maxnoofAssociatedRANParameters_OF_PolicyAction_RANParameter_Item = -1;
-static gint ett_e2ap_SEQUENCE_SIZE_1_maxnoofAssociatedRANParameters_OF_PolicyCondition_RANParameter_Item = -1;
-static gint ett_e2ap_PolicyAction_RANParameter_Item = -1;
-static gint ett_e2ap_PolicyCondition_RANParameter_Item = -1;
-static gint ett_e2ap_MeasurementType = -1;
-static gint ett_e2ap_MeasurementLabel = -1;
-static gint ett_e2ap_TestCondInfo = -1;
-static gint ett_e2ap_TestCond_Type = -1;
-static gint ett_e2ap_TestCond_Value = -1;
-static gint ett_e2ap_MeasurementInfoList = -1;
-static gint ett_e2ap_MeasurementInfoItem = -1;
-static gint ett_e2ap_LabelInfoList = -1;
-static gint ett_e2ap_LabelInfoItem = -1;
-static gint ett_e2ap_MeasurementData = -1;
-static gint ett_e2ap_MeasurementDataItem = -1;
-static gint ett_e2ap_MeasurementRecord = -1;
-static gint ett_e2ap_MeasurementRecordItem = -1;
-static gint ett_e2ap_MeasurementInfo_Action_List = -1;
-static gint ett_e2ap_MeasurementInfo_Action_Item = -1;
-static gint ett_e2ap_MeasurementCondList = -1;
-static gint ett_e2ap_MeasurementCondItem = -1;
-static gint ett_e2ap_MeasurementCondUEidList = -1;
-static gint ett_e2ap_MeasurementCondUEidItem = -1;
-static gint ett_e2ap_MatchingCondList = -1;
-static gint ett_e2ap_MatchingCondItem = -1;
-static gint ett_e2ap_MatchingUEidList = -1;
-static gint ett_e2ap_MatchingUEidItem = -1;
-static gint ett_e2ap_MatchingUeCondPerSubList = -1;
-static gint ett_e2ap_MatchingUeCondPerSubItem = -1;
-static gint ett_e2ap_MatchingUEidPerSubList = -1;
-static gint ett_e2ap_MatchingUEidPerSubItem = -1;
-static gint ett_e2ap_UEMeasurementReportList = -1;
-static gint ett_e2ap_UEMeasurementReportItem = -1;
-static gint ett_e2ap_E2SM_KPM_EventTriggerDefinition = -1;
-static gint ett_e2ap_T_eventDefinition_formats = -1;
-static gint ett_e2ap_E2SM_KPM_EventTriggerDefinition_Format1 = -1;
-static gint ett_e2ap_E2SM_KPM_ActionDefinition = -1;
-static gint ett_e2ap_T_actionDefinition_formats = -1;
-static gint ett_e2ap_E2SM_KPM_ActionDefinition_Format1 = -1;
-static gint ett_e2ap_E2SM_KPM_ActionDefinition_Format2 = -1;
-static gint ett_e2ap_E2SM_KPM_ActionDefinition_Format3 = -1;
-static gint ett_e2ap_E2SM_KPM_ActionDefinition_Format4 = -1;
-static gint ett_e2ap_E2SM_KPM_ActionDefinition_Format5 = -1;
-static gint ett_e2ap_E2SM_KPM_IndicationHeader = -1;
-static gint ett_e2ap_T_indicationHeader_formats = -1;
-static gint ett_e2ap_E2SM_KPM_IndicationHeader_Format1 = -1;
-static gint ett_e2ap_E2SM_KPM_IndicationMessage = -1;
-static gint ett_e2ap_T_indicationMessage_formats = -1;
-static gint ett_e2ap_E2SM_KPM_IndicationMessage_Format1 = -1;
-static gint ett_e2ap_E2SM_KPM_IndicationMessage_Format2 = -1;
-static gint ett_e2ap_E2SM_KPM_IndicationMessage_Format3 = -1;
-static gint ett_e2ap_E2SM_KPM_RANfunction_Description = -1;
-static gint ett_e2ap_SEQUENCE_SIZE_1_maxnoofRICStyles_OF_RIC_EventTriggerStyle_Item = -1;
-static gint ett_e2ap_SEQUENCE_SIZE_1_maxnoofRICStyles_OF_RIC_ReportStyle_Item = -1;
-static gint ett_e2ap_RIC_EventTriggerStyle_Item = -1;
-static gint ett_e2ap_RIC_ReportStyle_Item = -1;
-static gint ett_e2ap_E2SM_NI_EventTriggerDefinition = -1;
-static gint ett_e2ap_E2SM_NI_EventTriggerDefinition_Format1 = -1;
-static gint ett_e2ap_SEQUENCE_SIZE_1_maxofInterfaceProtocolTests_OF_NI_ProtocolIE_Item = -1;
-static gint ett_e2ap_E2SM_NI_ActionDefinition = -1;
-static gint ett_e2ap_E2SM_NI_ActionDefinitionFormat = -1;
-static gint ett_e2ap_E2SM_NI_ActionDefinition_Format1 = -1;
-static gint ett_e2ap_SEQUENCE_SIZE_1_maxofActionParameters_OF_RANparameter_Item = -1;
-static gint ett_e2ap_E2SM_NI_ActionDefinition_Format2 = -1;
-static gint ett_e2ap_SEQUENCE_SIZE_1_maxofRANueGroups_OF_RANueGroup_Item = -1;
-static gint ett_e2ap_E2SM_NI_IndicationHeader = -1;
-static gint ett_e2ap_E2SM_NI_IndicationHeader_Format1 = -1;
-static gint ett_e2ap_E2SM_NI_IndicationMessage = -1;
-static gint ett_e2ap_E2SM_NI_IndicationMessage_Format1 = -1;
-static gint ett_e2ap_E2SM_NI_CallProcessID = -1;
-static gint ett_e2ap_E2SM_NI_CallProcessID_Format1 = -1;
-static gint ett_e2ap_E2SM_NI_CallProcessID_Format2 = -1;
-static gint ett_e2ap_E2SM_NI_ControlHeader = -1;
-static gint ett_e2ap_E2SM_NI_ControlHeader_Format1 = -1;
-static gint ett_e2ap_E2SM_NI_ControlMessage = -1;
-static gint ett_e2ap_E2SM_NI_ControlMessage_Format1 = -1;
-static gint ett_e2ap_E2SM_NI_ControlOutcome = -1;
-static gint ett_e2ap_E2SM_NI_ControlOutcome_Format1 = -1;
-static gint ett_e2ap_SEQUENCE_SIZE_1_maxofRANparameters_OF_RANparameter_Item = -1;
-static gint ett_e2ap_E2SM_NI_RANfunction_Description = -1;
-static gint ett_e2ap_SEQUENCE_SIZE_1_maxofNItypes_OF_E2SM_NI_RANfunction_Item = -1;
-static gint ett_e2ap_E2SM_NI_RANfunction_Item = -1;
-static gint ett_e2ap_SEQUENCE_SIZE_1_maxofRICstyles_OF_RIC_EventTriggerStyle_List = -1;
-static gint ett_e2ap_SEQUENCE_SIZE_1_maxofRICstyles_OF_RIC_ReportStyle_List = -1;
-static gint ett_e2ap_SEQUENCE_SIZE_1_maxofRICstyles_OF_RIC_InsertStyle_List = -1;
-static gint ett_e2ap_SEQUENCE_SIZE_1_maxofRICstyles_OF_RIC_ControlStyle_List = -1;
-static gint ett_e2ap_SEQUENCE_SIZE_1_maxofRICstyles_OF_RIC_PolicyStyle_List = -1;
-static gint ett_e2ap_Global_gNB_DU_ID = -1;
-static gint ett_e2ap_Global_gNB_CU_UP_ID = -1;
-static gint ett_e2ap_NI_Identifier = -1;
-static gint ett_e2ap_NI_MessageType = -1;
-static gint ett_e2ap_NI_MessageTypeApproach1 = -1;
-static gint ett_e2ap_NI_ProtocolIE_Item = -1;
-static gint ett_e2ap_NI_ProtocolIE_Value = -1;
-static gint ett_e2ap_RANimperativePolicy = -1;
-static gint ett_e2ap_RANparameter_Item = -1;
-static gint ett_e2ap_RANparameterDef_Item = -1;
-static gint ett_e2ap_RANparameter_Value = -1;
-static gint ett_e2ap_RANueGroup_Item = -1;
-static gint ett_e2ap_RANueGroupDefinition = -1;
-static gint ett_e2ap_SEQUENCE_SIZE_1_maxofRANparameters_OF_RANueGroupDef_Item = -1;
-static gint ett_e2ap_RANueGroupDef_Item = -1;
-static gint ett_e2ap_RIC_ControlStyle_List = -1;
-static gint ett_e2ap_SEQUENCE_SIZE_1_maxofRANparameters_OF_RANparameterDef_Item = -1;
-static gint ett_e2ap_RIC_EventTriggerStyle_List = -1;
-static gint ett_e2ap_RIC_InsertStyle_List = -1;
-static gint ett_e2ap_RIC_PolicyStyle_List = -1;
-static gint ett_e2ap_RIC_ReportStyle_List = -1;
+static int ett_e2ap_ProtocolIE_Container;
+static int ett_e2ap_ProtocolIE_Field;
+static int ett_e2ap_Cause;
+static int ett_e2ap_CriticalityDiagnostics;
+static int ett_e2ap_CriticalityDiagnostics_IE_List;
+static int ett_e2ap_CriticalityDiagnostics_IE_Item;
+static int ett_e2ap_E2nodeComponentConfiguration;
+static int ett_e2ap_E2nodeComponentConfigurationAck;
+static int ett_e2ap_E2nodeComponentID;
+static int ett_e2ap_E2nodeComponentInterfaceE1;
+static int ett_e2ap_E2nodeComponentInterfaceF1;
+static int ett_e2ap_E2nodeComponentInterfaceNG;
+static int ett_e2ap_E2nodeComponentInterfaceS1;
+static int ett_e2ap_E2nodeComponentInterfaceX2;
+static int ett_e2ap_E2nodeComponentInterfaceXn;
+static int ett_e2ap_E2nodeComponentInterfaceW1;
+static int ett_e2ap_ENB_ID;
+static int ett_e2ap_ENB_ID_Choice;
+static int ett_e2ap_ENGNB_ID;
+static int ett_e2ap_GlobalE2node_ID;
+static int ett_e2ap_GlobalE2node_en_gNB_ID;
+static int ett_e2ap_GlobalE2node_eNB_ID;
+static int ett_e2ap_GlobalE2node_gNB_ID;
+static int ett_e2ap_GlobalE2node_ng_eNB_ID;
+static int ett_e2ap_GlobalENB_ID;
+static int ett_e2ap_GlobalenGNB_ID;
+static int ett_e2ap_GlobalgNB_ID;
+static int ett_e2ap_GlobalngeNB_ID;
+static int ett_e2ap_GlobalNG_RANNode_ID;
+static int ett_e2ap_GlobalRIC_ID;
+static int ett_e2ap_GNB_ID_Choice;
+static int ett_e2ap_RICrequestID;
+static int ett_e2ap_RICsubsequentAction;
+static int ett_e2ap_TNLinformation;
+static int ett_e2ap_RICsubscriptionRequest;
+static int ett_e2ap_RICsubscriptionDetails;
+static int ett_e2ap_RICactions_ToBeSetup_List;
+static int ett_e2ap_RICaction_ToBeSetup_Item;
+static int ett_e2ap_RICsubscriptionResponse;
+static int ett_e2ap_RICaction_Admitted_List;
+static int ett_e2ap_RICaction_Admitted_Item;
+static int ett_e2ap_RICaction_NotAdmitted_List;
+static int ett_e2ap_RICaction_NotAdmitted_Item;
+static int ett_e2ap_RICsubscriptionFailure;
+static int ett_e2ap_RICsubscriptionDeleteRequest;
+static int ett_e2ap_RICsubscriptionDeleteResponse;
+static int ett_e2ap_RICsubscriptionDeleteFailure;
+static int ett_e2ap_RICsubscriptionDeleteRequired;
+static int ett_e2ap_RICsubscription_List_withCause;
+static int ett_e2ap_RICsubscription_withCause_Item;
+static int ett_e2ap_RICsubscriptionModificationRequest;
+static int ett_e2ap_RICactions_ToBeRemovedForModification_List;
+static int ett_e2ap_RICaction_ToBeRemovedForModification_Item;
+static int ett_e2ap_RICactions_ToBeModifiedForModification_List;
+static int ett_e2ap_RICaction_ToBeModifiedForModification_Item;
+static int ett_e2ap_RICactions_ToBeAddedForModification_List;
+static int ett_e2ap_RICaction_ToBeAddedForModification_Item;
+static int ett_e2ap_RICsubscriptionModificationResponse;
+static int ett_e2ap_RICactions_RemovedForModification_List;
+static int ett_e2ap_RICaction_RemovedForModification_Item;
+static int ett_e2ap_RICactions_FailedToBeRemovedForModification_List;
+static int ett_e2ap_RICaction_FailedToBeRemovedForModification_Item;
+static int ett_e2ap_RICactions_ModifiedForModification_List;
+static int ett_e2ap_RICaction_ModifiedForModification_Item;
+static int ett_e2ap_RICactions_FailedToBeModifiedForModification_List;
+static int ett_e2ap_RICaction_FailedToBeModifiedForModification_Item;
+static int ett_e2ap_RICactions_AddedForModification_List;
+static int ett_e2ap_RICaction_AddedForModification_Item;
+static int ett_e2ap_RICactions_FailedToBeAddedForModification_List;
+static int ett_e2ap_RICaction_FailedToBeAddedForModification_Item;
+static int ett_e2ap_RICsubscriptionModificationFailure;
+static int ett_e2ap_RICsubscriptionModificationRequired;
+static int ett_e2ap_RICactions_RequiredToBeModified_List;
+static int ett_e2ap_RICaction_RequiredToBeModified_Item;
+static int ett_e2ap_RICactions_RequiredToBeRemoved_List;
+static int ett_e2ap_RICaction_RequiredToBeRemoved_Item;
+static int ett_e2ap_RICsubscriptionModificationConfirm;
+static int ett_e2ap_RICactions_ConfirmedForModification_List;
+static int ett_e2ap_RICaction_ConfirmedForModification_Item;
+static int ett_e2ap_RICactions_RefusedToBeModified_List;
+static int ett_e2ap_RICaction_RefusedToBeModified_Item;
+static int ett_e2ap_RICactions_ConfirmedForRemoval_List;
+static int ett_e2ap_RICaction_ConfirmedForRemoval_Item;
+static int ett_e2ap_RICactions_RefusedToBeRemoved_List;
+static int ett_e2ap_RICaction_RefusedToBeRemoved_Item;
+static int ett_e2ap_RICsubscriptionModificationRefuse;
+static int ett_e2ap_RICindication;
+static int ett_e2ap_RICcontrolRequest;
+static int ett_e2ap_RICcontrolAcknowledge;
+static int ett_e2ap_RICcontrolFailure;
+static int ett_e2ap_RICQueryRequest;
+static int ett_e2ap_RICQueryResponse;
+static int ett_e2ap_RICQueryFailure;
+static int ett_e2ap_ErrorIndication;
+static int ett_e2ap_E2setupRequest;
+static int ett_e2ap_E2setupResponse;
+static int ett_e2ap_E2setupFailure;
+static int ett_e2ap_E2connectionUpdate;
+static int ett_e2ap_E2connectionUpdate_List;
+static int ett_e2ap_E2connectionUpdate_Item;
+static int ett_e2ap_E2connectionUpdateRemove_List;
+static int ett_e2ap_E2connectionUpdateRemove_Item;
+static int ett_e2ap_E2connectionUpdateAcknowledge;
+static int ett_e2ap_E2connectionSetupFailed_List;
+static int ett_e2ap_E2connectionSetupFailed_Item;
+static int ett_e2ap_E2connectionUpdateFailure;
+static int ett_e2ap_E2nodeConfigurationUpdate;
+static int ett_e2ap_E2nodeComponentConfigAddition_List;
+static int ett_e2ap_E2nodeComponentConfigAddition_Item;
+static int ett_e2ap_E2nodeComponentConfigUpdate_List;
+static int ett_e2ap_E2nodeComponentConfigUpdate_Item;
+static int ett_e2ap_E2nodeComponentConfigRemoval_List;
+static int ett_e2ap_E2nodeComponentConfigRemoval_Item;
+static int ett_e2ap_E2nodeTNLassociationRemoval_List;
+static int ett_e2ap_E2nodeTNLassociationRemoval_Item;
+static int ett_e2ap_E2nodeConfigurationUpdateAcknowledge;
+static int ett_e2ap_E2nodeComponentConfigAdditionAck_List;
+static int ett_e2ap_E2nodeComponentConfigAdditionAck_Item;
+static int ett_e2ap_E2nodeComponentConfigUpdateAck_List;
+static int ett_e2ap_E2nodeComponentConfigUpdateAck_Item;
+static int ett_e2ap_E2nodeComponentConfigRemovalAck_List;
+static int ett_e2ap_E2nodeComponentConfigRemovalAck_Item;
+static int ett_e2ap_E2nodeConfigurationUpdateFailure;
+static int ett_e2ap_ResetRequest;
+static int ett_e2ap_ResetResponse;
+static int ett_e2ap_RICserviceUpdate;
+static int ett_e2ap_RANfunctions_List;
+static int ett_e2ap_RANfunction_Item;
+static int ett_e2ap_RANfunctionsID_List;
+static int ett_e2ap_RANfunctionID_Item;
+static int ett_e2ap_RICserviceUpdateAcknowledge;
+static int ett_e2ap_RANfunctionsIDcause_List;
+static int ett_e2ap_RANfunctionIDcause_Item;
+static int ett_e2ap_RICserviceUpdateFailure;
+static int ett_e2ap_RICserviceQuery;
+static int ett_e2ap_E2RemovalRequest;
+static int ett_e2ap_E2RemovalResponse;
+static int ett_e2ap_E2RemovalFailure;
+static int ett_e2ap_E2AP_PDU;
+static int ett_e2ap_InitiatingMessage;
+static int ett_e2ap_SuccessfulOutcome;
+static int ett_e2ap_UnsuccessfulOutcome;
+static int ett_e2ap_CGI;
+static int ett_e2ap_InterfaceIdentifier;
+static int ett_e2ap_InterfaceID_NG;
+static int ett_e2ap_InterfaceID_Xn;
+static int ett_e2ap_InterfaceID_F1;
+static int ett_e2ap_InterfaceID_E1;
+static int ett_e2ap_InterfaceID_S1;
+static int ett_e2ap_InterfaceID_X2;
+static int ett_e2ap_T_nodeType;
+static int ett_e2ap_InterfaceID_W1;
+static int ett_e2ap_Interface_MessageID;
+static int ett_e2ap_RANfunction_Name;
+static int ett_e2ap_RRC_MessageID;
+static int ett_e2ap_T_rrcType;
+static int ett_e2ap_ServingCell_ARFCN;
+static int ett_e2ap_ServingCell_PCI;
+static int ett_e2ap_UEID;
+static int ett_e2ap_UEID_GNB;
+static int ett_e2ap_UEID_GNB_CU_CP_E1AP_ID_List;
+static int ett_e2ap_UEID_GNB_CU_CP_E1AP_ID_Item;
+static int ett_e2ap_UEID_GNB_CU_F1AP_ID_List;
+static int ett_e2ap_UEID_GNB_CU_CP_F1AP_ID_Item;
+static int ett_e2ap_UEID_GNB_DU;
+static int ett_e2ap_UEID_GNB_CU_UP;
+static int ett_e2ap_UEID_NG_ENB;
+static int ett_e2ap_UEID_NG_ENB_DU;
+static int ett_e2ap_UEID_EN_GNB;
+static int ett_e2ap_UEID_ENB;
+static int ett_e2ap_GUMMEI;
+static int ett_e2ap_EUTRA_CGI;
+static int ett_e2ap_GlobalGNB_ID;
+static int ett_e2ap_GlobalNgENB_ID;
+static int ett_e2ap_GNB_ID;
+static int ett_e2ap_GUAMI;
+static int ett_e2ap_NgENB_ID;
+static int ett_e2ap_NR_CGI;
+static int ett_e2ap_S_NSSAI;
+static int ett_e2ap_GlobalNGRANNodeID;
+static int ett_e2ap_NR_ARFCN;
+static int ett_e2ap_NRFrequencyBand_List;
+static int ett_e2ap_NRFrequencyBandItem;
+static int ett_e2ap_NRFrequencyInfo;
+static int ett_e2ap_SupportedSULBandList;
+static int ett_e2ap_SupportedSULFreqBandItem;
+static int ett_e2ap_NeighborCell_List;
+static int ett_e2ap_NeighborCell_Item;
+static int ett_e2ap_NeighborCell_Item_Choice_NR;
+static int ett_e2ap_NeighborCell_Item_Choice_E_UTRA;
+static int ett_e2ap_NeighborRelation_Info;
+static int ett_e2ap_EventTrigger_Cell_Info;
+static int ett_e2ap_SEQUENCE_SIZE_1_maxnoofCellInfo_OF_EventTrigger_Cell_Info_Item;
+static int ett_e2ap_EventTrigger_Cell_Info_Item;
+static int ett_e2ap_T_cellType;
+static int ett_e2ap_EventTrigger_Cell_Info_Item_Choice_Individual;
+static int ett_e2ap_EventTrigger_Cell_Info_Item_Choice_Group;
+static int ett_e2ap_EventTrigger_UE_Info;
+static int ett_e2ap_SEQUENCE_SIZE_1_maxnoofUEInfo_OF_EventTrigger_UE_Info_Item;
+static int ett_e2ap_EventTrigger_UE_Info_Item;
+static int ett_e2ap_T_ueType;
+static int ett_e2ap_EventTrigger_UE_Info_Item_Choice_Individual;
+static int ett_e2ap_EventTrigger_UE_Info_Item_Choice_Group;
+static int ett_e2ap_EventTrigger_UEevent_Info;
+static int ett_e2ap_SEQUENCE_SIZE_1_maxnoofUEeventInfo_OF_EventTrigger_UEevent_Info_Item;
+static int ett_e2ap_EventTrigger_UEevent_Info_Item;
+static int ett_e2ap_RANParameter_Definition;
+static int ett_e2ap_RANParameter_Definition_Choice;
+static int ett_e2ap_RANParameter_Definition_Choice_LIST;
+static int ett_e2ap_SEQUENCE_SIZE_1_maxnoofItemsinList_OF_RANParameter_Definition_Choice_LIST_Item;
+static int ett_e2ap_RANParameter_Definition_Choice_LIST_Item;
+static int ett_e2ap_RANParameter_Definition_Choice_STRUCTURE;
+static int ett_e2ap_SEQUENCE_SIZE_1_maxnoofParametersinStructure_OF_RANParameter_Definition_Choice_STRUCTURE_Item;
+static int ett_e2ap_RANParameter_Definition_Choice_STRUCTURE_Item;
+static int ett_e2ap_RANParameter_Value;
+static int ett_e2ap_RANParameter_ValueType;
+static int ett_e2ap_RANParameter_ValueType_Choice_ElementTrue;
+static int ett_e2ap_RANParameter_ValueType_Choice_ElementFalse;
+static int ett_e2ap_RANParameter_ValueType_Choice_Structure;
+static int ett_e2ap_RANParameter_ValueType_Choice_List;
+static int ett_e2ap_RANParameter_STRUCTURE;
+static int ett_e2ap_SEQUENCE_SIZE_1_maxnoofParametersinStructure_OF_RANParameter_STRUCTURE_Item;
+static int ett_e2ap_RANParameter_STRUCTURE_Item;
+static int ett_e2ap_RANParameter_LIST;
+static int ett_e2ap_SEQUENCE_SIZE_1_maxnoofItemsinList_OF_RANParameter_STRUCTURE;
+static int ett_e2ap_RANParameter_Testing;
+static int ett_e2ap_RANParameter_TestingCondition;
+static int ett_e2ap_RANParameter_Testing_Item;
+static int ett_e2ap_T_ranParameter_Type;
+static int ett_e2ap_RANParameter_Testing_Item_Choice_List;
+static int ett_e2ap_RANParameter_Testing_Item_Choice_Structure;
+static int ett_e2ap_RANParameter_Testing_Item_Choice_ElementTrue;
+static int ett_e2ap_RANParameter_Testing_Item_Choice_ElementFalse;
+static int ett_e2ap_RANParameter_Testing_LIST;
+static int ett_e2ap_RANParameter_Testing_STRUCTURE;
+static int ett_e2ap_RIC_PolicyAction;
+static int ett_e2ap_SEQUENCE_SIZE_1_maxnoofAssociatedRANParameters_OF_RIC_PolicyAction_RANParameter_Item;
+static int ett_e2ap_RIC_PolicyAction_RANParameter_Item;
+static int ett_e2ap_E2SM_RC_EventTrigger;
+static int ett_e2ap_T_ric_eventTrigger_formats;
+static int ett_e2ap_E2SM_RC_EventTrigger_Format1;
+static int ett_e2ap_SEQUENCE_SIZE_1_maxnoofMessages_OF_E2SM_RC_EventTrigger_Format1_Item;
+static int ett_e2ap_E2SM_RC_EventTrigger_Format1_Item;
+static int ett_e2ap_MessageType_Choice;
+static int ett_e2ap_MessageType_Choice_NI;
+static int ett_e2ap_MessageType_Choice_RRC;
+static int ett_e2ap_E2SM_RC_EventTrigger_Format2;
+static int ett_e2ap_E2SM_RC_EventTrigger_Format3;
+static int ett_e2ap_SEQUENCE_SIZE_1_maxnoofE2InfoChanges_OF_E2SM_RC_EventTrigger_Format3_Item;
+static int ett_e2ap_E2SM_RC_EventTrigger_Format3_Item;
+static int ett_e2ap_E2SM_RC_EventTrigger_Format4;
+static int ett_e2ap_SEQUENCE_SIZE_1_maxnoofUEInfoChanges_OF_E2SM_RC_EventTrigger_Format4_Item;
+static int ett_e2ap_E2SM_RC_EventTrigger_Format4_Item;
+static int ett_e2ap_TriggerType_Choice;
+static int ett_e2ap_TriggerType_Choice_RRCstate;
+static int ett_e2ap_SEQUENCE_SIZE_1_maxnoofRRCstate_OF_TriggerType_Choice_RRCstate_Item;
+static int ett_e2ap_TriggerType_Choice_RRCstate_Item;
+static int ett_e2ap_TriggerType_Choice_UEID;
+static int ett_e2ap_TriggerType_Choice_L2state;
+static int ett_e2ap_E2SM_RC_EventTrigger_Format5;
+static int ett_e2ap_E2SM_RC_ActionDefinition;
+static int ett_e2ap_T_ric_actionDefinition_formats;
+static int ett_e2ap_E2SM_RC_ActionDefinition_Format1;
+static int ett_e2ap_SEQUENCE_SIZE_1_maxnoofParametersToReport_OF_E2SM_RC_ActionDefinition_Format1_Item;
+static int ett_e2ap_E2SM_RC_ActionDefinition_Format1_Item;
+static int ett_e2ap_E2SM_RC_ActionDefinition_Format2;
+static int ett_e2ap_SEQUENCE_SIZE_1_maxnoofPolicyConditions_OF_E2SM_RC_ActionDefinition_Format2_Item;
+static int ett_e2ap_E2SM_RC_ActionDefinition_Format2_Item;
+static int ett_e2ap_E2SM_RC_ActionDefinition_Format3;
+static int ett_e2ap_SEQUENCE_SIZE_1_maxnoofAssociatedRANParameters_OF_E2SM_RC_ActionDefinition_Format3_Item;
+static int ett_e2ap_E2SM_RC_ActionDefinition_Format3_Item;
+static int ett_e2ap_E2SM_RC_ActionDefinition_Format4;
+static int ett_e2ap_SEQUENCE_SIZE_1_maxnoofRICStyles_OF_E2SM_RC_ActionDefinition_Format4_Style_Item;
+static int ett_e2ap_E2SM_RC_ActionDefinition_Format4_Style_Item;
+static int ett_e2ap_SEQUENCE_SIZE_1_maxnoofInsertIndicationActions_OF_E2SM_RC_ActionDefinition_Format4_Indication_Item;
+static int ett_e2ap_E2SM_RC_ActionDefinition_Format4_Indication_Item;
+static int ett_e2ap_SEQUENCE_SIZE_1_maxnoofAssociatedRANParameters_OF_E2SM_RC_ActionDefinition_Format4_RANP_Item;
+static int ett_e2ap_E2SM_RC_ActionDefinition_Format4_RANP_Item;
+static int ett_e2ap_E2SM_RC_IndicationHeader;
+static int ett_e2ap_T_ric_indicationHeader_formats;
+static int ett_e2ap_E2SM_RC_IndicationHeader_Format1;
+static int ett_e2ap_E2SM_RC_IndicationHeader_Format2;
+static int ett_e2ap_E2SM_RC_IndicationHeader_Format3;
+static int ett_e2ap_E2SM_RC_IndicationMessage;
+static int ett_e2ap_T_ric_indicationMessage_formats;
+static int ett_e2ap_E2SM_RC_IndicationMessage_Format1;
+static int ett_e2ap_SEQUENCE_SIZE_1_maxnoofAssociatedRANParameters_OF_E2SM_RC_IndicationMessage_Format1_Item;
+static int ett_e2ap_E2SM_RC_IndicationMessage_Format1_Item;
+static int ett_e2ap_E2SM_RC_IndicationMessage_Format2;
+static int ett_e2ap_SEQUENCE_SIZE_1_maxnoofUEID_OF_E2SM_RC_IndicationMessage_Format2_Item;
+static int ett_e2ap_E2SM_RC_IndicationMessage_Format2_Item;
+static int ett_e2ap_SEQUENCE_SIZE_1_maxnoofAssociatedRANParameters_OF_E2SM_RC_IndicationMessage_Format2_RANParameter_Item;
+static int ett_e2ap_E2SM_RC_IndicationMessage_Format2_RANParameter_Item;
+static int ett_e2ap_E2SM_RC_IndicationMessage_Format3;
+static int ett_e2ap_SEQUENCE_SIZE_1_maxnoofCellID_OF_E2SM_RC_IndicationMessage_Format3_Item;
+static int ett_e2ap_E2SM_RC_IndicationMessage_Format3_Item;
+static int ett_e2ap_E2SM_RC_IndicationMessage_Format4;
+static int ett_e2ap_SEQUENCE_SIZE_0_maxnoofUEID_OF_E2SM_RC_IndicationMessage_Format4_ItemUE;
+static int ett_e2ap_SEQUENCE_SIZE_0_maxnoofCellID_OF_E2SM_RC_IndicationMessage_Format4_ItemCell;
+static int ett_e2ap_E2SM_RC_IndicationMessage_Format4_ItemUE;
+static int ett_e2ap_E2SM_RC_IndicationMessage_Format4_ItemCell;
+static int ett_e2ap_E2SM_RC_IndicationMessage_Format5;
+static int ett_e2ap_SEQUENCE_SIZE_0_maxnoofAssociatedRANParameters_OF_E2SM_RC_IndicationMessage_Format5_Item;
+static int ett_e2ap_E2SM_RC_IndicationMessage_Format5_Item;
+static int ett_e2ap_E2SM_RC_IndicationMessage_Format6;
+static int ett_e2ap_SEQUENCE_SIZE_1_maxnoofRICStyles_OF_E2SM_RC_IndicationMessage_Format6_Style_Item;
+static int ett_e2ap_E2SM_RC_IndicationMessage_Format6_Style_Item;
+static int ett_e2ap_SEQUENCE_SIZE_1_maxnoofInsertIndicationActions_OF_E2SM_RC_IndicationMessage_Format6_Indication_Item;
+static int ett_e2ap_E2SM_RC_IndicationMessage_Format6_Indication_Item;
+static int ett_e2ap_SEQUENCE_SIZE_0_maxnoofAssociatedRANParameters_OF_E2SM_RC_IndicationMessage_Format6_RANP_Item;
+static int ett_e2ap_E2SM_RC_IndicationMessage_Format6_RANP_Item;
+static int ett_e2ap_E2SM_RC_CallProcessID;
+static int ett_e2ap_T_ric_callProcessID_formats;
+static int ett_e2ap_E2SM_RC_CallProcessID_Format1;
+static int ett_e2ap_E2SM_RC_ControlHeader;
+static int ett_e2ap_T_ric_controlHeader_formats;
+static int ett_e2ap_E2SM_RC_ControlHeader_Format1;
+static int ett_e2ap_E2SM_RC_ControlHeader_Format2;
+static int ett_e2ap_E2SM_RC_ControlMessage;
+static int ett_e2ap_T_ric_controlMessage_formats;
+static int ett_e2ap_E2SM_RC_ControlMessage_Format1;
+static int ett_e2ap_SEQUENCE_SIZE_0_maxnoofAssociatedRANParameters_OF_E2SM_RC_ControlMessage_Format1_Item;
+static int ett_e2ap_E2SM_RC_ControlMessage_Format1_Item;
+static int ett_e2ap_E2SM_RC_ControlMessage_Format2;
+static int ett_e2ap_SEQUENCE_SIZE_1_maxnoofRICStyles_OF_E2SM_RC_ControlMessage_Format2_Style_Item;
+static int ett_e2ap_E2SM_RC_ControlMessage_Format2_Style_Item;
+static int ett_e2ap_SEQUENCE_SIZE_1_maxnoofMulCtrlActions_OF_E2SM_RC_ControlMessage_Format2_ControlAction_Item;
+static int ett_e2ap_E2SM_RC_ControlMessage_Format2_ControlAction_Item;
+static int ett_e2ap_E2SM_RC_ControlOutcome;
+static int ett_e2ap_T_ric_controlOutcome_formats;
+static int ett_e2ap_E2SM_RC_ControlOutcome_Format1;
+static int ett_e2ap_SEQUENCE_SIZE_0_maxnoofRANOutcomeParameters_OF_E2SM_RC_ControlOutcome_Format1_Item;
+static int ett_e2ap_E2SM_RC_ControlOutcome_Format1_Item;
+static int ett_e2ap_E2SM_RC_ControlOutcome_Format2;
+static int ett_e2ap_SEQUENCE_SIZE_1_maxnoofRICStyles_OF_E2SM_RC_ControlOutcome_Format2_Style_Item;
+static int ett_e2ap_E2SM_RC_ControlOutcome_Format2_Style_Item;
+static int ett_e2ap_SEQUENCE_SIZE_1_maxnoofMulCtrlActions_OF_E2SM_RC_ControlOutcome_Format2_ControlOutcome_Item;
+static int ett_e2ap_E2SM_RC_ControlOutcome_Format2_ControlOutcome_Item;
+static int ett_e2ap_SEQUENCE_SIZE_1_maxnoofAssociatedRANParameters_OF_E2SM_RC_ControlOutcome_Format2_RANP_Item;
+static int ett_e2ap_E2SM_RC_ControlOutcome_Format2_RANP_Item;
+static int ett_e2ap_E2SM_RC_ControlOutcome_Format3;
+static int ett_e2ap_SEQUENCE_SIZE_0_maxnoofRANOutcomeParameters_OF_E2SM_RC_ControlOutcome_Format3_Item;
+static int ett_e2ap_E2SM_RC_ControlOutcome_Format3_Item;
+static int ett_e2ap_E2SM_RC_RANFunctionDefinition;
+static int ett_e2ap_RANFunctionDefinition_EventTrigger;
+static int ett_e2ap_SEQUENCE_SIZE_1_maxnoofRICStyles_OF_RANFunctionDefinition_EventTrigger_Style_Item;
+static int ett_e2ap_SEQUENCE_SIZE_1_maxnoofAssociatedRANParameters_OF_L2Parameters_RANParameter_Item;
+static int ett_e2ap_SEQUENCE_SIZE_1_maxnoofCallProcessTypes_OF_RANFunctionDefinition_EventTrigger_CallProcess_Item;
+static int ett_e2ap_SEQUENCE_SIZE_1_maxnoofAssociatedRANParameters_OF_UEIdentification_RANParameter_Item;
+static int ett_e2ap_SEQUENCE_SIZE_1_maxnoofAssociatedRANParameters_OF_CellIdentification_RANParameter_Item;
+static int ett_e2ap_RANFunctionDefinition_EventTrigger_Style_Item;
+static int ett_e2ap_L2Parameters_RANParameter_Item;
+static int ett_e2ap_UEIdentification_RANParameter_Item;
+static int ett_e2ap_CellIdentification_RANParameter_Item;
+static int ett_e2ap_RANFunctionDefinition_EventTrigger_CallProcess_Item;
+static int ett_e2ap_SEQUENCE_SIZE_1_maxnoofCallProcessBreakpoints_OF_RANFunctionDefinition_EventTrigger_Breakpoint_Item;
+static int ett_e2ap_RANFunctionDefinition_EventTrigger_Breakpoint_Item;
+static int ett_e2ap_SEQUENCE_SIZE_1_maxnoofAssociatedRANParameters_OF_CallProcessBreakpoint_RANParameter_Item;
+static int ett_e2ap_CallProcessBreakpoint_RANParameter_Item;
+static int ett_e2ap_RANFunctionDefinition_Report;
+static int ett_e2ap_SEQUENCE_SIZE_1_maxnoofRICStyles_OF_RANFunctionDefinition_Report_Item;
+static int ett_e2ap_RANFunctionDefinition_Report_Item;
+static int ett_e2ap_SEQUENCE_SIZE_1_maxnoofAssociatedRANParameters_OF_Report_RANParameter_Item;
+static int ett_e2ap_Report_RANParameter_Item;
+static int ett_e2ap_RANFunctionDefinition_Insert;
+static int ett_e2ap_SEQUENCE_SIZE_1_maxnoofRICStyles_OF_RANFunctionDefinition_Insert_Item;
+static int ett_e2ap_RANFunctionDefinition_Insert_Item;
+static int ett_e2ap_SEQUENCE_SIZE_1_maxnoofInsertIndication_OF_RANFunctionDefinition_Insert_Indication_Item;
+static int ett_e2ap_RANFunctionDefinition_Insert_Indication_Item;
+static int ett_e2ap_SEQUENCE_SIZE_1_maxnoofAssociatedRANParameters_OF_InsertIndication_RANParameter_Item;
+static int ett_e2ap_InsertIndication_RANParameter_Item;
+static int ett_e2ap_RANFunctionDefinition_Control;
+static int ett_e2ap_SEQUENCE_SIZE_1_maxnoofRICStyles_OF_RANFunctionDefinition_Control_Item;
+static int ett_e2ap_RANFunctionDefinition_Control_Item;
+static int ett_e2ap_SEQUENCE_SIZE_1_maxnoofControlAction_OF_RANFunctionDefinition_Control_Action_Item;
+static int ett_e2ap_SEQUENCE_SIZE_1_maxnoofRANOutcomeParameters_OF_ControlOutcome_RANParameter_Item;
+static int ett_e2ap_ControlOutcome_RANParameter_Item;
+static int ett_e2ap_RANFunctionDefinition_Control_Action_Item;
+static int ett_e2ap_SEQUENCE_SIZE_1_maxnoofAssociatedRANParameters_OF_ControlAction_RANParameter_Item;
+static int ett_e2ap_ControlAction_RANParameter_Item;
+static int ett_e2ap_RANFunctionDefinition_Policy;
+static int ett_e2ap_SEQUENCE_SIZE_1_maxnoofRICStyles_OF_RANFunctionDefinition_Policy_Item;
+static int ett_e2ap_RANFunctionDefinition_Policy_Item;
+static int ett_e2ap_SEQUENCE_SIZE_1_maxnoofPolicyAction_OF_RANFunctionDefinition_Policy_Action_Item;
+static int ett_e2ap_RANFunctionDefinition_Policy_Action_Item;
+static int ett_e2ap_SEQUENCE_SIZE_1_maxnoofAssociatedRANParameters_OF_PolicyAction_RANParameter_Item;
+static int ett_e2ap_SEQUENCE_SIZE_1_maxnoofAssociatedRANParameters_OF_PolicyCondition_RANParameter_Item;
+static int ett_e2ap_PolicyAction_RANParameter_Item;
+static int ett_e2ap_PolicyCondition_RANParameter_Item;
+static int ett_e2ap_BinRangeValue;
+static int ett_e2ap_MeasurementType;
+static int ett_e2ap_MeasurementLabel;
+static int ett_e2ap_TestCondInfo;
+static int ett_e2ap_TestCond_Type;
+static int ett_e2ap_TestCond_Value;
+static int ett_e2ap_BinRangeDefinition;
+static int ett_e2ap_BinRangeList;
+static int ett_e2ap_BinRangeItem;
+static int ett_e2ap_DistMeasurementBinRangeList;
+static int ett_e2ap_DistMeasurementBinRangeItem;
+static int ett_e2ap_MeasurementInfoList;
+static int ett_e2ap_MeasurementInfoItem;
+static int ett_e2ap_LabelInfoList;
+static int ett_e2ap_LabelInfoItem;
+static int ett_e2ap_MeasurementData;
+static int ett_e2ap_MeasurementDataItem;
+static int ett_e2ap_MeasurementRecord;
+static int ett_e2ap_MeasurementRecordItem;
+static int ett_e2ap_MeasurementInfo_Action_List;
+static int ett_e2ap_MeasurementInfo_Action_Item;
+static int ett_e2ap_MeasurementCondList;
+static int ett_e2ap_MeasurementCondItem;
+static int ett_e2ap_MeasurementCondUEidList;
+static int ett_e2ap_MeasurementCondUEidItem;
+static int ett_e2ap_MatchingCondList;
+static int ett_e2ap_MatchingCondItem;
+static int ett_e2ap_MatchingCondItem_Choice;
+static int ett_e2ap_MatchingUEidList;
+static int ett_e2ap_MatchingUEidItem;
+static int ett_e2ap_MatchingUEidPerGP;
+static int ett_e2ap_MatchingUEidPerGP_Item;
+static int ett_e2ap_T_matchedPerGP;
+static int ett_e2ap_MatchingUEidList_PerGP;
+static int ett_e2ap_MatchingUEidItem_PerGP;
+static int ett_e2ap_MatchingUeCondPerSubList;
+static int ett_e2ap_MatchingUeCondPerSubItem;
+static int ett_e2ap_MatchingUEidPerSubList;
+static int ett_e2ap_MatchingUEidPerSubItem;
+static int ett_e2ap_UEMeasurementReportList;
+static int ett_e2ap_UEMeasurementReportItem;
+static int ett_e2ap_E2SM_KPM_EventTriggerDefinition;
+static int ett_e2ap_T_eventDefinition_formats;
+static int ett_e2ap_E2SM_KPM_EventTriggerDefinition_Format1;
+static int ett_e2ap_E2SM_KPM_ActionDefinition;
+static int ett_e2ap_T_actionDefinition_formats;
+static int ett_e2ap_E2SM_KPM_ActionDefinition_Format1;
+static int ett_e2ap_E2SM_KPM_ActionDefinition_Format2;
+static int ett_e2ap_E2SM_KPM_ActionDefinition_Format3;
+static int ett_e2ap_E2SM_KPM_ActionDefinition_Format4;
+static int ett_e2ap_E2SM_KPM_ActionDefinition_Format5;
+static int ett_e2ap_E2SM_KPM_IndicationHeader;
+static int ett_e2ap_T_indicationHeader_formats;
+static int ett_e2ap_E2SM_KPM_IndicationHeader_Format1;
+static int ett_e2ap_E2SM_KPM_IndicationMessage;
+static int ett_e2ap_T_indicationMessage_formats;
+static int ett_e2ap_E2SM_KPM_IndicationMessage_Format1;
+static int ett_e2ap_E2SM_KPM_IndicationMessage_Format2;
+static int ett_e2ap_E2SM_KPM_IndicationMessage_Format3;
+static int ett_e2ap_E2SM_KPM_RANfunction_Description;
+static int ett_e2ap_SEQUENCE_SIZE_1_maxnoofRICStyles_OF_RIC_EventTriggerStyle_Item;
+static int ett_e2ap_SEQUENCE_SIZE_1_maxnoofRICStyles_OF_RIC_ReportStyle_Item;
+static int ett_e2ap_RIC_EventTriggerStyle_Item;
+static int ett_e2ap_RIC_ReportStyle_Item;
+static int ett_e2ap_E2SM_NI_EventTriggerDefinition;
+static int ett_e2ap_E2SM_NI_EventTriggerDefinition_Format1;
+static int ett_e2ap_SEQUENCE_SIZE_1_maxofInterfaceProtocolTests_OF_NI_ProtocolIE_Item;
+static int ett_e2ap_E2SM_NI_ActionDefinition;
+static int ett_e2ap_E2SM_NI_ActionDefinitionFormat;
+static int ett_e2ap_E2SM_NI_ActionDefinition_Format1;
+static int ett_e2ap_SEQUENCE_SIZE_1_maxofActionParameters_OF_RANparameter_Item;
+static int ett_e2ap_E2SM_NI_ActionDefinition_Format2;
+static int ett_e2ap_SEQUENCE_SIZE_1_maxofRANueGroups_OF_RANueGroup_Item;
+static int ett_e2ap_E2SM_NI_IndicationHeader;
+static int ett_e2ap_E2SM_NI_IndicationHeader_Format1;
+static int ett_e2ap_E2SM_NI_IndicationMessage;
+static int ett_e2ap_E2SM_NI_IndicationMessage_Format1;
+static int ett_e2ap_E2SM_NI_CallProcessID;
+static int ett_e2ap_E2SM_NI_CallProcessID_Format1;
+static int ett_e2ap_E2SM_NI_CallProcessID_Format2;
+static int ett_e2ap_E2SM_NI_ControlHeader;
+static int ett_e2ap_E2SM_NI_ControlHeader_Format1;
+static int ett_e2ap_E2SM_NI_ControlMessage;
+static int ett_e2ap_E2SM_NI_ControlMessage_Format1;
+static int ett_e2ap_E2SM_NI_ControlOutcome;
+static int ett_e2ap_E2SM_NI_ControlOutcome_Format1;
+static int ett_e2ap_SEQUENCE_SIZE_1_maxofRANparameters_OF_RANparameter_Item;
+static int ett_e2ap_E2SM_NI_RANfunction_Description;
+static int ett_e2ap_SEQUENCE_SIZE_1_maxofNItypes_OF_E2SM_NI_RANfunction_Item;
+static int ett_e2ap_E2SM_NI_RANfunction_Item;
+static int ett_e2ap_SEQUENCE_SIZE_1_maxofRICstyles_OF_RIC_EventTriggerStyle_List;
+static int ett_e2ap_SEQUENCE_SIZE_1_maxofRICstyles_OF_RIC_ReportStyle_List;
+static int ett_e2ap_SEQUENCE_SIZE_1_maxofRICstyles_OF_RIC_InsertStyle_List;
+static int ett_e2ap_SEQUENCE_SIZE_1_maxofRICstyles_OF_RIC_ControlStyle_List;
+static int ett_e2ap_SEQUENCE_SIZE_1_maxofRICstyles_OF_RIC_PolicyStyle_List;
+static int ett_e2ap_Global_gNB_DU_ID;
+static int ett_e2ap_Global_gNB_CU_UP_ID;
+static int ett_e2ap_NI_Identifier;
+static int ett_e2ap_NI_MessageType;
+static int ett_e2ap_NI_MessageTypeApproach1;
+static int ett_e2ap_NI_ProtocolIE_Item;
+static int ett_e2ap_NI_ProtocolIE_Value;
+static int ett_e2ap_RANimperativePolicy;
+static int ett_e2ap_RANparameter_Item;
+static int ett_e2ap_RANparameterDef_Item;
+static int ett_e2ap_RANparameter_Value;
+static int ett_e2ap_RANueGroup_Item;
+static int ett_e2ap_RANueGroupDefinition;
+static int ett_e2ap_SEQUENCE_SIZE_1_maxofRANparameters_OF_RANueGroupDef_Item;
+static int ett_e2ap_RANueGroupDef_Item;
+static int ett_e2ap_RIC_ControlStyle_List;
+static int ett_e2ap_SEQUENCE_SIZE_1_maxofRANparameters_OF_RANparameterDef_Item;
+static int ett_e2ap_RIC_EventTriggerStyle_List;
+static int ett_e2ap_RIC_InsertStyle_List;
+static int ett_e2ap_RIC_PolicyStyle_List;
+static int ett_e2ap_RIC_ReportStyle_List;
 
 
 /* Forward declarations */
+static int dissect_e2ap_RANfunction_Name(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_);
+
+
 static int dissect_E2SM_KPM_EventTriggerDefinition_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_);
 static int dissect_E2SM_KPM_ActionDefinition_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_);
 static int dissect_E2SM_KPM_IndicationHeader_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_);
@@ -1441,37 +1623,115 @@ static int dissect_E2SM_NI_ControlHeader_PDU(tvbuff_t *tvb _U_, packet_info *pin
 static int dissect_E2SM_NI_ControlMessage_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_);
 static int dissect_E2SM_NI_ControlOutcome_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_);
 
-
-
 enum {
   INITIATING_MESSAGE,
   SUCCESSFUL_OUTCOME,
   UNSUCCESSFUL_OUTCOME
 };
 
-typedef struct _e2ap_ctx_t {
-  guint32 message_type;
-  guint32 ProcedureCode;
-  guint32 ProtocolIE_ID;
-  guint32 ProtocolExtensionID;
-} e2ap_ctx_t;
 
+/* E2AP stats - Tap interface */
 
+static void set_stats_message_type(packet_info *pinfo, int type);
 
-struct e2ap_private_data {
-  guint32 procedure_code;
-  guint32 protocol_ie_id;
-  guint32 protocol_extension_id;
-  guint32 message_type;
-  guint32 ran_ue_e2ap_id;
+static const uint8_t *st_str_packets        = "Total Packets";
+static const uint8_t *st_str_packet_types   = "E2AP Packet Types";
 
-  guint32 ran_function_id;
-  guint32 gnb_id_len;
-#define MAX_GNB_ID_BYTES 6
-  guint8  gnb_id_bytes[MAX_GNB_ID_BYTES];
-  dissector_handle_t component_configuration_dissector;
+static int st_node_packets = -1;
+static int st_node_packet_types = -1;
+static int e2ap_tap;
+
+struct e2ap_tap_t {
+    int e2ap_mtype;
 };
 
+#define MTYPE_E2_CONNECTION_UPDATE             1
+#define MTYPE_E2_CONNECTION_UPDATE_ACK         2
+#define MTYPE_E2_CONNECTION_UPDATE_FAIL        3
+#define MTYPE_E2_CONFIGURATION_UPDATE          4
+#define MTYPE_E2_CONFIGURATION_UPDATE_ACK      5
+#define MTYPE_E2_CONFIGURATION_UPDATE_FAIL     6
+#define MTYPE_E2_SETUP_FAIL                    7
+#define MTYPE_E2_SETUP_REQUEST                 8
+#define MTYPE_E2_SETUP_RESPONSE                9
+#define MTYPE_ERROR_INDICATION                 10
+#define MTYPE_RESET_REQUEST                    11
+#define MTYPE_RESET_RESPONSE                   12
+#define MTYPE_RIC_CONTROL_ACK                  13
+#define MTYPE_RIC_CONTROL_FAIL                 14
+#define MTYPE_RIC_CONTROL_REQUEST              15
+#define MTYPE_RIC_IND                          16
+#define MTYPE_RIC_SERVICE_QUERY                17
+#define MTYPE_RIC_SERVICE_UPDATE               18
+#define MTYPE_RIC_SERVICE_UPDATE_ACK           19
+#define MTYPE_RIC_SERVICE_UPDATE_FAIL          20
+#define MTYPE_RIC_SUBSCRIPTION_FAIL            21
+#define MTYPE_RIC_SUBSCRIPTION_REQUEST         22
+#define MTYPE_RIC_SUBSCRIPTION_RESPONSE        23
+#define MTYPE_RIC_SUBSCRIPTION_DELETE_FAIL     24
+#define MTYPE_RIC_SUBSCRIPTION_DELETE_REQUEST  25
+#define MTYPE_RIC_SUBSCRIPTION_DELETE_RESPONSE 26
+#define MTYPE_RIC_SUBSCRIPTION_DELETE_REQUIRED 27
+
+/* Value Strings. TODO: ext? */
+static const value_string mtype_names[] = {
+    { MTYPE_E2_CONNECTION_UPDATE,                "E2connectionUpdate"},
+    { MTYPE_E2_CONNECTION_UPDATE_ACK,            "E2connectionUpdateAcknowledge"},
+    { MTYPE_E2_CONNECTION_UPDATE_FAIL,           "E2connectionUpdateFailure"},
+    { MTYPE_E2_CONFIGURATION_UPDATE,             "E2nodeConfigurationUpdate"},
+    { MTYPE_E2_CONFIGURATION_UPDATE_ACK,         "E2nodeConfigurationUpdateAcknowledge"},
+    { MTYPE_E2_CONFIGURATION_UPDATE_FAIL,        "E2nodeConfigurationUpdateFailure"},
+    { MTYPE_E2_SETUP_FAIL,                       "E2setupFailure"},
+    { MTYPE_E2_SETUP_REQUEST,                    "E2setupRequest"},
+    { MTYPE_E2_SETUP_RESPONSE,                   "E2setupResponse"},
+    { MTYPE_ERROR_INDICATION,                    "ErrorIndication"},
+    { MTYPE_RESET_REQUEST,                       "ResetRequest"},
+    { MTYPE_RESET_RESPONSE,                      "ResetResponse"},
+    { MTYPE_RIC_CONTROL_ACK,                     "RICcontrolAcknowledge"},
+    { MTYPE_RIC_CONTROL_FAIL,                    "RICcontrolFailure"},
+    { MTYPE_RIC_CONTROL_REQUEST,                 "RICcontrolRequest"},
+    { MTYPE_RIC_IND,                             "RICindication"},
+    { MTYPE_RIC_SERVICE_QUERY,                   "RICserviceQuery"},
+    { MTYPE_RIC_SERVICE_UPDATE,                  "RICserviceUpdate"},
+    { MTYPE_RIC_SERVICE_UPDATE_ACK,              "RICserviceUpdateAcknowledge"},
+    { MTYPE_RIC_SERVICE_UPDATE_FAIL,             "RICserviceUpdateFailure"},
+    { MTYPE_RIC_SUBSCRIPTION_FAIL,               "RICsubscriptionFailure"},
+    { MTYPE_RIC_SUBSCRIPTION_REQUEST,            "RICsubscriptionRequest"},
+    { MTYPE_RIC_SUBSCRIPTION_RESPONSE,           "RICsubscriptionResponse"},
+    { MTYPE_RIC_SUBSCRIPTION_DELETE_FAIL,        "RICsubscriptionDeleteFailure"},
+    { MTYPE_RIC_SUBSCRIPTION_DELETE_REQUEST,     "RICsubscriptionDeleteRequest"},
+    { MTYPE_RIC_SUBSCRIPTION_DELETE_RESPONSE,    "RICsubscriptionDeleteResponse"},
+    { MTYPE_RIC_SUBSCRIPTION_DELETE_REQUIRED,    "RICsubscriptionDeleteRequired"},
+    { 0,  NULL }
+};
+
+static proto_tree *top_tree;
+
+static void set_message_label(asn1_ctx_t *actx, int type)
+{
+  const char *label = val_to_str_const(type, mtype_names, "Unknown");
+  col_append_sep_str(actx->pinfo->cinfo, COL_INFO, NULL, label);
+  proto_item_append_text(top_tree, " (%s)", label);
+}
+
+
+
+
+/* Temporary private info to remember while dissecting frame */
+struct e2ap_private_data {
+  uint32_t procedure_code;
+  uint32_t protocol_ie_id;
+  uint32_t message_type;
+
+  uint32_t ran_function_id;
+  uint32_t gnb_id_len;
+#define MAX_GNB_ID_BYTES 6
+  uint8_t gnb_id_bytes[MAX_GNB_ID_BYTES];
+  dissector_handle_t component_configuration_dissector;
+  struct e2ap_tap_t *stats_tap;
+};
+
+/* Lookup temporary private info */
 static struct e2ap_private_data*
 e2ap_get_private_data(packet_info *pinfo)
 {
@@ -1484,94 +1744,30 @@ e2ap_get_private_data(packet_info *pinfo)
 }
 
 /****************************************************************************************************************/
-/* We learn which set of RAN functions pointers corresponds to a given ranFunctionID when we see E2SetupRequest */
-typedef int (*pdu_dissector_t)(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree, void *data);
-
-/* Function pointers for a RANFunction */
-typedef struct {
-    pdu_dissector_t ran_function_definition_dissector;
-
-    pdu_dissector_t ric_control_header_dissector;
-    pdu_dissector_t ric_control_message_dissector;
-    pdu_dissector_t ric_control_outcome_dissector;
-
-    pdu_dissector_t ran_action_definition_dissector;
-    pdu_dissector_t ran_indication_message_dissector;
-    pdu_dissector_t ran_indication_header_dissector;
-    pdu_dissector_t ran_callprocessid_dissector;
-    pdu_dissector_t ran_event_trigger_dissector;
-} ran_function_pointers_t;
-
-typedef enum {
-    MIN_RANFUNCTIONS,
-    KPM_RANFUNCTIONS=0,
-    RIC_RANFUNCTIONS,
-    NI_RANFUNCTIONS,
-    MAX_RANFUNCTIONS
-} ran_function_t;
-
-typedef struct {
-    const char* name;
-    ran_function_pointers_t functions;
-} ran_function_name_mapping_t;
-
+/* These are the strings that we look for at the beginning of RAN Function Description to identify RAN Function */
 /* Static table mapping from string -> ran_function */
-static const ran_function_name_mapping_t g_ran_functioname_table[MAX_RANFUNCTIONS] =
+static const char* g_ran_function_name_table[MAX_RANFUNCTIONS] =
 {
-  { "ORAN-E2SM-KPM", {  dissect_E2SM_KPM_RANfunction_Description_PDU,
-
-                        NULL,
-                        NULL,
-                        NULL,
-
-                        dissect_E2SM_KPM_ActionDefinition_PDU,
-                        dissect_E2SM_KPM_IndicationMessage_PDU,
-                        dissect_E2SM_KPM_IndicationHeader_PDU,
-                        NULL, /* no dissect_E2SM_KPM_CallProcessID_PDU */
-                        dissect_E2SM_KPM_EventTriggerDefinition_PDU
-                     }
-  },
-  { "ORAN-E2SM-RC",  {  dissect_E2SM_RC_RANFunctionDefinition_PDU,
-
-                        dissect_E2SM_RC_ControlHeader_PDU,
-                        dissect_E2SM_RC_ControlMessage_PDU,
-                        dissect_E2SM_RC_ControlOutcome_PDU,
-
-                        dissect_E2SM_RC_ActionDefinition_PDU,
-                        dissect_E2SM_RC_IndicationMessage_PDU,
-                        dissect_E2SM_RC_IndicationHeader_PDU,
-                        dissect_E2SM_RC_CallProcessID_PDU,
-                        dissect_E2SM_RC_EventTrigger_PDU
-                     }
-  },
-  { "ORAN-E2SM-NI",  {  dissect_E2SM_NI_RANfunction_Description_PDU,
-
-                        dissect_E2SM_NI_ControlHeader_PDU,
-                        dissect_E2SM_NI_ControlMessage_PDU,
-                        dissect_E2SM_NI_ControlOutcome_PDU,
-
-                        dissect_E2SM_NI_ActionDefinition_PDU,
-                        dissect_E2SM_NI_IndicationMessage_PDU,
-                        dissect_E2SM_NI_IndicationHeader_PDU,
-                        dissect_E2SM_NI_CallProcessID_PDU,
-                        dissect_E2SM_NI_EventTriggerDefinition_PDU
-                     }
-    }
+    "ORAN-E2SM-KPM",
+    "ORAN-E2SM-RC",
+    "ORAN-E2SM-NI",
+    "{"               /* For now, CCC is the only JSON-based RAN Function, so just match opening */
 };
 
 
 
-/* Per-conversation mapping: ranFunctionId -> ran_function */
+/* Per-conversation mapping: ranFunctionId -> ran_function+dissector */
 typedef struct {
-    guint32                  setup_frame;
-    guint32                  ran_function_id;
+    uint32_t                 setup_frame;
+    uint32_t                 ran_function_id;
     ran_function_t           ran_function;
-    ran_function_pointers_t *ran_function_pointers;
+    char                     oid[MAX_OID_LEN];       // i.e., OID from setupRequest
+    ran_function_dissector_t *dissector;
 } ran_function_id_mapping_t;
 
 typedef struct  {
 #define MAX_RANFUNCTION_ENTRIES 8
-    guint32                   num_entries;
+    uint32_t                  num_entries;
     ran_function_id_mapping_t entries[MAX_RANFUNCTION_ENTRIES];
 } ran_functionid_table_t;
 
@@ -1580,27 +1776,52 @@ static const char *ran_function_to_str(ran_function_t ran_function)
     switch (ran_function) {
         case KPM_RANFUNCTIONS:
             return "KPM";
-        case RIC_RANFUNCTIONS:
-            return "RIC";
+        case RC_RANFUNCTIONS:
+            return "RC";
         case NI_RANFUNCTIONS:
             return "NI";
+        case CCC_RANFUNCTIONS:
+            return "CCC";
 
         default:
             return "Unknown";
     }
 }
 
+/* Table of RAN Function tables, indexed by gnbId (bytes) */
 typedef struct {
 #define MAX_GNBS 6
-    guint32 num_gnbs;
+    uint32_t num_gnbs;
     struct {
-        guint32 len;
-        guint8  value[MAX_GNB_ID_BYTES];
+        uint8_t id_value[MAX_GNB_ID_BYTES];
+        uint32_t id_len;
         ran_functionid_table_t *ran_function_table;
     } gnb[MAX_GNBS];
 } gnb_ran_functions_t;
 
-static gnb_ran_functions_t s_gnb_ran_functions;
+static gnb_ran_functions_t s_gnb_ran_functions_table;
+
+
+/* Table of available dissectors for each RAN function */
+typedef struct {
+    uint32_t                 num_available_dissectors;
+#define MAX_DISSECTORS_PER_RAN_FUNCTION 8
+    ran_function_dissector_t* ran_function_dissectors[MAX_DISSECTORS_PER_RAN_FUNCTION];
+} ran_function_available_dissectors_t;
+
+/* Available dissectors should be set here */
+static ran_function_available_dissectors_t g_ran_functions_available_dissectors[MAX_RANFUNCTIONS];
+
+/* Will be called from outside this file by separate dissectors */
+void register_e2ap_ran_function_dissector(ran_function_t ran_function, ran_function_dissector_t *dissector)
+{
+    if ((ran_function >= MIN_RANFUNCTIONS) && (ran_function < MAX_RANFUNCTIONS)) {
+        ran_function_available_dissectors_t *available_dissectors = &g_ran_functions_available_dissectors[ran_function];
+        if (available_dissectors->num_available_dissectors < MAX_DISSECTORS_PER_RAN_FUNCTION) {
+            available_dissectors->ran_function_dissectors[available_dissectors->num_available_dissectors++] = dissector;
+        }
+    }
+}
 
 
 /* Get RANfunctionID table from conversation data - create new if necessary */
@@ -1631,27 +1852,40 @@ static ran_functionid_table_t* get_ran_functionid_table(packet_info *pinfo)
 
 
 /* Store new RANfunctionID -> Service Model mapping in table */
-static void store_ran_function_mapping(packet_info *pinfo, ran_functionid_table_t *table, struct e2ap_private_data *e2ap_data, const char *name)
+void e2ap_store_ran_function_mapping(packet_info *pinfo, proto_tree *tree, tvbuff_t *tvb, const char *name)
 {
-    if (!name) {
+    struct e2ap_private_data *e2ap_data = e2ap_get_private_data(pinfo);
+    ran_functionid_table_t *table = get_ran_functionid_table(pinfo);
+
+    /* Need these pointers not to be NULL */
+    if (!name || !table) {
       return;
     }
+
     /* Stop if already reached table limit */
     if (table->num_entries == MAX_RANFUNCTION_ENTRIES) {
-        /* TODO: expert info warning? */
+        proto_tree_add_expert_format(tree, pinfo, &ei_e2ap_ran_function_max_dissectors_registered,
+                                     tvb, 0, 0,
+                                     "Dissector wants to register for %s, but max (%u) already reached",
+                                     name, MAX_RANFUNCTION_ENTRIES);
         return;
     }
 
-    guint32 ran_function_id = e2ap_data->ran_function_id;
+    uint32_t ran_function_id = e2ap_data->ran_function_id;
 
     ran_function_t           ran_function = MAX_RANFUNCTIONS;  /* i.e. invalid */
-    ran_function_pointers_t *ran_function_pointers = NULL;
+    ran_function_dissector_t *ran_function_dissector = NULL;
 
-    /* Check known RAN functions */
+    /* Check known RAN function names */
     for (int n=MIN_RANFUNCTIONS; n < MAX_RANFUNCTIONS; n++) {
-        if (strcmp(name,   g_ran_functioname_table[n].name) == 0) {
+        if (strcmp(name, g_ran_function_name_table[n]) == 0) {
             ran_function = n;
-            ran_function_pointers = (ran_function_pointers_t*)&(g_ran_functioname_table[n].functions);
+
+            /* Don't know OID yet, so for now, just choose first/only one */
+            /* TODO: is latest one likely to be more compatible? First fields (at least) come from E2SM.. */
+            if (g_ran_functions_available_dissectors[table->entries[n].ran_function].num_available_dissectors) {
+                ran_function_dissector = g_ran_functions_available_dissectors[table->entries[n].ran_function].ran_function_dissectors[0];
+            }
             break;
         }
     }
@@ -1661,80 +1895,216 @@ static void store_ran_function_mapping(packet_info *pinfo, ran_functionid_table_
         return;
     }
 
-    /* If ID already mapped, ignore */
-    for (guint n=0; n < table->num_entries; n++) {
+    /* If ID already mapped, can stop here */
+    for (unsigned n=0; n < table->num_entries; n++) {
         if (table->entries[n].ran_function_id == ran_function_id) {
             return;
         }
     }
 
     /* OK, store this new entry */
-    guint idx = table->num_entries++;
+    unsigned idx = table->num_entries++;
     table->entries[idx].setup_frame = pinfo->num;
     table->entries[idx].ran_function_id = ran_function_id;
     table->entries[idx].ran_function = ran_function;
-    table->entries[idx].ran_function_pointers = ran_function_pointers;
+    table->entries[idx].dissector = ran_function_dissector;
 
     /* When add first entry, also want to set up table from gnbId -> table */
     if (idx == 0) {
-        guint id_len = e2ap_data->gnb_id_len;
-        guint8 *id_value = &e2ap_data->gnb_id_bytes[0];
+        unsigned id_len = e2ap_data->gnb_id_len;
+        uint8_t *id_value = &e2ap_data->gnb_id_bytes[0];
 
-        gboolean found = FALSE;
-        for (guint n=0; n<s_gnb_ran_functions.num_gnbs; n++) {
-            if ((s_gnb_ran_functions.gnb[n].len = id_len) &&
-                (memcmp(s_gnb_ran_functions.gnb[n].value, id_value, id_len) == 0)) {
-                // Already have an entry for this gnb.
-                found = TRUE;
+        bool found = false;
+        for (unsigned n=0; n<s_gnb_ran_functions_table.num_gnbs; n++) {
+            if ((s_gnb_ran_functions_table.gnb[n].id_len = id_len) &&
+                (memcmp(s_gnb_ran_functions_table.gnb[n].id_value, id_value, id_len) == 0)) {
+                /* Already have an entry for this gnb. */
+                found = true;
                 break;
             }
         }
 
         if (!found) {
             /* Add entry (if room for 1 more) */
-            guint32 new_idx = s_gnb_ran_functions.num_gnbs;
+            uint32_t new_idx = s_gnb_ran_functions_table.num_gnbs;
             if (new_idx < MAX_GNBS-1) {
-                s_gnb_ran_functions.gnb[new_idx].len = id_len;
-                memcpy(s_gnb_ran_functions.gnb[new_idx].value, id_value, id_len);
-                s_gnb_ran_functions.gnb[new_idx].ran_function_table = table;
+                s_gnb_ran_functions_table.gnb[new_idx].id_len = id_len;
+                memcpy(s_gnb_ran_functions_table.gnb[new_idx].id_value, id_value, id_len);
+                s_gnb_ran_functions_table.gnb[new_idx].ran_function_table = table;
 
-                s_gnb_ran_functions.num_gnbs++;
+                s_gnb_ran_functions_table.num_gnbs++;
             }
         }
     }
 }
 
-/* Look for Service Model function pointers, based on current RANFunctionID in pinfo */
-static ran_function_pointers_t* lookup_ranfunction_pointers(packet_info *pinfo, proto_tree *tree, tvbuff_t *tvb)
+/* Look for Service Model function pointers, based on current RANFunctionID from frame */
+static ran_function_dissector_t* lookup_ranfunction_dissector(packet_info *pinfo, proto_tree *tree, tvbuff_t *tvb)
 {
     /* Get ranFunctionID from this frame */
     struct e2ap_private_data *e2ap_data = e2ap_get_private_data(pinfo);
-    guint ran_function_id = e2ap_data->ran_function_id;
+    unsigned ran_function_id = e2ap_data->ran_function_id;
 
-    /* Look in table function pointers for this ranFunctionID */
+    /* Get ranFunction table corresponding to this frame's conversation */
     ran_functionid_table_t *table = get_ran_functionid_table(pinfo);
     if (!table) {
         /* There is no ran function table associated with this frame's conversation info */
         return NULL;
     }
-    for (guint n=0; n < table->num_entries; n++) {
-        if (ran_function_id == table->entries[n].ran_function_id) {
-            /* Point back at the setup frame where this ranfunction was mapped */
-            proto_item *ti = proto_tree_add_uint(tree, hf_e2ap_ran_function_setup_frame,
-                                                 tvb, 0, 0, table->entries[n].setup_frame);
-            /* Also show that mapping */
-            proto_item_append_text(ti, " (%u -> %s)", table->entries[n].ran_function_id, ran_function_to_str(table->entries[n].ran_function));
-            proto_item_set_generated(ti);
 
-            return table->entries[n].ran_function_pointers;
+    /* Find the entry in this table corresponding to ran_function_id */
+    for (unsigned n=0; n < table->num_entries; n++) {
+        if (ran_function_id == table->entries[n].ran_function_id) {
+            if (tree) {
+                /* Point back at the setup frame where this ranfunction was mapped */
+                proto_item *ti = proto_tree_add_uint(tree, hf_e2ap_ran_function_setup_frame,
+                                                     tvb, 0, 0, table->entries[n].setup_frame);
+                /* Show that mapping */
+                proto_item_append_text(ti, " (%u -> %s)", table->entries[n].ran_function_id, ran_function_to_str(table->entries[n].ran_function));
+                proto_item_set_generated(ti);
+
+                /* Also take the chance to compare signalled and available dissector */
+                char *frame_version = oid_resolved_from_string(pinfo->pool, table->entries[n].oid);
+                ti = proto_tree_add_string(tree, hf_e2ap_frame_version, tvb, 0, 0, frame_version);
+                proto_item_set_generated(ti);
+
+                char *dissector_version = oid_resolved_from_string(pinfo->pool, table->entries[n].dissector->oid);
+                ti = proto_tree_add_string(tree, hf_e2ap_dissector_version, tvb, 0, 0, dissector_version);
+                proto_item_set_generated(ti);
+
+                if (strcmp(frame_version, dissector_version) != 0) {
+                    /* Expert info for version mismatch! */
+                    expert_add_info_format(pinfo, ti, &ei_e2ap_ran_function_dissector_mismatch,
+                                           "Dissector version mismatch - frame is %s but dissector is %s",
+                                           frame_version, dissector_version);
+                }
+            }
+
+            /* Return the dissector */
+            return table->entries[n].dissector;
         }
     }
 
-    /* No match found.. */
-    proto_item *ti = proto_tree_add_item(tree, hf_e2ap_unmapped_ran_function_id, tvb, 0, 0, ENC_NA);
-    expert_add_info_format(pinfo, ti, &ei_e2ap_ran_function_id_not_mapped,
-                           "Service Model not mapped for FunctionID %u", ran_function_id);
+    if (tree) {
+        /* No match found.. */
+        proto_item *ti = proto_tree_add_item(tree, hf_e2ap_unmapped_ran_function_id, tvb, 0, 0, ENC_NA);
+        expert_add_info_format(pinfo, ti, &ei_e2ap_ran_function_id_not_mapped,
+                               "Service Model not mapped for FunctionID %u", ran_function_id);
+    }
+
     return NULL;
+}
+
+/* Return the oid associated with this frame's conversation */
+static char* lookup_ranfunction_oid(packet_info *pinfo)
+{
+    /* Get ranFunctionID from this frame */
+    struct e2ap_private_data *e2ap_data = e2ap_get_private_data(pinfo);
+    unsigned ran_function_id = e2ap_data->ran_function_id;
+
+    /* Get ranFunction table corresponding to this frame's conversation */
+    ran_functionid_table_t *table = get_ran_functionid_table(pinfo);
+    if (!table) {
+        /* There is no ran function table associated with this frame's conversation info */
+        return NULL;
+    }
+
+    /* Find the entry in this table corresponding to ran_function_id */
+    for (unsigned n=0; n < table->num_entries; n++) {
+        if (ran_function_id == table->entries[n].ran_function_id) {
+            return (char*)(table->entries[n].oid);
+        }
+    }
+
+    /* Not found */
+    return NULL;
+}
+
+
+/* We now know the OID - can we set a dissector that is an exact match from what has been signalled? */
+static void update_dissector_using_oid(packet_info *pinfo, ran_function_t ran_function)
+{
+    char *frame_oid = lookup_ranfunction_oid(pinfo);
+    if (frame_oid == NULL) {
+        /* TODO: error? */
+        return;
+    }
+
+    bool found = false;
+
+    /* Look at available dissectors for this RAN function */
+    ran_function_available_dissectors_t *available = &g_ran_functions_available_dissectors[ran_function];
+    if (!available->num_available_dissectors) {
+        /* Oops - none available at all! */
+        return;
+    }
+
+    // Get mapping in use
+    struct e2ap_private_data *e2ap_data = e2ap_get_private_data(pinfo);
+    unsigned ran_function_id = e2ap_data->ran_function_id;
+    ran_function_id_mapping_t *mapping = NULL;
+    ran_functionid_table_t *table = get_ran_functionid_table(pinfo);
+    if (!table) {
+        return;
+    }
+
+    /* Find the entry in this table corresponding to ran_function_id */
+    for (unsigned n=0; n < table->num_entries; n++) {
+        if (ran_function_id == table->entries[n].ran_function_id) {
+            mapping = &(table->entries[n]);
+        }
+    }
+
+    if (!mapping) {
+        return;
+    }
+
+    /* Set dissector pointer in ran_function_id_mapping_t */
+    for (uint32_t n=0; n < available->num_available_dissectors; n++) {
+        /* If exact match, set it */
+        if (strcmp(frame_oid, available->ran_function_dissectors[n]->oid) == 0) {
+            mapping->dissector = available->ran_function_dissectors[n];
+            found = true;
+            break;
+        }
+    }
+
+    /* If not exact match, just set to first one available (TODO: closest above better?) */
+    if (!found) {
+        mapping->dissector = available->ran_function_dissectors[0];
+    }
+}
+
+
+/* Update RANfunctionID -> Service Model mapping in table (now that we know OID) */
+void e2ap_update_ran_function_mapping(packet_info *pinfo, proto_tree *tree, tvbuff_t *tvb, const char *oid)
+{
+    /* Copy OID into table entry (so may be used to choose and be compared with chosen available dissector */
+    struct e2ap_private_data *e2ap_data = e2ap_get_private_data(pinfo);
+    ran_functionid_table_t *table = get_ran_functionid_table(pinfo);
+    /* Make sure we have private and table data to compare */
+    if (!e2ap_data || !table) {
+        return;
+    }
+    ran_function_t ran_function = MAX_RANFUNCTIONS;
+    for (unsigned n=0; n < table->num_entries; n++) {
+        if (e2ap_data->ran_function_id == table->entries[n].ran_function_id) {
+            ran_function = table->entries[n].ran_function;
+            g_strlcpy(table->entries[n].oid, oid, MAX_OID_LEN);
+        }
+    }
+
+    /* Look up version from oid and show as generated field */
+    char *version = oid_resolved_from_string(pinfo->pool, oid);
+    proto_item *ti = proto_tree_add_string(tree, hf_e2ap_frame_version, tvb, 0, 0, version);
+    proto_item_set_generated(ti);
+
+    /* Can now pick most appropriate dissector for this RAN Function name, based upon this OID and the available dissectors */
+    if (ran_function < MAX_RANFUNCTIONS) {
+        if (pinfo->fd->visited) {
+            update_dissector_using_oid(pinfo, ran_function);
+        }
+    }
 }
 
 /* This will get used for E2nodeConfigurationUpdate, where we have a gnb-id but haven't seen E2setupRequest */
@@ -1761,16 +2131,16 @@ static void update_conversation_from_gnb_id(asn1_ctx_t *actx)
         conversation_add_proto_data(p_conv, proto_e2ap, p_conv_data);
 
         /* Look to see if we already know about the mappings in effect on this gNB */
-        guint id_len = e2ap_data->gnb_id_len;
-        guint8 *id_value = &e2ap_data->gnb_id_bytes[0];
+        unsigned id_len = e2ap_data->gnb_id_len;
+        uint8_t *id_value = &e2ap_data->gnb_id_bytes[0];
 
-        for (guint n=0; n<s_gnb_ran_functions.num_gnbs; n++) {
-            if ((s_gnb_ran_functions.gnb[n].len = id_len) &&
-                (memcmp(s_gnb_ran_functions.gnb[n].value, id_value, id_len) == 0)) {
+        for (unsigned n=0; n<s_gnb_ran_functions_table.num_gnbs; n++) {
+            if ((s_gnb_ran_functions_table.gnb[n].id_len = id_len) &&
+                (memcmp(s_gnb_ran_functions_table.gnb[n].id_value, id_value, id_len) == 0)) {
 
                 /* Have an entry for this gnb.  Set direct pointer to existing data (used by original conversation). */
                 /* N.B. This means that no further updates for the gNB are expected on different conversations.. */
-                p_conv_data = s_gnb_ran_functions.gnb[n].ran_function_table;
+                p_conv_data = s_gnb_ran_functions_table.gnb[n].ran_function_table;
                 conversation_add_proto_data(p_conv, proto_e2ap, p_conv_data);
 
                 /* TODO: may want to try to add a generated field to pass back to E2setupRequest where RAN function mappings were first seen? */
@@ -1778,6 +2148,14 @@ static void update_conversation_from_gnb_id(asn1_ctx_t *actx)
             }
         }
     }
+}
+
+static dissector_handle_t json_handle;
+
+static int dissect_E2SM_NI_JSON_PDU(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree, void *data _U_)
+{
+    /* Send to JSON dissector */
+    return call_dissector_only(json_handle, tvb, pinfo, tree, NULL);
 }
 
 
@@ -1831,7 +2209,7 @@ static const value_string e2ap_Criticality_vals[] = {
 static int
 dissect_e2ap_Criticality(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_per_enumerated(tvb, offset, actx, tree, hf_index,
-                                     3, NULL, FALSE, 0, NULL);
+                                     3, NULL, false, 0, NULL);
 
   return offset;
 }
@@ -1851,6 +2229,9 @@ static const value_string e2ap_ProcedureCode_vals[] = {
   { id_E2connectionUpdate, "id-E2connectionUpdate" },
   { id_RICsubscriptionDeleteRequired, "id-RICsubscriptionDeleteRequired" },
   { id_E2removal, "id-E2removal" },
+  { id_RICsubscriptionModification, "id-RICsubscriptionModification" },
+  { id_RICsubscriptionModificationRequired, "id-RICsubscriptionModificationRequired" },
+  { id_RICquery, "id-RICquery" },
   { 0, NULL }
 };
 
@@ -1861,7 +2242,7 @@ static int
 dissect_e2ap_ProcedureCode(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   struct e2ap_private_data *e2ap_data = e2ap_get_private_data(actx->pinfo);
   offset = dissect_per_constrained_integer(tvb, offset, actx, tree, hf_index,
-                                                            0U, 255U, &e2ap_data->procedure_code, FALSE);
+                                                            0U, 255U, &e2ap_data->procedure_code, false);
 
   //col_append_fstr(actx->pinfo->cinfo, COL_INFO, "%s", val_to_str(e2ap_data->procedure_code, e2ap_ProcedureCode_vals, "Unknown"));
 
@@ -1929,6 +2310,42 @@ static const value_string e2ap_ProtocolIE_ID_vals[] = {
   { id_E2nodeTNLassociationRemoval_Item, "id-E2nodeTNLassociationRemoval-Item" },
   { id_RICsubscriptionToBeRemoved, "id-RICsubscriptionToBeRemoved" },
   { id_RICsubscription_withCause_Item, "id-RICsubscription-withCause-Item" },
+  { id_RICsubscriptionStartTime, "id-RICsubscriptionStartTime" },
+  { id_RICsubscriptionEndTime, "id-RICsubscriptionEndTime" },
+  { id_RICeventTriggerDefinitionToBeModified, "id-RICeventTriggerDefinitionToBeModified" },
+  { id_RICactionsToBeRemovedForModification_List, "id-RICactionsToBeRemovedForModification-List" },
+  { id_RICaction_ToBeRemovedForModification_Item, "id-RICaction-ToBeRemovedForModification-Item" },
+  { id_RICactionsToBeModifiedForModification_List, "id-RICactionsToBeModifiedForModification-List" },
+  { id_RICaction_ToBeModifiedForModification_Item, "id-RICaction-ToBeModifiedForModification-Item" },
+  { id_RICactionsToBeAddedForModification_List, "id-RICactionsToBeAddedForModification-List" },
+  { id_RICaction_ToBeAddedForModification_Item, "id-RICaction-ToBeAddedForModification-Item" },
+  { id_RICactionsRemovedForModification_List, "id-RICactionsRemovedForModification-List" },
+  { id_RICaction_RemovedForModification_Item, "id-RICaction-RemovedForModification-Item" },
+  { id_RICactionsFailedToBeRemovedForModification_List, "id-RICactionsFailedToBeRemovedForModification-List" },
+  { id_RICaction_FailedToBeRemovedForModification_Item, "id-RICaction-FailedToBeRemovedForModification-Item" },
+  { id_RICactionsModifiedForModification_List, "id-RICactionsModifiedForModification-List" },
+  { id_RICaction_ModifiedForModification_Item, "id-RICaction-ModifiedForModification-Item" },
+  { id_RICactionsFailedToBeModifiedForModification_List, "id-RICactionsFailedToBeModifiedForModification-List" },
+  { id_RICaction_FailedToBeModifiedForModification_Item, "id-RICaction-FailedToBeModifiedForModification-Item" },
+  { id_RICactionsAddedForModification_List, "id-RICactionsAddedForModification-List" },
+  { id_RICaction_AddedForModification_Item, "id-RICaction-AddedForModification-Item" },
+  { id_RICactionsFailedToBeAddedForModification_List, "id-RICactionsFailedToBeAddedForModification-List" },
+  { id_RICaction_FailedToBeAddedForModification_Item, "id-RICaction-FailedToBeAddedForModification-Item" },
+  { id_RICactionsRequiredToBeModified_List, "id-RICactionsRequiredToBeModified-List" },
+  { id_RICaction_RequiredToBeModified_Item, "id-RICaction-RequiredToBeModified-Item" },
+  { id_RICactionsRequiredToBeRemoved_List, "id-RICactionsRequiredToBeRemoved-List" },
+  { id_RICaction_RequiredToBeRemoved_Item, "id-RICaction-RequiredToBeRemoved-Item" },
+  { id_RICactionsConfirmedForModification_List, "id-RICactionsConfirmedForModification-List" },
+  { id_RICaction_ConfirmedForModification_Item, "id-RICaction-ConfirmedForModification-Item" },
+  { id_RICactionsRefusedToBeModified_List, "id-RICactionsRefusedToBeModified-List" },
+  { id_RICaction_RefusedToBeModified_Item, "id-RICaction-RefusedToBeModified-Item" },
+  { id_RICactionsConfirmedForRemoval_List, "id-RICactionsConfirmedForRemoval-List" },
+  { id_RICaction_ConfirmedForRemoval_Item, "id-RICaction-ConfirmedForRemoval-Item" },
+  { id_RICactionsRefusedToBeRemoved_List, "id-RICactionsRefusedToBeRemoved-List" },
+  { id_RICaction_RefusedToBeRemoved_Item, "id-RICaction-RefusedToBeRemoved-Item" },
+  { id_RICqueryHeader, "id-RICqueryHeader" },
+  { id_RICqueryDefinition, "id-RICqueryDefinition" },
+  { id_RICqueryOutcome, "id-RICqueryOutcome" },
   { 0, NULL }
 };
 
@@ -1939,7 +2356,7 @@ static int
 dissect_e2ap_ProtocolIE_ID(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   struct e2ap_private_data *e2ap_data = e2ap_get_private_data(actx->pinfo);
   offset = dissect_per_constrained_integer(tvb, offset, actx, tree, hf_index,
-                                                            0U, 65535U, &e2ap_data->protocol_ie_id, FALSE);
+                                                            0U, 65535U, &e2ap_data->protocol_ie_id, false);
 
 
 
@@ -1962,7 +2379,7 @@ static const value_string e2ap_TriggeringMessage_vals[] = {
 static int
 dissect_e2ap_TriggeringMessage(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_per_enumerated(tvb, offset, actx, tree, hf_index,
-                                     3, NULL, FALSE, 0, NULL);
+                                     3, NULL, false, 0, NULL);
 
   return offset;
 }
@@ -2001,7 +2418,7 @@ static int
 dissect_e2ap_ProtocolIE_Container(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_per_constrained_sequence_of(tvb, offset, actx, tree, hf_index,
                                                   ett_e2ap_ProtocolIE_Container, ProtocolIE_Container_sequence_of,
-                                                  0, maxProtocolIEs, FALSE);
+                                                  0, maxProtocolIEs, false);
 
   return offset;
 }
@@ -2020,7 +2437,7 @@ dissect_e2ap_ProtocolIE_SingleContainer(tvbuff_t *tvb _U_, int offset _U_, asn1_
 static int
 dissect_e2ap_AMFName(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_per_PrintableString(tvb, offset, actx, tree, hf_index,
-                                          1, 150, TRUE,
+                                          1, 150, true,
                                           NULL);
 
   return offset;
@@ -2042,6 +2459,12 @@ static const value_string e2ap_CauseRICrequest_vals[] = {
   {  11, "control-failed-to-execute" },
   {  12, "system-not-ready" },
   {  13, "unspecified" },
+  {  14, "ric-subscription-end-time-expired" },
+  {  15, "ric-subscription-end-time-invalid" },
+  {  16, "duplicate-ric-request-id" },
+  {  17, "eventTriggerNotSupported" },
+  {  18, "requested-information-unavailable" },
+  {  19, "invalid-information-request" },
   { 0, NULL }
 };
 
@@ -2049,7 +2472,7 @@ static const value_string e2ap_CauseRICrequest_vals[] = {
 static int
 dissect_e2ap_CauseRICrequest(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_per_enumerated(tvb, offset, actx, tree, hf_index,
-                                     14, NULL, TRUE, 0, NULL);
+                                     14, NULL, true, 6, NULL);
 
   return offset;
 }
@@ -2066,7 +2489,7 @@ static const value_string e2ap_CauseRICservice_vals[] = {
 static int
 dissect_e2ap_CauseRICservice(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_per_enumerated(tvb, offset, actx, tree, hf_index,
-                                     3, NULL, TRUE, 0, NULL);
+                                     3, NULL, true, 0, NULL);
 
   return offset;
 }
@@ -2081,7 +2504,7 @@ static const value_string e2ap_CauseE2node_vals[] = {
 static int
 dissect_e2ap_CauseE2node(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_per_enumerated(tvb, offset, actx, tree, hf_index,
-                                     1, NULL, TRUE, 0, NULL);
+                                     1, NULL, true, 0, NULL);
 
   return offset;
 }
@@ -2097,7 +2520,7 @@ static const value_string e2ap_CauseTransport_vals[] = {
 static int
 dissect_e2ap_CauseTransport(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_per_enumerated(tvb, offset, actx, tree, hf_index,
-                                     2, NULL, TRUE, 0, NULL);
+                                     2, NULL, true, 0, NULL);
 
   return offset;
 }
@@ -2118,7 +2541,7 @@ static const value_string e2ap_CauseProtocol_vals[] = {
 static int
 dissect_e2ap_CauseProtocol(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_per_enumerated(tvb, offset, actx, tree, hf_index,
-                                     7, NULL, TRUE, 0, NULL);
+                                     7, NULL, true, 0, NULL);
 
   return offset;
 }
@@ -2136,7 +2559,7 @@ static const value_string e2ap_CauseMisc_vals[] = {
 static int
 dissect_e2ap_CauseMisc(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_per_enumerated(tvb, offset, actx, tree, hf_index,
-                                     4, NULL, TRUE, 0, NULL);
+                                     4, NULL, true, 0, NULL);
 
   return offset;
 }
@@ -2176,7 +2599,7 @@ dissect_e2ap_Cause(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, prot
 static int
 dissect_e2ap_INTEGER_0_65535(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_per_constrained_integer(tvb, offset, actx, tree, hf_index,
-                                                            0U, 65535U, NULL, FALSE);
+                                                            0U, 65535U, NULL, false);
 
   return offset;
 }
@@ -2207,7 +2630,7 @@ static const value_string e2ap_TypeOfError_vals[] = {
 static int
 dissect_e2ap_TypeOfError(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_per_enumerated(tvb, offset, actx, tree, hf_index,
-                                     2, NULL, TRUE, 0, NULL);
+                                     2, NULL, true, 0, NULL);
 
   return offset;
 }
@@ -2237,7 +2660,7 @@ static int
 dissect_e2ap_CriticalityDiagnostics_IE_List(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_per_constrained_sequence_of(tvb, offset, actx, tree, hf_index,
                                                   ett_e2ap_CriticalityDiagnostics_IE_List, CriticalityDiagnostics_IE_List_sequence_of,
-                                                  1, maxnoofErrors, FALSE);
+                                                  1, maxnoofErrors, false);
 
   return offset;
 }
@@ -2266,15 +2689,15 @@ static int
 dissect_e2ap_T_e2nodeComponentRequestPart(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   tvbuff_t *value_tvb;
   offset = dissect_per_octet_string(tvb, offset, actx, tree, hf_index,
-                                       NO_BOUND, NO_BOUND, FALSE, &value_tvb);
+                                       NO_BOUND, NO_BOUND, false, &value_tvb);
 
   struct e2ap_private_data *e2ap_data = e2ap_get_private_data(actx->pinfo);
   if (e2ap_data->component_configuration_dissector) {
     col_append_str(actx->pinfo->cinfo, COL_PROTOCOL, "|");
     col_set_fence(actx->pinfo->cinfo, COL_PROTOCOL);
-    col_set_writable(actx->pinfo->cinfo, COL_INFO, FALSE);
+    col_set_writable(actx->pinfo->cinfo, COL_INFO, false);
     call_dissector(e2ap_data->component_configuration_dissector, value_tvb, actx->pinfo, tree);
-    col_set_writable(actx->pinfo->cinfo, COL_INFO, TRUE);
+    col_set_writable(actx->pinfo->cinfo, COL_INFO, true);
   }
 
 
@@ -2287,13 +2710,13 @@ static int
 dissect_e2ap_T_e2nodeComponentResponsePart(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   tvbuff_t *value_tvb;
   offset = dissect_per_octet_string(tvb, offset, actx, tree, hf_index,
-                                       NO_BOUND, NO_BOUND, FALSE, &value_tvb);
+                                       NO_BOUND, NO_BOUND, false, &value_tvb);
 
   struct e2ap_private_data *e2ap_data = e2ap_get_private_data(actx->pinfo);
   if (e2ap_data->component_configuration_dissector) {
-    col_set_writable(actx->pinfo->cinfo, COL_INFO, FALSE);
+    col_set_writable(actx->pinfo->cinfo, COL_INFO, false);
     call_dissector(e2ap_data->component_configuration_dissector, value_tvb, actx->pinfo, tree);
-    col_set_writable(actx->pinfo->cinfo, COL_INFO, TRUE);
+    col_set_writable(actx->pinfo->cinfo, COL_INFO, true);
   }
 
 
@@ -2327,7 +2750,7 @@ static const value_string e2ap_T_updateOutcome_vals[] = {
 static int
 dissect_e2ap_T_updateOutcome(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_per_enumerated(tvb, offset, actx, tree, hf_index,
-                                     2, NULL, TRUE, 0, NULL);
+                                     2, NULL, true, 0, NULL);
 
   return offset;
 }
@@ -2363,7 +2786,7 @@ static const value_string e2ap_E2nodeComponentInterfaceType_vals[] = {
 static int
 dissect_e2ap_E2nodeComponentInterfaceType(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_per_enumerated(tvb, offset, actx, tree, hf_index,
-                                     7, NULL, TRUE, 0, NULL);
+                                     7, NULL, true, 0, NULL);
 
   return offset;
 }
@@ -2401,7 +2824,7 @@ dissect_e2ap_T_e2nodeComponentInterfaceTypeNG(tvbuff_t *tvb _U_, int offset _U_,
 static int
 dissect_e2ap_PLMN_Identity(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_per_octet_string(tvb, offset, actx, tree, hf_index,
-                                       3, 3, FALSE, NULL);
+                                       3, 3, false, NULL);
 
   return offset;
 }
@@ -2411,7 +2834,7 @@ dissect_e2ap_PLMN_Identity(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _
 static int
 dissect_e2ap_BIT_STRING_SIZE_22_32(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_per_bit_string(tvb, offset, actx, tree, hf_index,
-                                     22, 32, FALSE, NULL, 0, NULL, NULL);
+                                     22, 32, false, NULL, 0, NULL, NULL);
 
   return offset;
 }
@@ -2476,7 +2899,7 @@ dissect_e2ap_GlobalgNB_ID(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U
 static int
 dissect_e2ap_BIT_STRING_SIZE_20(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_per_bit_string(tvb, offset, actx, tree, hf_index,
-                                     20, 20, FALSE, NULL, 0, NULL, NULL);
+                                     20, 20, false, NULL, 0, NULL, NULL);
 
   return offset;
 }
@@ -2486,7 +2909,7 @@ dissect_e2ap_BIT_STRING_SIZE_20(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *a
 static int
 dissect_e2ap_BIT_STRING_SIZE_18(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_per_bit_string(tvb, offset, actx, tree, hf_index,
-                                     18, 18, FALSE, NULL, 0, NULL, NULL);
+                                     18, 18, false, NULL, 0, NULL, NULL);
 
   return offset;
 }
@@ -2496,7 +2919,7 @@ dissect_e2ap_BIT_STRING_SIZE_18(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *a
 static int
 dissect_e2ap_BIT_STRING_SIZE_21(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_per_bit_string(tvb, offset, actx, tree, hf_index,
-                                     21, 21, FALSE, NULL, 0, NULL, NULL);
+                                     21, 21, false, NULL, 0, NULL, NULL);
 
   return offset;
 }
@@ -2595,14 +3018,14 @@ dissect_e2ap_T_e2nodeComponentInterfaceTypeXn(tvbuff_t *tvb _U_, int offset _U_,
 static int
 dissect_e2ap_GNB_CU_UP_ID(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_per_constrained_integer_64b(tvb, offset, actx, tree, hf_index,
-                                                            0U, G_GUINT64_CONSTANT(68719476735), NULL, FALSE);
+                                                            0U, UINT64_C(68719476735), NULL, false);
 
   return offset;
 }
 
 
 static const per_sequence_t E2nodeComponentInterfaceE1_sequence[] = {
-  { &hf_e2ap_gNB_CU_CP_ID   , ASN1_EXTENSION_ROOT    , ASN1_NOT_OPTIONAL, dissect_e2ap_GNB_CU_UP_ID },
+  { &hf_e2ap_gNB_CU_UP_ID   , ASN1_EXTENSION_ROOT    , ASN1_NOT_OPTIONAL, dissect_e2ap_GNB_CU_UP_ID },
   { NULL, 0, 0, NULL }
 };
 
@@ -2633,7 +3056,7 @@ dissect_e2ap_T_e2nodeComponentInterfaceTypeE1(tvbuff_t *tvb _U_, int offset _U_,
 static int
 dissect_e2ap_GNB_DU_ID(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_per_constrained_integer_64b(tvb, offset, actx, tree, hf_index,
-                                                            0U, G_GUINT64_CONSTANT(68719476735), NULL, FALSE);
+                                                            0U, UINT64_C(68719476735), NULL, false);
 
   return offset;
 }
@@ -2672,7 +3095,7 @@ dissect_e2ap_T_e2nodeComponentInterfaceTypeF1(tvbuff_t *tvb _U_, int offset _U_,
 static int
 dissect_e2ap_NGENB_DU_ID(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_per_constrained_integer_64b(tvb, offset, actx, tree, hf_index,
-                                                            0U, G_GUINT64_CONSTANT(68719476735), NULL, FALSE);
+                                                            0U, UINT64_C(68719476735), NULL, false);
 
   return offset;
 }
@@ -2696,7 +3119,7 @@ dissect_e2ap_E2nodeComponentInterfaceW1(tvbuff_t *tvb _U_, int offset _U_, asn1_
 static int
 dissect_e2ap_MMEname(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_per_PrintableString(tvb, offset, actx, tree, hf_index,
-                                          1, 150, TRUE,
+                                          1, 150, true,
                                           NULL);
 
   return offset;
@@ -2735,7 +3158,7 @@ dissect_e2ap_T_e2nodeComponentInterfaceTypeS1(tvbuff_t *tvb _U_, int offset _U_,
 static int
 dissect_e2ap_BIT_STRING_SIZE_28(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_per_bit_string(tvb, offset, actx, tree, hf_index,
-                                     28, 28, FALSE, NULL, 0, NULL, NULL);
+                                     28, 28, false, NULL, 0, NULL, NULL);
 
   return offset;
 }
@@ -2840,6 +3263,7 @@ dissect_e2ap_T_e2nodeComponentInterfaceTypeX2(tvbuff_t *tvb _U_, int offset _U_,
   /* Store value in packet-private data */
   struct e2ap_private_data *e2ap_data = e2ap_get_private_data(actx->pinfo);
   e2ap_data->component_configuration_dissector = find_dissector("x2ap");
+
 
 
 
@@ -2988,29 +3412,50 @@ dissect_e2ap_GlobalRIC_ID(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U
 static int
 dissect_e2ap_RANfunctionDefinition(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   tvbuff_t *parameter_tvb;
+
+  /* We know that the next thing is a RANFunction-Name, but it's wrapped up in a sequence,
+     so can't silently/hiddenly call ranFunctionName here... */
+
     offset = dissect_per_octet_string(tvb, offset, actx, tree, hf_index,
-                                       NO_BOUND, NO_BOUND, FALSE, &parameter_tvb);
+                                       NO_BOUND, NO_BOUND, false, &parameter_tvb);
+
 
   /* Looking for shortName string near beginning of tvb */
-  gboolean found = FALSE;
-  for (int n=KPM_RANFUNCTIONS; n<MAX_RANFUNCTIONS; n++) {
-    guint32 tvb_len = tvb_captured_length(parameter_tvb);
-    guint name_len = (gint)strlen(g_ran_functioname_table[n].name);
+  bool found = false;
+  /* For each RAN function name.. */
+  int n, found_index;
+  for (n=KPM_RANFUNCTIONS; n<MAX_RANFUNCTIONS && !found; n++) {
+    uint32_t tvb_len = tvb_captured_length(parameter_tvb);
+    unsigned name_len = (int)strlen(g_ran_function_name_table[n]);
+    /* For each of several byte positions.. */
     for (int m=0; (m<30) && ((m+name_len+1))<tvb_len; m++) {
-      if (tvb_strneql(parameter_tvb, m, g_ran_functioname_table[n].name, name_len) == 0) {
-        /* Call the set's dissector */
-        g_ran_functioname_table[n].functions.ran_function_definition_dissector(parameter_tvb, actx->pinfo, tree, NULL);
-        found = TRUE;
-        break;
+      /* Have we found a match on the name? */
+      if (tvb_strneql(parameter_tvb, m, g_ran_function_name_table[n], name_len) == 0) {
+        /* We don't yet know the OID (should be OK),
+           so for now just call with the first/only available dissector for this RAN Function name */
+        if (g_ran_functions_available_dissectors[n].num_available_dissectors) {
+          g_ran_functions_available_dissectors[n].ran_function_dissectors[0]->functions.ran_function_definition_dissector(parameter_tvb, actx->pinfo, tree, NULL);
+          found = true;
+          found_index = n;
+          break;
+        }
       }
     }
   }
+
+  if (found && (found_index==CCC_RANFUNCTIONS)) {
+    // ranFunctionName, for this ranFunction, is inside the JSON.  Rather than try to retrive it,
+    // just use this proxy that ought to appear at the start...  OID should get set in the normal way.
+    if (!actx->pinfo->fd->visited) {
+      e2ap_store_ran_function_mapping(actx->pinfo, tree, parameter_tvb, "{" /*"ORAN-E2SM-CCC"*/);
+    }
+  }
+
   if (!found) {
     proto_item *ti = proto_tree_add_item(tree, hf_e2ap_ran_function_name_not_recognised, tvb, 0, 0, ENC_NA);
     expert_add_info_format(actx->pinfo, ti, &ei_e2ap_ran_function_names_no_match,
                            "ShortName does not match any known Service Model");
   }
-
 
 
   return offset;
@@ -3020,9 +3465,9 @@ dissect_e2ap_RANfunctionDefinition(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t
 
 static int
 dissect_e2ap_RANfunctionID(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  guint32 value;
+  uint32_t value;
   offset = dissect_per_constrained_integer(tvb, offset, actx, tree, hf_index,
-                                                            0U, 4095U, &value, FALSE);
+                                                            0U, 4095U, &value, false);
 
   /* Store value in packet-private data */
   struct e2ap_private_data *e2ap_data = e2ap_get_private_data(actx->pinfo);
@@ -3037,9 +3482,19 @@ dissect_e2ap_RANfunctionID(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _
 
 static int
 dissect_e2ap_RANfunctionOID(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  offset = dissect_per_PrintableString(tvb, offset, actx, tree, hf_index,
-                                          1, 1000, TRUE,
-                                          NULL);
+  tvbuff_t *parameter_tvb;
+    offset = dissect_per_PrintableString(tvb, offset, actx, tree, hf_index,
+                                          1, 1000, true,
+                                          &parameter_tvb);
+
+  /* Now complete mapping with OID string */
+  e2ap_update_ran_function_mapping(actx->pinfo, tree, parameter_tvb,
+                                   tvb_get_string_enc(actx->pinfo->pool, parameter_tvb, 0,
+                                   tvb_captured_length(parameter_tvb), ENC_ASCII));
+
+
+
+
 
   return offset;
 }
@@ -3049,7 +3504,7 @@ dissect_e2ap_RANfunctionOID(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx 
 static int
 dissect_e2ap_RANfunctionRevision(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_per_constrained_integer(tvb, offset, actx, tree, hf_index,
-                                                            0U, 4095U, NULL, FALSE);
+                                                            0U, 4095U, NULL, false);
 
   return offset;
 }
@@ -3060,11 +3515,13 @@ static int
 dissect_e2ap_RICactionDefinition(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   tvbuff_t *parameter_tvb;
     offset = dissect_per_octet_string(tvb, offset, actx, tree, hf_index,
-                                       NO_BOUND, NO_BOUND, FALSE, &parameter_tvb);
+                                       NO_BOUND, NO_BOUND, false, &parameter_tvb);
 
-  ran_function_pointers_t* functions = lookup_ranfunction_pointers(actx->pinfo, tree, parameter_tvb);
-  if (functions && functions->ran_action_definition_dissector) {
-    functions->ran_action_definition_dissector(parameter_tvb, actx->pinfo, tree, NULL);
+  ran_function_dissector_t* dissector = lookup_ranfunction_dissector(actx->pinfo, tree, parameter_tvb);
+  if (dissector) {
+    if (dissector->functions.ran_action_definition_dissector) {
+      dissector->functions.ran_action_definition_dissector(parameter_tvb, actx->pinfo, tree, NULL);
+    }
   }
 
 
@@ -3074,9 +3531,19 @@ dissect_e2ap_RICactionDefinition(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *
 
 
 static int
+dissect_e2ap_RICactionExecutionOrder(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+  offset = dissect_per_constrained_integer(tvb, offset, actx, tree, hf_index,
+                                                            0U, 255U, NULL, true);
+
+  return offset;
+}
+
+
+
+static int
 dissect_e2ap_RICactionID(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_per_constrained_integer(tvb, offset, actx, tree, hf_index,
-                                                            0U, 255U, NULL, FALSE);
+                                                            0U, 255U, NULL, false);
 
   return offset;
 }
@@ -3093,7 +3560,7 @@ static const value_string e2ap_RICactionType_vals[] = {
 static int
 dissect_e2ap_RICactionType(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_per_enumerated(tvb, offset, actx, tree, hf_index,
-                                     3, NULL, TRUE, 0, NULL);
+                                     3, NULL, true, 0, NULL);
 
   return offset;
 }
@@ -3104,11 +3571,13 @@ static int
 dissect_e2ap_RICcallProcessID(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   tvbuff_t *parameter_tvb;
     offset = dissect_per_octet_string(tvb, offset, actx, tree, hf_index,
-                                       NO_BOUND, NO_BOUND, FALSE, &parameter_tvb);
+                                       NO_BOUND, NO_BOUND, false, &parameter_tvb);
 
-  ran_function_pointers_t* functions = lookup_ranfunction_pointers(actx->pinfo, tree, parameter_tvb);
-  if (functions && functions->ran_callprocessid_dissector) {
-    functions->ran_callprocessid_dissector(parameter_tvb, actx->pinfo, tree, NULL);
+  ran_function_dissector_t* dissector = lookup_ranfunction_dissector(actx->pinfo, tree, parameter_tvb);
+  if (dissector) {
+    if (dissector->functions.ran_callprocessid_dissector) {
+      dissector->functions.ran_callprocessid_dissector(parameter_tvb, actx->pinfo, tree, NULL);
+    }
   }
 
 
@@ -3128,7 +3597,7 @@ static const value_string e2ap_RICcontrolAckRequest_vals[] = {
 static int
 dissect_e2ap_RICcontrolAckRequest(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_per_enumerated(tvb, offset, actx, tree, hf_index,
-                                     2, NULL, TRUE, 0, NULL);
+                                     2, NULL, true, 0, NULL);
 
   return offset;
 }
@@ -3139,11 +3608,13 @@ static int
 dissect_e2ap_RICcontrolHeader(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   tvbuff_t *parameter_tvb;
     offset = dissect_per_octet_string(tvb, offset, actx, tree, hf_index,
-                                       NO_BOUND, NO_BOUND, FALSE, &parameter_tvb);
+                                       NO_BOUND, NO_BOUND, false, &parameter_tvb);
 
-  ran_function_pointers_t* functions = lookup_ranfunction_pointers(actx->pinfo, tree, parameter_tvb);
-  if (functions && functions->ric_control_header_dissector) {
-    functions->ric_control_header_dissector(parameter_tvb, actx->pinfo, tree, NULL);
+  ran_function_dissector_t* dissector = lookup_ranfunction_dissector(actx->pinfo, tree, parameter_tvb);
+  if (dissector) {
+    if (dissector->functions.ric_control_header_dissector) {
+      dissector->functions.ric_control_header_dissector(parameter_tvb, actx->pinfo, tree, NULL);
+    }
   }
 
 
@@ -3156,11 +3627,13 @@ static int
 dissect_e2ap_RICcontrolMessage(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   tvbuff_t *parameter_tvb;
     offset = dissect_per_octet_string(tvb, offset, actx, tree, hf_index,
-                                       NO_BOUND, NO_BOUND, FALSE, &parameter_tvb);
+                                       NO_BOUND, NO_BOUND, false, &parameter_tvb);
 
-  ran_function_pointers_t* functions = lookup_ranfunction_pointers(actx->pinfo, tree, parameter_tvb);
-  if (functions && functions->ric_control_message_dissector) {
-    functions->ric_control_message_dissector(parameter_tvb, actx->pinfo, tree, NULL);
+  ran_function_dissector_t* dissector = lookup_ranfunction_dissector(actx->pinfo, tree, parameter_tvb);
+  if (dissector) {
+    if (dissector->functions.ric_control_message_dissector) {
+      dissector->functions.ric_control_message_dissector(parameter_tvb, actx->pinfo, tree, NULL);
+    }
   }
 
 
@@ -3173,13 +3646,14 @@ static int
 dissect_e2ap_RICcontrolOutcome(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   tvbuff_t *parameter_tvb;
     offset = dissect_per_octet_string(tvb, offset, actx, tree, hf_index,
-                                       NO_BOUND, NO_BOUND, FALSE, &parameter_tvb);
+                                       NO_BOUND, NO_BOUND, false, &parameter_tvb);
 
-  ran_function_pointers_t* functions = lookup_ranfunction_pointers(actx->pinfo, tree, parameter_tvb);
-  if (functions && functions->ric_control_outcome_dissector) {
-    functions->ric_control_outcome_dissector(parameter_tvb, actx->pinfo, tree, NULL);
+  ran_function_dissector_t* dissector = lookup_ranfunction_dissector(actx->pinfo, tree, parameter_tvb);
+  if (dissector) {
+    if (dissector->functions.ric_control_outcome_dissector) {
+        dissector->functions.ric_control_outcome_dissector(parameter_tvb, actx->pinfo, tree, NULL);
+    }
   }
-
 
 
   return offset;
@@ -3191,11 +3665,13 @@ static int
 dissect_e2ap_RICeventTriggerDefinition(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   tvbuff_t *parameter_tvb;
     offset = dissect_per_octet_string(tvb, offset, actx, tree, hf_index,
-                                       NO_BOUND, NO_BOUND, FALSE, &parameter_tvb);
+                                       NO_BOUND, NO_BOUND, false, &parameter_tvb);
 
-  ran_function_pointers_t* functions = lookup_ranfunction_pointers(actx->pinfo, tree, parameter_tvb);
-  if (functions && functions->ran_event_trigger_dissector) {
-    functions->ran_event_trigger_dissector(parameter_tvb, actx->pinfo, tree, NULL);
+  ran_function_dissector_t* dissector = lookup_ranfunction_dissector(actx->pinfo, tree, parameter_tvb);
+  if (dissector) {
+    if (dissector->functions.ran_event_trigger_dissector) {
+      dissector->functions.ran_event_trigger_dissector(parameter_tvb, actx->pinfo, tree, NULL);
+    }
   }
 
 
@@ -3208,11 +3684,13 @@ static int
 dissect_e2ap_RICindicationHeader(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   tvbuff_t *parameter_tvb;
     offset = dissect_per_octet_string(tvb, offset, actx, tree, hf_index,
-                                       NO_BOUND, NO_BOUND, FALSE, &parameter_tvb);
+                                       NO_BOUND, NO_BOUND, false, &parameter_tvb);
 
-  ran_function_pointers_t* functions = lookup_ranfunction_pointers(actx->pinfo, tree, parameter_tvb);
-  if (functions && functions->ran_indication_header_dissector) {
-    functions->ran_indication_header_dissector(parameter_tvb, actx->pinfo, tree, NULL);
+  ran_function_dissector_t* dissector = lookup_ranfunction_dissector(actx->pinfo, tree, parameter_tvb);
+  if (dissector) {
+    if (dissector->functions.ran_indication_header_dissector) {
+      dissector->functions.ran_indication_header_dissector(parameter_tvb, actx->pinfo, tree, NULL);
+    }
   }
 
 
@@ -3225,11 +3703,13 @@ static int
 dissect_e2ap_RICindicationMessage(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   tvbuff_t *parameter_tvb;
     offset = dissect_per_octet_string(tvb, offset, actx, tree, hf_index,
-                                       NO_BOUND, NO_BOUND, FALSE, &parameter_tvb);
+                                       NO_BOUND, NO_BOUND, false, &parameter_tvb);
 
-  ran_function_pointers_t* functions = lookup_ranfunction_pointers(actx->pinfo, tree, parameter_tvb);
-  if (functions && functions->ran_indication_message_dissector) {
-    functions->ran_indication_message_dissector(parameter_tvb, actx->pinfo, tree, NULL);
+  ran_function_dissector_t* dissector = lookup_ranfunction_dissector(actx->pinfo, tree, parameter_tvb);
+  if (dissector) {
+    if (dissector->functions.ran_indication_message_dissector) {
+      dissector->functions.ran_indication_message_dissector(parameter_tvb, actx->pinfo, tree, NULL);
+    }
   }
 
 
@@ -3241,7 +3721,7 @@ dissect_e2ap_RICindicationMessage(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t 
 static int
 dissect_e2ap_RICindicationSN(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_per_constrained_integer(tvb, offset, actx, tree, hf_index,
-                                                            0U, 65535U, NULL, FALSE);
+                                                            0U, 65535U, NULL, false);
 
   return offset;
 }
@@ -3257,7 +3737,17 @@ static const value_string e2ap_RICindicationType_vals[] = {
 static int
 dissect_e2ap_RICindicationType(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_per_enumerated(tvb, offset, actx, tree, hf_index,
-                                     2, NULL, TRUE, 0, NULL);
+                                     2, NULL, true, 0, NULL);
+
+  return offset;
+}
+
+
+
+static int
+dissect_e2ap_RICsubscriptionTime(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+  offset = dissect_per_octet_string(tvb, offset, actx, tree, hf_index,
+                                       8, 8, false, NULL);
 
   return offset;
 }
@@ -3273,7 +3763,7 @@ static const value_string e2ap_RICsubsequentActionType_vals[] = {
 static int
 dissect_e2ap_RICsubsequentActionType(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_per_enumerated(tvb, offset, actx, tree, hf_index,
-                                     2, NULL, TRUE, 0, NULL);
+                                     2, NULL, true, 0, NULL);
 
   return offset;
 }
@@ -3304,7 +3794,7 @@ static const value_string e2ap_RICtimeToWait_vals[] = {
 static int
 dissect_e2ap_RICtimeToWait(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_per_enumerated(tvb, offset, actx, tree, hf_index,
-                                     17, NULL, TRUE, 0, NULL);
+                                     17, NULL, true, 0, NULL);
 
   return offset;
 }
@@ -3325,6 +3815,65 @@ dissect_e2ap_RICsubsequentAction(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *
 }
 
 
+
+static int
+dissect_e2ap_RICqueryHeader(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+  tvbuff_t *parameter_tvb;
+    offset = dissect_per_octet_string(tvb, offset, actx, tree, hf_index,
+                                       NO_BOUND, NO_BOUND, false, &parameter_tvb);
+
+  ran_function_dissector_t* dissector = lookup_ranfunction_dissector(actx->pinfo, tree, parameter_tvb);
+  if (dissector) {
+    if (dissector->functions.ric_query_header_dissector) {
+      dissector->functions.ric_query_header_dissector(parameter_tvb, actx->pinfo, tree, NULL);
+    }
+  }
+
+
+
+
+  return offset;
+}
+
+
+
+static int
+dissect_e2ap_RICqueryDefinition(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+  tvbuff_t *parameter_tvb;
+    offset = dissect_per_octet_string(tvb, offset, actx, tree, hf_index,
+                                       NO_BOUND, NO_BOUND, false, &parameter_tvb);
+
+  ran_function_dissector_t* dissector = lookup_ranfunction_dissector(actx->pinfo, tree, parameter_tvb);
+  if (dissector) {
+    if (dissector->functions.ric_query_definition_dissector) {
+      dissector->functions.ric_query_definition_dissector(parameter_tvb, actx->pinfo, tree, NULL);
+    }
+  }
+
+
+  return offset;
+}
+
+
+
+static int
+dissect_e2ap_RICqueryOutcome(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+  tvbuff_t *parameter_tvb;
+    offset = dissect_per_octet_string(tvb, offset, actx, tree, hf_index,
+                                       NO_BOUND, NO_BOUND, false, &parameter_tvb);
+
+  ran_function_dissector_t* dissector = lookup_ranfunction_dissector(actx->pinfo, tree, parameter_tvb);
+  if (dissector) {
+    if (dissector->functions.ric_query_outcome_dissector) {
+      dissector->functions.ric_query_outcome_dissector(parameter_tvb, actx->pinfo, tree, NULL);
+    }
+  }
+
+
+  return offset;
+}
+
+
 static const value_string e2ap_TimeToWait_vals[] = {
   {   0, "v1s" },
   {   1, "v2s" },
@@ -3339,7 +3888,7 @@ static const value_string e2ap_TimeToWait_vals[] = {
 static int
 dissect_e2ap_TimeToWait(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_per_enumerated(tvb, offset, actx, tree, hf_index,
-                                     6, NULL, TRUE, 0, NULL);
+                                     6, NULL, true, 0, NULL);
 
   return offset;
 }
@@ -3350,7 +3899,7 @@ static int
 dissect_e2ap_T_tnlAddress(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   tvbuff_t *value_tvb;
   offset = dissect_per_bit_string(tvb, offset, actx, tree, hf_index,
-                                     1, 160, TRUE, NULL, 0, &value_tvb, NULL);
+                                     1, 160, true, NULL, 0, &value_tvb, NULL);
 
   if (tvb_captured_length(value_tvb)==4) {
     proto_item_append_text(tree, " (%s", tvb_ip_to_str(actx->pinfo->pool, value_tvb, 0));
@@ -3369,7 +3918,7 @@ static int
 dissect_e2ap_T_tnlPort(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   proto_item_append_text(tree, ":%u)", tvb_get_ntohs(tvb, offset/8));
   offset = dissect_per_bit_string(tvb, offset, actx, tree, hf_index,
-                                     16, 16, FALSE, NULL, 0, NULL, NULL);
+                                     16, 16, false, NULL, 0, NULL, NULL);
 
 
 
@@ -3404,7 +3953,7 @@ static const value_string e2ap_TNLusage_vals[] = {
 static int
 dissect_e2ap_TNLusage(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_per_enumerated(tvb, offset, actx, tree, hf_index,
-                                     3, NULL, TRUE, 0, NULL);
+                                     3, NULL, true, 0, NULL);
 
   return offset;
 }
@@ -3414,7 +3963,7 @@ dissect_e2ap_TNLusage(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, p
 static int
 dissect_e2ap_TransactionID(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_per_constrained_integer(tvb, offset, actx, tree, hf_index,
-                                                            0U, 255U, NULL, TRUE);
+                                                            0U, 255U, NULL, true);
 
   return offset;
 }
@@ -3427,7 +3976,8 @@ static const per_sequence_t RICsubscriptionRequest_sequence[] = {
 
 static int
 dissect_e2ap_RICsubscriptionRequest(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  col_append_sep_str(actx->pinfo->cinfo, COL_INFO, NULL, "RICsubscriptionRequest");
+  set_message_label(actx, MTYPE_RIC_SUBSCRIPTION_REQUEST);
+  set_stats_message_type(actx->pinfo, MTYPE_RIC_SUBSCRIPTION_REQUEST);
 
   offset = dissect_per_sequence(tvb, offset, actx, tree, hf_index,
                                    ett_e2ap_RICsubscriptionRequest, RICsubscriptionRequest_sequence);
@@ -3444,7 +3994,7 @@ static int
 dissect_e2ap_RICactions_ToBeSetup_List(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_per_constrained_sequence_of(tvb, offset, actx, tree, hf_index,
                                                   ett_e2ap_RICactions_ToBeSetup_List, RICactions_ToBeSetup_List_sequence_of,
-                                                  1, maxofRICactionID, FALSE);
+                                                  1, maxofRICactionID, false);
 
   return offset;
 }
@@ -3470,6 +4020,7 @@ static const per_sequence_t RICaction_ToBeSetup_Item_sequence[] = {
   { &hf_e2ap_ricActionType  , ASN1_EXTENSION_ROOT    , ASN1_NOT_OPTIONAL, dissect_e2ap_RICactionType },
   { &hf_e2ap_ricActionDefinition, ASN1_EXTENSION_ROOT    , ASN1_OPTIONAL    , dissect_e2ap_RICactionDefinition },
   { &hf_e2ap_ricSubsequentAction, ASN1_EXTENSION_ROOT    , ASN1_OPTIONAL    , dissect_e2ap_RICsubsequentAction },
+  { &hf_e2ap_ricActionExecutionOrder, ASN1_NOT_EXTENSION_ROOT, ASN1_OPTIONAL    , dissect_e2ap_RICactionExecutionOrder },
   { NULL, 0, 0, NULL }
 };
 
@@ -3489,7 +4040,8 @@ static const per_sequence_t RICsubscriptionResponse_sequence[] = {
 
 static int
 dissect_e2ap_RICsubscriptionResponse(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  col_append_sep_str(actx->pinfo->cinfo, COL_INFO, NULL, "RICsubscriptionResponse");
+  set_message_label(actx, MTYPE_RIC_SUBSCRIPTION_RESPONSE);
+  set_stats_message_type(actx->pinfo, MTYPE_RIC_SUBSCRIPTION_RESPONSE);
 
 
 
@@ -3508,7 +4060,7 @@ static int
 dissect_e2ap_RICaction_Admitted_List(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_per_constrained_sequence_of(tvb, offset, actx, tree, hf_index,
                                                   ett_e2ap_RICaction_Admitted_List, RICaction_Admitted_List_sequence_of,
-                                                  1, maxofRICactionID, FALSE);
+                                                  1, maxofRICactionID, false);
 
   return offset;
 }
@@ -3536,7 +4088,7 @@ static int
 dissect_e2ap_RICaction_NotAdmitted_List(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_per_constrained_sequence_of(tvb, offset, actx, tree, hf_index,
                                                   ett_e2ap_RICaction_NotAdmitted_List, RICaction_NotAdmitted_List_sequence_of,
-                                                  0, maxofRICactionID, FALSE);
+                                                  0, maxofRICactionID, false);
 
   return offset;
 }
@@ -3564,7 +4116,8 @@ static const per_sequence_t RICsubscriptionFailure_sequence[] = {
 
 static int
 dissect_e2ap_RICsubscriptionFailure(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  col_append_sep_str(actx->pinfo->cinfo, COL_INFO, NULL, "RICsubscriptionFailure");
+  set_message_label(actx, MTYPE_RIC_SUBSCRIPTION_FAIL);
+  set_stats_message_type(actx->pinfo, MTYPE_RIC_SUBSCRIPTION_FAIL);
 
   offset = dissect_per_sequence(tvb, offset, actx, tree, hf_index,
                                    ett_e2ap_RICsubscriptionFailure, RICsubscriptionFailure_sequence);
@@ -3580,7 +4133,8 @@ static const per_sequence_t RICsubscriptionDeleteRequest_sequence[] = {
 
 static int
 dissect_e2ap_RICsubscriptionDeleteRequest(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  col_append_sep_str(actx->pinfo->cinfo, COL_INFO, NULL, "RICsubscriptionDeleteRequest");
+  set_message_label(actx, MTYPE_RIC_SUBSCRIPTION_DELETE_REQUEST);
+  set_stats_message_type(actx->pinfo, MTYPE_RIC_SUBSCRIPTION_DELETE_REQUEST);
 
   offset = dissect_per_sequence(tvb, offset, actx, tree, hf_index,
                                    ett_e2ap_RICsubscriptionDeleteRequest, RICsubscriptionDeleteRequest_sequence);
@@ -3596,7 +4150,8 @@ static const per_sequence_t RICsubscriptionDeleteResponse_sequence[] = {
 
 static int
 dissect_e2ap_RICsubscriptionDeleteResponse(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  col_append_sep_str(actx->pinfo->cinfo, COL_INFO, NULL, "RICsubscriptionDeleteResponse");
+  set_message_label(actx, MTYPE_RIC_SUBSCRIPTION_DELETE_RESPONSE);
+  set_stats_message_type(actx->pinfo, MTYPE_RIC_SUBSCRIPTION_DELETE_RESPONSE);
 
   offset = dissect_per_sequence(tvb, offset, actx, tree, hf_index,
                                    ett_e2ap_RICsubscriptionDeleteResponse, RICsubscriptionDeleteResponse_sequence);
@@ -3612,7 +4167,8 @@ static const per_sequence_t RICsubscriptionDeleteFailure_sequence[] = {
 
 static int
 dissect_e2ap_RICsubscriptionDeleteFailure(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  col_append_sep_str(actx->pinfo->cinfo, COL_INFO, NULL, "RICsubscriptionDeleteFailure");
+  set_message_label(actx, MTYPE_RIC_SUBSCRIPTION_DELETE_FAIL);
+  set_stats_message_type(actx->pinfo, MTYPE_RIC_SUBSCRIPTION_DELETE_FAIL);
 
   offset = dissect_per_sequence(tvb, offset, actx, tree, hf_index,
                                    ett_e2ap_RICsubscriptionDeleteFailure, RICsubscriptionDeleteFailure_sequence);
@@ -3628,7 +4184,8 @@ static const per_sequence_t RICsubscriptionDeleteRequired_sequence[] = {
 
 static int
 dissect_e2ap_RICsubscriptionDeleteRequired(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  col_append_sep_str(actx->pinfo->cinfo, COL_INFO, NULL, "RICsubscriptionDeleteRequired");
+  set_message_label(actx, MTYPE_RIC_SUBSCRIPTION_DELETE_REQUIRED);
+  set_stats_message_type(actx->pinfo, MTYPE_RIC_SUBSCRIPTION_DELETE_REQUIRED);
 
 
   offset = dissect_per_sequence(tvb, offset, actx, tree, hf_index,
@@ -3646,7 +4203,7 @@ static int
 dissect_e2ap_RICsubscription_List_withCause(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_per_constrained_sequence_of(tvb, offset, actx, tree, hf_index,
                                                   ett_e2ap_RICsubscription_List_withCause, RICsubscription_List_withCause_sequence_of,
-                                                  1, maxofRICrequestID, FALSE);
+                                                  1, maxofRICrequestID, false);
 
   return offset;
 }
@@ -3668,6 +4225,524 @@ dissect_e2ap_RICsubscription_withCause_Item(tvbuff_t *tvb _U_, int offset _U_, a
 }
 
 
+static const per_sequence_t RICsubscriptionModificationRequest_sequence[] = {
+  { &hf_e2ap_protocolIEs    , ASN1_EXTENSION_ROOT    , ASN1_NOT_OPTIONAL, dissect_e2ap_ProtocolIE_Container },
+  { NULL, 0, 0, NULL }
+};
+
+static int
+dissect_e2ap_RICsubscriptionModificationRequest(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+  offset = dissect_per_sequence(tvb, offset, actx, tree, hf_index,
+                                   ett_e2ap_RICsubscriptionModificationRequest, RICsubscriptionModificationRequest_sequence);
+
+  return offset;
+}
+
+
+static const per_sequence_t RICactions_ToBeRemovedForModification_List_sequence_of[1] = {
+  { &hf_e2ap_RICactions_ToBeRemovedForModification_List_item, ASN1_NO_EXTENSIONS     , ASN1_NOT_OPTIONAL, dissect_e2ap_ProtocolIE_SingleContainer },
+};
+
+static int
+dissect_e2ap_RICactions_ToBeRemovedForModification_List(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+  offset = dissect_per_constrained_sequence_of(tvb, offset, actx, tree, hf_index,
+                                                  ett_e2ap_RICactions_ToBeRemovedForModification_List, RICactions_ToBeRemovedForModification_List_sequence_of,
+                                                  0, maxofRICactionID, false);
+
+  return offset;
+}
+
+
+static const per_sequence_t RICaction_ToBeRemovedForModification_Item_sequence[] = {
+  { &hf_e2ap_ricActionID    , ASN1_EXTENSION_ROOT    , ASN1_NOT_OPTIONAL, dissect_e2ap_RICactionID },
+  { NULL, 0, 0, NULL }
+};
+
+static int
+dissect_e2ap_RICaction_ToBeRemovedForModification_Item(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+  offset = dissect_per_sequence(tvb, offset, actx, tree, hf_index,
+                                   ett_e2ap_RICaction_ToBeRemovedForModification_Item, RICaction_ToBeRemovedForModification_Item_sequence);
+
+  return offset;
+}
+
+
+static const per_sequence_t RICactions_ToBeModifiedForModification_List_sequence_of[1] = {
+  { &hf_e2ap_RICactions_ToBeModifiedForModification_List_item, ASN1_NO_EXTENSIONS     , ASN1_NOT_OPTIONAL, dissect_e2ap_ProtocolIE_SingleContainer },
+};
+
+static int
+dissect_e2ap_RICactions_ToBeModifiedForModification_List(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+  offset = dissect_per_constrained_sequence_of(tvb, offset, actx, tree, hf_index,
+                                                  ett_e2ap_RICactions_ToBeModifiedForModification_List, RICactions_ToBeModifiedForModification_List_sequence_of,
+                                                  0, maxofRICactionID, false);
+
+  return offset;
+}
+
+
+static const per_sequence_t RICaction_ToBeModifiedForModification_Item_sequence[] = {
+  { &hf_e2ap_ricActionID    , ASN1_EXTENSION_ROOT    , ASN1_NOT_OPTIONAL, dissect_e2ap_RICactionID },
+  { &hf_e2ap_ricActionDefinition, ASN1_EXTENSION_ROOT    , ASN1_OPTIONAL    , dissect_e2ap_RICactionDefinition },
+  { &hf_e2ap_ricActionExecutionOrder, ASN1_EXTENSION_ROOT    , ASN1_OPTIONAL    , dissect_e2ap_RICactionExecutionOrder },
+  { &hf_e2ap_ricSubsequentAction, ASN1_EXTENSION_ROOT    , ASN1_OPTIONAL    , dissect_e2ap_RICsubsequentAction },
+  { NULL, 0, 0, NULL }
+};
+
+static int
+dissect_e2ap_RICaction_ToBeModifiedForModification_Item(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+  offset = dissect_per_sequence(tvb, offset, actx, tree, hf_index,
+                                   ett_e2ap_RICaction_ToBeModifiedForModification_Item, RICaction_ToBeModifiedForModification_Item_sequence);
+
+  return offset;
+}
+
+
+static const per_sequence_t RICactions_ToBeAddedForModification_List_sequence_of[1] = {
+  { &hf_e2ap_RICactions_ToBeAddedForModification_List_item, ASN1_NO_EXTENSIONS     , ASN1_NOT_OPTIONAL, dissect_e2ap_ProtocolIE_SingleContainer },
+};
+
+static int
+dissect_e2ap_RICactions_ToBeAddedForModification_List(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+  offset = dissect_per_constrained_sequence_of(tvb, offset, actx, tree, hf_index,
+                                                  ett_e2ap_RICactions_ToBeAddedForModification_List, RICactions_ToBeAddedForModification_List_sequence_of,
+                                                  0, maxofRICactionID, false);
+
+  return offset;
+}
+
+
+static const per_sequence_t RICaction_ToBeAddedForModification_Item_sequence[] = {
+  { &hf_e2ap_ricActionID    , ASN1_EXTENSION_ROOT    , ASN1_NOT_OPTIONAL, dissect_e2ap_RICactionID },
+  { &hf_e2ap_ricActionType  , ASN1_EXTENSION_ROOT    , ASN1_NOT_OPTIONAL, dissect_e2ap_RICactionType },
+  { &hf_e2ap_ricActionDefinition, ASN1_EXTENSION_ROOT    , ASN1_NOT_OPTIONAL, dissect_e2ap_RICactionDefinition },
+  { &hf_e2ap_ricActionExecutionOrder, ASN1_EXTENSION_ROOT    , ASN1_NOT_OPTIONAL, dissect_e2ap_RICactionExecutionOrder },
+  { &hf_e2ap_ricSubsequentAction, ASN1_EXTENSION_ROOT    , ASN1_OPTIONAL    , dissect_e2ap_RICsubsequentAction },
+  { NULL, 0, 0, NULL }
+};
+
+static int
+dissect_e2ap_RICaction_ToBeAddedForModification_Item(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+  offset = dissect_per_sequence(tvb, offset, actx, tree, hf_index,
+                                   ett_e2ap_RICaction_ToBeAddedForModification_Item, RICaction_ToBeAddedForModification_Item_sequence);
+
+  return offset;
+}
+
+
+static const per_sequence_t RICsubscriptionModificationResponse_sequence[] = {
+  { &hf_e2ap_protocolIEs    , ASN1_EXTENSION_ROOT    , ASN1_NOT_OPTIONAL, dissect_e2ap_ProtocolIE_Container },
+  { NULL, 0, 0, NULL }
+};
+
+static int
+dissect_e2ap_RICsubscriptionModificationResponse(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+  offset = dissect_per_sequence(tvb, offset, actx, tree, hf_index,
+                                   ett_e2ap_RICsubscriptionModificationResponse, RICsubscriptionModificationResponse_sequence);
+
+  return offset;
+}
+
+
+static const per_sequence_t RICactions_RemovedForModification_List_sequence_of[1] = {
+  { &hf_e2ap_RICactions_RemovedForModification_List_item, ASN1_NO_EXTENSIONS     , ASN1_NOT_OPTIONAL, dissect_e2ap_ProtocolIE_SingleContainer },
+};
+
+static int
+dissect_e2ap_RICactions_RemovedForModification_List(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+  offset = dissect_per_constrained_sequence_of(tvb, offset, actx, tree, hf_index,
+                                                  ett_e2ap_RICactions_RemovedForModification_List, RICactions_RemovedForModification_List_sequence_of,
+                                                  0, maxofRICactionID, false);
+
+  return offset;
+}
+
+
+static const per_sequence_t RICaction_RemovedForModification_Item_sequence[] = {
+  { &hf_e2ap_ricActionID    , ASN1_EXTENSION_ROOT    , ASN1_NOT_OPTIONAL, dissect_e2ap_RICactionID },
+  { NULL, 0, 0, NULL }
+};
+
+static int
+dissect_e2ap_RICaction_RemovedForModification_Item(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+  offset = dissect_per_sequence(tvb, offset, actx, tree, hf_index,
+                                   ett_e2ap_RICaction_RemovedForModification_Item, RICaction_RemovedForModification_Item_sequence);
+
+  return offset;
+}
+
+
+static const per_sequence_t RICactions_FailedToBeRemovedForModification_List_sequence_of[1] = {
+  { &hf_e2ap_RICactions_FailedToBeRemovedForModification_List_item, ASN1_NO_EXTENSIONS     , ASN1_NOT_OPTIONAL, dissect_e2ap_ProtocolIE_SingleContainer },
+};
+
+static int
+dissect_e2ap_RICactions_FailedToBeRemovedForModification_List(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+  offset = dissect_per_constrained_sequence_of(tvb, offset, actx, tree, hf_index,
+                                                  ett_e2ap_RICactions_FailedToBeRemovedForModification_List, RICactions_FailedToBeRemovedForModification_List_sequence_of,
+                                                  0, maxofRICactionID, false);
+
+  return offset;
+}
+
+
+static const per_sequence_t RICaction_FailedToBeRemovedForModification_Item_sequence[] = {
+  { &hf_e2ap_ricActionID    , ASN1_EXTENSION_ROOT    , ASN1_NOT_OPTIONAL, dissect_e2ap_RICactionID },
+  { &hf_e2ap_cause          , ASN1_EXTENSION_ROOT    , ASN1_NOT_OPTIONAL, dissect_e2ap_Cause },
+  { NULL, 0, 0, NULL }
+};
+
+static int
+dissect_e2ap_RICaction_FailedToBeRemovedForModification_Item(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+  offset = dissect_per_sequence(tvb, offset, actx, tree, hf_index,
+                                   ett_e2ap_RICaction_FailedToBeRemovedForModification_Item, RICaction_FailedToBeRemovedForModification_Item_sequence);
+
+  return offset;
+}
+
+
+static const per_sequence_t RICactions_ModifiedForModification_List_sequence_of[1] = {
+  { &hf_e2ap_RICactions_ModifiedForModification_List_item, ASN1_NO_EXTENSIONS     , ASN1_NOT_OPTIONAL, dissect_e2ap_ProtocolIE_SingleContainer },
+};
+
+static int
+dissect_e2ap_RICactions_ModifiedForModification_List(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+  offset = dissect_per_constrained_sequence_of(tvb, offset, actx, tree, hf_index,
+                                                  ett_e2ap_RICactions_ModifiedForModification_List, RICactions_ModifiedForModification_List_sequence_of,
+                                                  0, maxofRICactionID, false);
+
+  return offset;
+}
+
+
+static const per_sequence_t RICaction_ModifiedForModification_Item_sequence[] = {
+  { &hf_e2ap_ricActionID    , ASN1_EXTENSION_ROOT    , ASN1_NOT_OPTIONAL, dissect_e2ap_RICactionID },
+  { NULL, 0, 0, NULL }
+};
+
+static int
+dissect_e2ap_RICaction_ModifiedForModification_Item(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+  offset = dissect_per_sequence(tvb, offset, actx, tree, hf_index,
+                                   ett_e2ap_RICaction_ModifiedForModification_Item, RICaction_ModifiedForModification_Item_sequence);
+
+  return offset;
+}
+
+
+static const per_sequence_t RICactions_FailedToBeModifiedForModification_List_sequence_of[1] = {
+  { &hf_e2ap_RICactions_FailedToBeModifiedForModification_List_item, ASN1_NO_EXTENSIONS     , ASN1_NOT_OPTIONAL, dissect_e2ap_ProtocolIE_SingleContainer },
+};
+
+static int
+dissect_e2ap_RICactions_FailedToBeModifiedForModification_List(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+  offset = dissect_per_constrained_sequence_of(tvb, offset, actx, tree, hf_index,
+                                                  ett_e2ap_RICactions_FailedToBeModifiedForModification_List, RICactions_FailedToBeModifiedForModification_List_sequence_of,
+                                                  0, maxofRICactionID, false);
+
+  return offset;
+}
+
+
+static const per_sequence_t RICaction_FailedToBeModifiedForModification_Item_sequence[] = {
+  { &hf_e2ap_ricActionID    , ASN1_EXTENSION_ROOT    , ASN1_NOT_OPTIONAL, dissect_e2ap_RICactionID },
+  { &hf_e2ap_cause          , ASN1_EXTENSION_ROOT    , ASN1_NOT_OPTIONAL, dissect_e2ap_Cause },
+  { NULL, 0, 0, NULL }
+};
+
+static int
+dissect_e2ap_RICaction_FailedToBeModifiedForModification_Item(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+  offset = dissect_per_sequence(tvb, offset, actx, tree, hf_index,
+                                   ett_e2ap_RICaction_FailedToBeModifiedForModification_Item, RICaction_FailedToBeModifiedForModification_Item_sequence);
+
+  return offset;
+}
+
+
+static const per_sequence_t RICactions_AddedForModification_List_sequence_of[1] = {
+  { &hf_e2ap_RICactions_AddedForModification_List_item, ASN1_NO_EXTENSIONS     , ASN1_NOT_OPTIONAL, dissect_e2ap_ProtocolIE_SingleContainer },
+};
+
+static int
+dissect_e2ap_RICactions_AddedForModification_List(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+  offset = dissect_per_constrained_sequence_of(tvb, offset, actx, tree, hf_index,
+                                                  ett_e2ap_RICactions_AddedForModification_List, RICactions_AddedForModification_List_sequence_of,
+                                                  0, maxofRICactionID, false);
+
+  return offset;
+}
+
+
+static const per_sequence_t RICaction_AddedForModification_Item_sequence[] = {
+  { &hf_e2ap_ricActionID    , ASN1_EXTENSION_ROOT    , ASN1_NOT_OPTIONAL, dissect_e2ap_RICactionID },
+  { NULL, 0, 0, NULL }
+};
+
+static int
+dissect_e2ap_RICaction_AddedForModification_Item(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+  offset = dissect_per_sequence(tvb, offset, actx, tree, hf_index,
+                                   ett_e2ap_RICaction_AddedForModification_Item, RICaction_AddedForModification_Item_sequence);
+
+  return offset;
+}
+
+
+static const per_sequence_t RICactions_FailedToBeAddedForModification_List_sequence_of[1] = {
+  { &hf_e2ap_RICactions_FailedToBeAddedForModification_List_item, ASN1_NO_EXTENSIONS     , ASN1_NOT_OPTIONAL, dissect_e2ap_ProtocolIE_SingleContainer },
+};
+
+static int
+dissect_e2ap_RICactions_FailedToBeAddedForModification_List(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+  offset = dissect_per_constrained_sequence_of(tvb, offset, actx, tree, hf_index,
+                                                  ett_e2ap_RICactions_FailedToBeAddedForModification_List, RICactions_FailedToBeAddedForModification_List_sequence_of,
+                                                  0, maxofRICactionID, false);
+
+  return offset;
+}
+
+
+static const per_sequence_t RICaction_FailedToBeAddedForModification_Item_sequence[] = {
+  { &hf_e2ap_ricActionID    , ASN1_EXTENSION_ROOT    , ASN1_NOT_OPTIONAL, dissect_e2ap_RICactionID },
+  { &hf_e2ap_cause          , ASN1_EXTENSION_ROOT    , ASN1_NOT_OPTIONAL, dissect_e2ap_Cause },
+  { NULL, 0, 0, NULL }
+};
+
+static int
+dissect_e2ap_RICaction_FailedToBeAddedForModification_Item(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+  offset = dissect_per_sequence(tvb, offset, actx, tree, hf_index,
+                                   ett_e2ap_RICaction_FailedToBeAddedForModification_Item, RICaction_FailedToBeAddedForModification_Item_sequence);
+
+  return offset;
+}
+
+
+static const per_sequence_t RICsubscriptionModificationFailure_sequence[] = {
+  { &hf_e2ap_protocolIEs    , ASN1_EXTENSION_ROOT    , ASN1_NOT_OPTIONAL, dissect_e2ap_ProtocolIE_Container },
+  { NULL, 0, 0, NULL }
+};
+
+static int
+dissect_e2ap_RICsubscriptionModificationFailure(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+  offset = dissect_per_sequence(tvb, offset, actx, tree, hf_index,
+                                   ett_e2ap_RICsubscriptionModificationFailure, RICsubscriptionModificationFailure_sequence);
+
+  return offset;
+}
+
+
+static const per_sequence_t RICsubscriptionModificationRequired_sequence[] = {
+  { &hf_e2ap_protocolIEs    , ASN1_EXTENSION_ROOT    , ASN1_NOT_OPTIONAL, dissect_e2ap_ProtocolIE_Container },
+  { NULL, 0, 0, NULL }
+};
+
+static int
+dissect_e2ap_RICsubscriptionModificationRequired(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+  offset = dissect_per_sequence(tvb, offset, actx, tree, hf_index,
+                                   ett_e2ap_RICsubscriptionModificationRequired, RICsubscriptionModificationRequired_sequence);
+
+  return offset;
+}
+
+
+static const per_sequence_t RICactions_RequiredToBeModified_List_sequence_of[1] = {
+  { &hf_e2ap_RICactions_RequiredToBeModified_List_item, ASN1_NO_EXTENSIONS     , ASN1_NOT_OPTIONAL, dissect_e2ap_ProtocolIE_SingleContainer },
+};
+
+static int
+dissect_e2ap_RICactions_RequiredToBeModified_List(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+  offset = dissect_per_constrained_sequence_of(tvb, offset, actx, tree, hf_index,
+                                                  ett_e2ap_RICactions_RequiredToBeModified_List, RICactions_RequiredToBeModified_List_sequence_of,
+                                                  0, maxofRICactionID, false);
+
+  return offset;
+}
+
+
+static const per_sequence_t RICaction_RequiredToBeModified_Item_sequence[] = {
+  { &hf_e2ap_ricActionID    , ASN1_EXTENSION_ROOT    , ASN1_NOT_OPTIONAL, dissect_e2ap_RICactionID },
+  { &hf_e2ap_ricTimeToWait  , ASN1_EXTENSION_ROOT    , ASN1_NOT_OPTIONAL, dissect_e2ap_RICtimeToWait },
+  { NULL, 0, 0, NULL }
+};
+
+static int
+dissect_e2ap_RICaction_RequiredToBeModified_Item(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+  offset = dissect_per_sequence(tvb, offset, actx, tree, hf_index,
+                                   ett_e2ap_RICaction_RequiredToBeModified_Item, RICaction_RequiredToBeModified_Item_sequence);
+
+  return offset;
+}
+
+
+static const per_sequence_t RICactions_RequiredToBeRemoved_List_sequence_of[1] = {
+  { &hf_e2ap_RICactions_RequiredToBeRemoved_List_item, ASN1_NO_EXTENSIONS     , ASN1_NOT_OPTIONAL, dissect_e2ap_ProtocolIE_SingleContainer },
+};
+
+static int
+dissect_e2ap_RICactions_RequiredToBeRemoved_List(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+  offset = dissect_per_constrained_sequence_of(tvb, offset, actx, tree, hf_index,
+                                                  ett_e2ap_RICactions_RequiredToBeRemoved_List, RICactions_RequiredToBeRemoved_List_sequence_of,
+                                                  0, maxofRICactionID, false);
+
+  return offset;
+}
+
+
+static const per_sequence_t RICaction_RequiredToBeRemoved_Item_sequence[] = {
+  { &hf_e2ap_ricActionID    , ASN1_EXTENSION_ROOT    , ASN1_NOT_OPTIONAL, dissect_e2ap_RICactionID },
+  { &hf_e2ap_cause          , ASN1_EXTENSION_ROOT    , ASN1_NOT_OPTIONAL, dissect_e2ap_Cause },
+  { NULL, 0, 0, NULL }
+};
+
+static int
+dissect_e2ap_RICaction_RequiredToBeRemoved_Item(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+  offset = dissect_per_sequence(tvb, offset, actx, tree, hf_index,
+                                   ett_e2ap_RICaction_RequiredToBeRemoved_Item, RICaction_RequiredToBeRemoved_Item_sequence);
+
+  return offset;
+}
+
+
+static const per_sequence_t RICsubscriptionModificationConfirm_sequence[] = {
+  { &hf_e2ap_protocolIEs    , ASN1_EXTENSION_ROOT    , ASN1_NOT_OPTIONAL, dissect_e2ap_ProtocolIE_Container },
+  { NULL, 0, 0, NULL }
+};
+
+static int
+dissect_e2ap_RICsubscriptionModificationConfirm(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+  offset = dissect_per_sequence(tvb, offset, actx, tree, hf_index,
+                                   ett_e2ap_RICsubscriptionModificationConfirm, RICsubscriptionModificationConfirm_sequence);
+
+  return offset;
+}
+
+
+static const per_sequence_t RICactions_ConfirmedForModification_List_sequence_of[1] = {
+  { &hf_e2ap_RICactions_ConfirmedForModification_List_item, ASN1_NO_EXTENSIONS     , ASN1_NOT_OPTIONAL, dissect_e2ap_ProtocolIE_SingleContainer },
+};
+
+static int
+dissect_e2ap_RICactions_ConfirmedForModification_List(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+  offset = dissect_per_constrained_sequence_of(tvb, offset, actx, tree, hf_index,
+                                                  ett_e2ap_RICactions_ConfirmedForModification_List, RICactions_ConfirmedForModification_List_sequence_of,
+                                                  0, maxofRICactionID, false);
+
+  return offset;
+}
+
+
+static const per_sequence_t RICaction_ConfirmedForModification_Item_sequence[] = {
+  { &hf_e2ap_ricActionID    , ASN1_EXTENSION_ROOT    , ASN1_NOT_OPTIONAL, dissect_e2ap_RICactionID },
+  { NULL, 0, 0, NULL }
+};
+
+static int
+dissect_e2ap_RICaction_ConfirmedForModification_Item(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+  offset = dissect_per_sequence(tvb, offset, actx, tree, hf_index,
+                                   ett_e2ap_RICaction_ConfirmedForModification_Item, RICaction_ConfirmedForModification_Item_sequence);
+
+  return offset;
+}
+
+
+static const per_sequence_t RICactions_RefusedToBeModified_List_sequence_of[1] = {
+  { &hf_e2ap_RICactions_RefusedToBeModified_List_item, ASN1_NO_EXTENSIONS     , ASN1_NOT_OPTIONAL, dissect_e2ap_ProtocolIE_SingleContainer },
+};
+
+static int
+dissect_e2ap_RICactions_RefusedToBeModified_List(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+  offset = dissect_per_constrained_sequence_of(tvb, offset, actx, tree, hf_index,
+                                                  ett_e2ap_RICactions_RefusedToBeModified_List, RICactions_RefusedToBeModified_List_sequence_of,
+                                                  0, maxofRICactionID, false);
+
+  return offset;
+}
+
+
+static const per_sequence_t RICaction_RefusedToBeModified_Item_sequence[] = {
+  { &hf_e2ap_ricActionID    , ASN1_EXTENSION_ROOT    , ASN1_NOT_OPTIONAL, dissect_e2ap_RICactionID },
+  { &hf_e2ap_cause          , ASN1_EXTENSION_ROOT    , ASN1_NOT_OPTIONAL, dissect_e2ap_Cause },
+  { NULL, 0, 0, NULL }
+};
+
+static int
+dissect_e2ap_RICaction_RefusedToBeModified_Item(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+  offset = dissect_per_sequence(tvb, offset, actx, tree, hf_index,
+                                   ett_e2ap_RICaction_RefusedToBeModified_Item, RICaction_RefusedToBeModified_Item_sequence);
+
+  return offset;
+}
+
+
+static const per_sequence_t RICactions_ConfirmedForRemoval_List_sequence_of[1] = {
+  { &hf_e2ap_RICactions_ConfirmedForRemoval_List_item, ASN1_NO_EXTENSIONS     , ASN1_NOT_OPTIONAL, dissect_e2ap_ProtocolIE_SingleContainer },
+};
+
+static int
+dissect_e2ap_RICactions_ConfirmedForRemoval_List(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+  offset = dissect_per_constrained_sequence_of(tvb, offset, actx, tree, hf_index,
+                                                  ett_e2ap_RICactions_ConfirmedForRemoval_List, RICactions_ConfirmedForRemoval_List_sequence_of,
+                                                  0, maxofRICactionID, false);
+
+  return offset;
+}
+
+
+static const per_sequence_t RICaction_ConfirmedForRemoval_Item_sequence[] = {
+  { &hf_e2ap_ricActionID    , ASN1_EXTENSION_ROOT    , ASN1_NOT_OPTIONAL, dissect_e2ap_RICactionID },
+  { NULL, 0, 0, NULL }
+};
+
+static int
+dissect_e2ap_RICaction_ConfirmedForRemoval_Item(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+  offset = dissect_per_sequence(tvb, offset, actx, tree, hf_index,
+                                   ett_e2ap_RICaction_ConfirmedForRemoval_Item, RICaction_ConfirmedForRemoval_Item_sequence);
+
+  return offset;
+}
+
+
+static const per_sequence_t RICactions_RefusedToBeRemoved_List_sequence_of[1] = {
+  { &hf_e2ap_RICactions_RefusedToBeRemoved_List_item, ASN1_NO_EXTENSIONS     , ASN1_NOT_OPTIONAL, dissect_e2ap_ProtocolIE_SingleContainer },
+};
+
+static int
+dissect_e2ap_RICactions_RefusedToBeRemoved_List(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+  offset = dissect_per_constrained_sequence_of(tvb, offset, actx, tree, hf_index,
+                                                  ett_e2ap_RICactions_RefusedToBeRemoved_List, RICactions_RefusedToBeRemoved_List_sequence_of,
+                                                  0, maxofRICactionID, false);
+
+  return offset;
+}
+
+
+static const per_sequence_t RICaction_RefusedToBeRemoved_Item_sequence[] = {
+  { &hf_e2ap_ricActionID    , ASN1_EXTENSION_ROOT    , ASN1_NOT_OPTIONAL, dissect_e2ap_RICactionID },
+  { &hf_e2ap_cause          , ASN1_EXTENSION_ROOT    , ASN1_NOT_OPTIONAL, dissect_e2ap_Cause },
+  { NULL, 0, 0, NULL }
+};
+
+static int
+dissect_e2ap_RICaction_RefusedToBeRemoved_Item(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+  offset = dissect_per_sequence(tvb, offset, actx, tree, hf_index,
+                                   ett_e2ap_RICaction_RefusedToBeRemoved_Item, RICaction_RefusedToBeRemoved_Item_sequence);
+
+  return offset;
+}
+
+
+static const per_sequence_t RICsubscriptionModificationRefuse_sequence[] = {
+  { &hf_e2ap_protocolIEs    , ASN1_EXTENSION_ROOT    , ASN1_NOT_OPTIONAL, dissect_e2ap_ProtocolIE_Container },
+  { NULL, 0, 0, NULL }
+};
+
+static int
+dissect_e2ap_RICsubscriptionModificationRefuse(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+  offset = dissect_per_sequence(tvb, offset, actx, tree, hf_index,
+                                   ett_e2ap_RICsubscriptionModificationRefuse, RICsubscriptionModificationRefuse_sequence);
+
+  return offset;
+}
+
+
 static const per_sequence_t RICindication_sequence[] = {
   { &hf_e2ap_protocolIEs    , ASN1_EXTENSION_ROOT    , ASN1_NOT_OPTIONAL, dissect_e2ap_ProtocolIE_Container },
   { NULL, 0, 0, NULL }
@@ -3675,7 +4750,8 @@ static const per_sequence_t RICindication_sequence[] = {
 
 static int
 dissect_e2ap_RICindication(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  col_append_sep_str(actx->pinfo->cinfo, COL_INFO, NULL, "RICindication");
+  set_message_label(actx, MTYPE_RIC_IND);
+  set_stats_message_type(actx->pinfo, MTYPE_RIC_IND);
 
 
   offset = dissect_per_sequence(tvb, offset, actx, tree, hf_index,
@@ -3692,7 +4768,8 @@ static const per_sequence_t RICcontrolRequest_sequence[] = {
 
 static int
 dissect_e2ap_RICcontrolRequest(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  col_append_sep_str(actx->pinfo->cinfo, COL_INFO, NULL, "RICcontrolRequest");
+  set_message_label(actx, MTYPE_RIC_CONTROL_REQUEST);
+  set_stats_message_type(actx->pinfo, MTYPE_RIC_CONTROL_REQUEST);
 
 
   offset = dissect_per_sequence(tvb, offset, actx, tree, hf_index,
@@ -3709,7 +4786,8 @@ static const per_sequence_t RICcontrolAcknowledge_sequence[] = {
 
 static int
 dissect_e2ap_RICcontrolAcknowledge(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  col_append_sep_str(actx->pinfo->cinfo, COL_INFO, NULL, "RICcontrolAcknowledge");
+  set_message_label(actx, MTYPE_RIC_CONTROL_ACK);
+  set_stats_message_type(actx->pinfo, MTYPE_RIC_CONTROL_ACK);
 
   offset = dissect_per_sequence(tvb, offset, actx, tree, hf_index,
                                    ett_e2ap_RICcontrolAcknowledge, RICcontrolAcknowledge_sequence);
@@ -3725,10 +4803,53 @@ static const per_sequence_t RICcontrolFailure_sequence[] = {
 
 static int
 dissect_e2ap_RICcontrolFailure(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  col_append_sep_str(actx->pinfo->cinfo, COL_INFO, NULL, "RICcontrolFailure");
+  set_message_label(actx, MTYPE_RIC_CONTROL_FAIL);
+  set_stats_message_type(actx->pinfo, MTYPE_RIC_CONTROL_FAIL);
 
   offset = dissect_per_sequence(tvb, offset, actx, tree, hf_index,
                                    ett_e2ap_RICcontrolFailure, RICcontrolFailure_sequence);
+
+  return offset;
+}
+
+
+static const per_sequence_t RICQueryRequest_sequence[] = {
+  { &hf_e2ap_protocolIEs    , ASN1_EXTENSION_ROOT    , ASN1_NOT_OPTIONAL, dissect_e2ap_ProtocolIE_Container },
+  { NULL, 0, 0, NULL }
+};
+
+static int
+dissect_e2ap_RICQueryRequest(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+  offset = dissect_per_sequence(tvb, offset, actx, tree, hf_index,
+                                   ett_e2ap_RICQueryRequest, RICQueryRequest_sequence);
+
+  return offset;
+}
+
+
+static const per_sequence_t RICQueryResponse_sequence[] = {
+  { &hf_e2ap_protocolIEs    , ASN1_EXTENSION_ROOT    , ASN1_NOT_OPTIONAL, dissect_e2ap_ProtocolIE_Container },
+  { NULL, 0, 0, NULL }
+};
+
+static int
+dissect_e2ap_RICQueryResponse(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+  offset = dissect_per_sequence(tvb, offset, actx, tree, hf_index,
+                                   ett_e2ap_RICQueryResponse, RICQueryResponse_sequence);
+
+  return offset;
+}
+
+
+static const per_sequence_t RICQueryFailure_sequence[] = {
+  { &hf_e2ap_protocolIEs    , ASN1_EXTENSION_ROOT    , ASN1_NOT_OPTIONAL, dissect_e2ap_ProtocolIE_Container },
+  { NULL, 0, 0, NULL }
+};
+
+static int
+dissect_e2ap_RICQueryFailure(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+  offset = dissect_per_sequence(tvb, offset, actx, tree, hf_index,
+                                   ett_e2ap_RICQueryFailure, RICQueryFailure_sequence);
 
   return offset;
 }
@@ -3741,7 +4862,8 @@ static const per_sequence_t ErrorIndication_sequence[] = {
 
 static int
 dissect_e2ap_ErrorIndication(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  col_append_sep_str(actx->pinfo->cinfo, COL_INFO, NULL, "ErrorIndication");
+  set_message_label(actx, MTYPE_ERROR_INDICATION);
+  set_stats_message_type(actx->pinfo, MTYPE_ERROR_INDICATION);
 
 
   offset = dissect_per_sequence(tvb, offset, actx, tree, hf_index,
@@ -3758,7 +4880,8 @@ static const per_sequence_t E2setupRequest_sequence[] = {
 
 static int
 dissect_e2ap_E2setupRequest(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  col_append_sep_str(actx->pinfo->cinfo, COL_INFO, NULL, "E2setupRequest");
+  set_message_label(actx, MTYPE_E2_SETUP_REQUEST);
+  set_stats_message_type(actx->pinfo, MTYPE_E2_SETUP_REQUEST);
 
   offset = dissect_per_sequence(tvb, offset, actx, tree, hf_index,
                                    ett_e2ap_E2setupRequest, E2setupRequest_sequence);
@@ -3774,7 +4897,9 @@ static const per_sequence_t E2setupResponse_sequence[] = {
 
 static int
 dissect_e2ap_E2setupResponse(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  col_append_sep_str(actx->pinfo->cinfo, COL_INFO, NULL, "E2setupResponse");
+  set_message_label(actx, MTYPE_E2_SETUP_RESPONSE);
+  set_stats_message_type(actx->pinfo, MTYPE_E2_SETUP_RESPONSE);
+
 
 
   offset = dissect_per_sequence(tvb, offset, actx, tree, hf_index,
@@ -3791,7 +4916,8 @@ static const per_sequence_t E2setupFailure_sequence[] = {
 
 static int
 dissect_e2ap_E2setupFailure(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  col_append_sep_str(actx->pinfo->cinfo, COL_INFO, NULL, "E2setupFailure");
+  set_message_label(actx, MTYPE_E2_SETUP_FAIL);
+  set_stats_message_type(actx->pinfo, MTYPE_E2_SETUP_FAIL);
 
   offset = dissect_per_sequence(tvb, offset, actx, tree, hf_index,
                                    ett_e2ap_E2setupFailure, E2setupFailure_sequence);
@@ -3807,7 +4933,9 @@ static const per_sequence_t E2connectionUpdate_sequence[] = {
 
 static int
 dissect_e2ap_E2connectionUpdate(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  col_append_sep_str(actx->pinfo->cinfo, COL_INFO, NULL, "E2connectionUpdate");
+  set_message_label(actx, MTYPE_E2_CONNECTION_UPDATE);
+  set_stats_message_type(actx->pinfo, MTYPE_E2_CONNECTION_UPDATE);
+
 
   offset = dissect_per_sequence(tvb, offset, actx, tree, hf_index,
                                    ett_e2ap_E2connectionUpdate, E2connectionUpdate_sequence);
@@ -3824,7 +4952,7 @@ static int
 dissect_e2ap_E2connectionUpdate_List(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_per_constrained_sequence_of(tvb, offset, actx, tree, hf_index,
                                                   ett_e2ap_E2connectionUpdate_List, E2connectionUpdate_List_sequence_of,
-                                                  1, maxofTNLA, FALSE);
+                                                  1, maxofTNLA, false);
 
   return offset;
 }
@@ -3853,7 +4981,7 @@ static int
 dissect_e2ap_E2connectionUpdateRemove_List(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_per_constrained_sequence_of(tvb, offset, actx, tree, hf_index,
                                                   ett_e2ap_E2connectionUpdateRemove_List, E2connectionUpdateRemove_List_sequence_of,
-                                                  1, maxofTNLA, FALSE);
+                                                  1, maxofTNLA, false);
 
   return offset;
 }
@@ -3880,7 +5008,8 @@ static const per_sequence_t E2connectionUpdateAcknowledge_sequence[] = {
 
 static int
 dissect_e2ap_E2connectionUpdateAcknowledge(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  col_append_sep_str(actx->pinfo->cinfo, COL_INFO, NULL, "E2connectionUpdateAcknowledge");
+  set_message_label(actx, MTYPE_E2_CONNECTION_UPDATE_ACK);
+  set_stats_message_type(actx->pinfo, MTYPE_E2_CONNECTION_UPDATE_ACK);
 
   offset = dissect_per_sequence(tvb, offset, actx, tree, hf_index,
                                    ett_e2ap_E2connectionUpdateAcknowledge, E2connectionUpdateAcknowledge_sequence);
@@ -3897,7 +5026,7 @@ static int
 dissect_e2ap_E2connectionSetupFailed_List(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_per_constrained_sequence_of(tvb, offset, actx, tree, hf_index,
                                                   ett_e2ap_E2connectionSetupFailed_List, E2connectionSetupFailed_List_sequence_of,
-                                                  1, maxofTNLA, FALSE);
+                                                  1, maxofTNLA, false);
 
   return offset;
 }
@@ -3925,7 +5054,8 @@ static const per_sequence_t E2connectionUpdateFailure_sequence[] = {
 
 static int
 dissect_e2ap_E2connectionUpdateFailure(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  col_append_sep_str(actx->pinfo->cinfo, COL_INFO, NULL, "E2connectionUpdateFailure");
+  set_message_label(actx, MTYPE_E2_CONNECTION_UPDATE_FAIL);
+  set_stats_message_type(actx->pinfo, MTYPE_E2_CONNECTION_UPDATE_FAIL);
 
 
   offset = dissect_per_sequence(tvb, offset, actx, tree, hf_index,
@@ -3942,7 +5072,9 @@ static const per_sequence_t E2nodeConfigurationUpdate_sequence[] = {
 
 static int
 dissect_e2ap_E2nodeConfigurationUpdate(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  col_append_sep_str(actx->pinfo->cinfo, COL_INFO, NULL, "E2nodeConfigurationUpdate");
+  set_message_label(actx, MTYPE_E2_CONFIGURATION_UPDATE_FAIL);
+  set_stats_message_type(actx->pinfo, MTYPE_E2_CONFIGURATION_UPDATE_FAIL);
+
 
   offset = dissect_per_sequence(tvb, offset, actx, tree, hf_index,
                                    ett_e2ap_E2nodeConfigurationUpdate, E2nodeConfigurationUpdate_sequence);
@@ -3959,7 +5091,7 @@ static int
 dissect_e2ap_E2nodeComponentConfigAddition_List(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_per_constrained_sequence_of(tvb, offset, actx, tree, hf_index,
                                                   ett_e2ap_E2nodeComponentConfigAddition_List, E2nodeComponentConfigAddition_List_sequence_of,
-                                                  1, maxofE2nodeComponents, FALSE);
+                                                  1, maxofE2nodeComponents, false);
 
   return offset;
 }
@@ -3989,7 +5121,7 @@ static int
 dissect_e2ap_E2nodeComponentConfigUpdate_List(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_per_constrained_sequence_of(tvb, offset, actx, tree, hf_index,
                                                   ett_e2ap_E2nodeComponentConfigUpdate_List, E2nodeComponentConfigUpdate_List_sequence_of,
-                                                  1, maxofE2nodeComponents, FALSE);
+                                                  1, maxofE2nodeComponents, false);
 
   return offset;
 }
@@ -4019,7 +5151,7 @@ static int
 dissect_e2ap_E2nodeComponentConfigRemoval_List(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_per_constrained_sequence_of(tvb, offset, actx, tree, hf_index,
                                                   ett_e2ap_E2nodeComponentConfigRemoval_List, E2nodeComponentConfigRemoval_List_sequence_of,
-                                                  1, maxofE2nodeComponents, FALSE);
+                                                  1, maxofE2nodeComponents, false);
 
   return offset;
 }
@@ -4048,7 +5180,7 @@ static int
 dissect_e2ap_E2nodeTNLassociationRemoval_List(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_per_constrained_sequence_of(tvb, offset, actx, tree, hf_index,
                                                   ett_e2ap_E2nodeTNLassociationRemoval_List, E2nodeTNLassociationRemoval_List_sequence_of,
-                                                  1, maxofTNLA, FALSE);
+                                                  1, maxofTNLA, false);
 
   return offset;
 }
@@ -4076,7 +5208,8 @@ static const per_sequence_t E2nodeConfigurationUpdateAcknowledge_sequence[] = {
 
 static int
 dissect_e2ap_E2nodeConfigurationUpdateAcknowledge(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  col_append_sep_str(actx->pinfo->cinfo, COL_INFO, NULL, "E2nodeConfigurationUpdateAcknowledge");
+  set_message_label(actx, MTYPE_E2_CONFIGURATION_UPDATE_ACK);
+  set_stats_message_type(actx->pinfo, MTYPE_E2_CONFIGURATION_UPDATE_ACK);
 
   offset = dissect_per_sequence(tvb, offset, actx, tree, hf_index,
                                    ett_e2ap_E2nodeConfigurationUpdateAcknowledge, E2nodeConfigurationUpdateAcknowledge_sequence);
@@ -4093,7 +5226,7 @@ static int
 dissect_e2ap_E2nodeComponentConfigAdditionAck_List(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_per_constrained_sequence_of(tvb, offset, actx, tree, hf_index,
                                                   ett_e2ap_E2nodeComponentConfigAdditionAck_List, E2nodeComponentConfigAdditionAck_List_sequence_of,
-                                                  1, maxofE2nodeComponents, FALSE);
+                                                  1, maxofE2nodeComponents, false);
 
   return offset;
 }
@@ -4123,7 +5256,7 @@ static int
 dissect_e2ap_E2nodeComponentConfigUpdateAck_List(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_per_constrained_sequence_of(tvb, offset, actx, tree, hf_index,
                                                   ett_e2ap_E2nodeComponentConfigUpdateAck_List, E2nodeComponentConfigUpdateAck_List_sequence_of,
-                                                  1, maxofE2nodeComponents, FALSE);
+                                                  1, maxofE2nodeComponents, false);
 
   return offset;
 }
@@ -4153,7 +5286,7 @@ static int
 dissect_e2ap_E2nodeComponentConfigRemovalAck_List(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_per_constrained_sequence_of(tvb, offset, actx, tree, hf_index,
                                                   ett_e2ap_E2nodeComponentConfigRemovalAck_List, E2nodeComponentConfigRemovalAck_List_sequence_of,
-                                                  1, maxofE2nodeComponents, FALSE);
+                                                  1, maxofE2nodeComponents, false);
 
   return offset;
 }
@@ -4182,7 +5315,8 @@ static const per_sequence_t E2nodeConfigurationUpdateFailure_sequence[] = {
 
 static int
 dissect_e2ap_E2nodeConfigurationUpdateFailure(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  col_append_sep_str(actx->pinfo->cinfo, COL_INFO, NULL, "E2nodeConfigurationUpdateFailure");
+  set_message_label(actx, MTYPE_E2_CONFIGURATION_UPDATE_FAIL);
+  set_stats_message_type(actx->pinfo, MTYPE_E2_CONFIGURATION_UPDATE_FAIL);
 
 
   offset = dissect_per_sequence(tvb, offset, actx, tree, hf_index,
@@ -4199,7 +5333,8 @@ static const per_sequence_t ResetRequest_sequence[] = {
 
 static int
 dissect_e2ap_ResetRequest(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  col_append_sep_str(actx->pinfo->cinfo, COL_INFO, NULL, "ResetRequest");
+  set_message_label(actx, MTYPE_RESET_REQUEST);
+  set_stats_message_type(actx->pinfo, MTYPE_RESET_REQUEST);
 
   offset = dissect_per_sequence(tvb, offset, actx, tree, hf_index,
                                    ett_e2ap_ResetRequest, ResetRequest_sequence);
@@ -4215,7 +5350,8 @@ static const per_sequence_t ResetResponse_sequence[] = {
 
 static int
 dissect_e2ap_ResetResponse(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  col_append_sep_str(actx->pinfo->cinfo, COL_INFO, NULL, "ResetResponse");
+  set_message_label(actx, MTYPE_RESET_RESPONSE);
+  set_stats_message_type(actx->pinfo, MTYPE_RESET_RESPONSE);
 
 
   offset = dissect_per_sequence(tvb, offset, actx, tree, hf_index,
@@ -4232,7 +5368,8 @@ static const per_sequence_t RICserviceUpdate_sequence[] = {
 
 static int
 dissect_e2ap_RICserviceUpdate(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  col_append_sep_str(actx->pinfo->cinfo, COL_INFO, NULL, "RICserviceUpdate");
+  set_message_label(actx, MTYPE_RIC_SERVICE_UPDATE);
+  set_stats_message_type(actx->pinfo, MTYPE_RIC_SERVICE_UPDATE);
 
   offset = dissect_per_sequence(tvb, offset, actx, tree, hf_index,
                                    ett_e2ap_RICserviceUpdate, RICserviceUpdate_sequence);
@@ -4249,7 +5386,7 @@ static int
 dissect_e2ap_RANfunctions_List(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_per_constrained_sequence_of(tvb, offset, actx, tree, hf_index,
                                                   ett_e2ap_RANfunctions_List, RANfunctions_List_sequence_of,
-                                                  1, maxofRANfunctionID, FALSE);
+                                                  1, maxofRANfunctionID, false);
 
   return offset;
 }
@@ -4280,7 +5417,7 @@ static int
 dissect_e2ap_RANfunctionsID_List(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_per_constrained_sequence_of(tvb, offset, actx, tree, hf_index,
                                                   ett_e2ap_RANfunctionsID_List, RANfunctionsID_List_sequence_of,
-                                                  1, maxofRANfunctionID, FALSE);
+                                                  1, maxofRANfunctionID, false);
 
   return offset;
 }
@@ -4308,7 +5445,8 @@ static const per_sequence_t RICserviceUpdateAcknowledge_sequence[] = {
 
 static int
 dissect_e2ap_RICserviceUpdateAcknowledge(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  col_append_sep_str(actx->pinfo->cinfo, COL_INFO, NULL, "RICserviceUpdateAcknowledge");
+  set_message_label(actx, MTYPE_RIC_SERVICE_UPDATE_ACK);
+  set_stats_message_type(actx->pinfo, MTYPE_RIC_SERVICE_UPDATE_ACK);
 
   offset = dissect_per_sequence(tvb, offset, actx, tree, hf_index,
                                    ett_e2ap_RICserviceUpdateAcknowledge, RICserviceUpdateAcknowledge_sequence);
@@ -4325,7 +5463,7 @@ static int
 dissect_e2ap_RANfunctionsIDcause_List(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_per_constrained_sequence_of(tvb, offset, actx, tree, hf_index,
                                                   ett_e2ap_RANfunctionsIDcause_List, RANfunctionsIDcause_List_sequence_of,
-                                                  1, maxofRANfunctionID, FALSE);
+                                                  1, maxofRANfunctionID, false);
 
   return offset;
 }
@@ -4353,7 +5491,8 @@ static const per_sequence_t RICserviceUpdateFailure_sequence[] = {
 
 static int
 dissect_e2ap_RICserviceUpdateFailure(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  col_append_sep_str(actx->pinfo->cinfo, COL_INFO, NULL, "RICserviceUpdateFailure");
+  set_message_label(actx, MTYPE_RIC_SERVICE_UPDATE_FAIL);
+  set_stats_message_type(actx->pinfo, MTYPE_RIC_SERVICE_UPDATE_FAIL);
 
 
 
@@ -4371,7 +5510,8 @@ static const per_sequence_t RICserviceQuery_sequence[] = {
 
 static int
 dissect_e2ap_RICserviceQuery(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
-  col_append_sep_str(actx->pinfo->cinfo, COL_INFO, NULL, "RICserviceQuery");
+  set_message_label(actx, MTYPE_RIC_SERVICE_QUERY);
+  set_stats_message_type(actx->pinfo, MTYPE_RIC_SERVICE_QUERY);
 
 
   offset = dissect_per_sequence(tvb, offset, actx, tree, hf_index,
@@ -4499,9 +5639,6 @@ dissect_e2ap_UnsuccessfulOutcome_value(tvbuff_t *tvb _U_, int offset _U_, asn1_c
 
 
 
-
-
-
   offset = dissect_per_open_type_pdu_new(tvb, offset, actx, tree, hf_index, dissect_UnsuccessfulOutcomeValue);
 
   return offset;
@@ -4552,7 +5689,7 @@ dissect_e2ap_E2AP_PDU(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, p
 static int
 dissect_e2ap_PLMNIdentity(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_per_octet_string(tvb, offset, actx, tree, hf_index,
-                                       3, 3, FALSE, NULL);
+                                       3, 3, false, NULL);
 
   return offset;
 }
@@ -4562,7 +5699,7 @@ dissect_e2ap_PLMNIdentity(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U
 static int
 dissect_e2ap_NRCellIdentity(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_per_bit_string(tvb, offset, actx, tree, hf_index,
-                                     36, 36, FALSE, NULL, 0, NULL, NULL);
+                                     36, 36, false, NULL, 0, NULL, NULL);
 
   return offset;
 }
@@ -4587,7 +5724,7 @@ dissect_e2ap_NR_CGI(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, pro
 static int
 dissect_e2ap_EUTRACellIdentity(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_per_bit_string(tvb, offset, actx, tree, hf_index,
-                                     28, 28, FALSE, NULL, 0, NULL, NULL);
+                                     28, 28, false, NULL, 0, NULL, NULL);
 
   return offset;
 }
@@ -4634,7 +5771,7 @@ dissect_e2ap_CGI(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_
 static int
 dissect_e2ap_AMFRegionID(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_per_bit_string(tvb, offset, actx, tree, hf_index,
-                                     8, 8, FALSE, NULL, 0, NULL, NULL);
+                                     8, 8, false, NULL, 0, NULL, NULL);
 
   return offset;
 }
@@ -4644,7 +5781,7 @@ dissect_e2ap_AMFRegionID(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_
 static int
 dissect_e2ap_AMFSetID(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_per_bit_string(tvb, offset, actx, tree, hf_index,
-                                     10, 10, FALSE, NULL, 0, NULL, NULL);
+                                     10, 10, false, NULL, 0, NULL, NULL);
 
   return offset;
 }
@@ -4654,7 +5791,7 @@ dissect_e2ap_AMFSetID(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, p
 static int
 dissect_e2ap_AMFPointer(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_per_bit_string(tvb, offset, actx, tree, hf_index,
-                                     6, 6, FALSE, NULL, 0, NULL, NULL);
+                                     6, 6, false, NULL, 0, NULL, NULL);
 
   return offset;
 }
@@ -4835,7 +5972,7 @@ dissect_e2ap_InterfaceID_E1(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx 
 static int
 dissect_e2ap_MME_Group_ID(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_per_octet_string(tvb, offset, actx, tree, hf_index,
-                                       2, 2, FALSE, NULL);
+                                       2, 2, false, NULL);
 
   return offset;
 }
@@ -4845,7 +5982,7 @@ dissect_e2ap_MME_Group_ID(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U
 static int
 dissect_e2ap_MME_Code(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_per_octet_string(tvb, offset, actx, tree, hf_index,
-                                       1, 1, FALSE, NULL);
+                                       1, 1, false, NULL);
 
   return offset;
 }
@@ -4984,7 +6121,7 @@ static const value_string e2ap_T_messageType_vals[] = {
 static int
 dissect_e2ap_T_messageType(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_per_enumerated(tvb, offset, actx, tree, hf_index,
-                                     3, NULL, TRUE, 0, NULL);
+                                     3, NULL, true, 0, NULL);
 
   return offset;
 }
@@ -5020,7 +6157,7 @@ static const value_string e2ap_InterfaceType_vals[] = {
 static int
 dissect_e2ap_InterfaceType(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_per_enumerated(tvb, offset, actx, tree, hf_index,
-                                     7, NULL, TRUE, 0, NULL);
+                                     7, NULL, true, 0, NULL);
 
   return offset;
 }
@@ -5031,13 +6168,14 @@ static int
 dissect_e2ap_T_ranFunction_ShortName(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   tvbuff_t *value_tvb;
   offset = dissect_per_PrintableString(tvb, offset, actx, tree, hf_index,
-                                          1, 150, TRUE,
+                                          1, 150, true,
                                           &value_tvb);
 
-  struct e2ap_private_data *e2ap_data = e2ap_get_private_data(actx->pinfo);
-  ran_functionid_table_t *table = get_ran_functionid_table(actx->pinfo);
-  store_ran_function_mapping(actx->pinfo, table, e2ap_data,
-                             tvb_get_string_enc(wmem_packet_scope(), value_tvb, 0, tvb_captured_length(value_tvb), ENC_ASCII));
+  if (!actx->pinfo->fd->visited) {
+    /* N.B. too early to work out exact dissector, as don't have OID yet */
+    e2ap_store_ran_function_mapping(actx->pinfo, tree, value_tvb,
+                                    tvb_get_string_enc(actx->pinfo->pool, value_tvb, 0, tvb_captured_length(value_tvb), ENC_ASCII));
+  }
 
 
   return offset;
@@ -5048,7 +6186,7 @@ dissect_e2ap_T_ranFunction_ShortName(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx
 static int
 dissect_e2ap_PrintableString_SIZE_1_1000_(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_per_PrintableString(tvb, offset, actx, tree, hf_index,
-                                          1, 1000, TRUE,
+                                          1, 1000, true,
                                           NULL);
 
   return offset;
@@ -5059,7 +6197,7 @@ dissect_e2ap_PrintableString_SIZE_1_1000_(tvbuff_t *tvb _U_, int offset _U_, asn
 static int
 dissect_e2ap_PrintableString_SIZE_1_150_(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_per_PrintableString(tvb, offset, actx, tree, hf_index,
-                                          1, 150, TRUE,
+                                          1, 150, true,
                                           NULL);
 
   return offset;
@@ -5105,7 +6243,7 @@ dissect_e2ap_RIC_Style_Type(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx 
 static int
 dissect_e2ap_RIC_Style_Name(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_per_PrintableString(tvb, offset, actx, tree, hf_index,
-                                          1, 150, TRUE,
+                                          1, 150, true,
                                           NULL);
 
   return offset;
@@ -5132,7 +6270,7 @@ static const value_string e2ap_RRCclass_LTE_vals[] = {
 static int
 dissect_e2ap_RRCclass_LTE(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_per_enumerated(tvb, offset, actx, tree, hf_index,
-                                     12, NULL, TRUE, 0, NULL);
+                                     12, NULL, true, 0, NULL);
 
   return offset;
 }
@@ -5154,7 +6292,7 @@ static const value_string e2ap_RRCclass_NR_vals[] = {
 static int
 dissect_e2ap_RRCclass_NR(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_per_enumerated(tvb, offset, actx, tree, hf_index,
-                                     8, NULL, TRUE, 0, NULL);
+                                     8, NULL, true, 0, NULL);
 
   return offset;
 }
@@ -5201,7 +6339,7 @@ dissect_e2ap_RRC_MessageID(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _
 static int
 dissect_e2ap_INTEGER_0_maxNRARFCN(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_per_constrained_integer(tvb, offset, actx, tree, hf_index,
-                                                            0U, maxNRARFCN, NULL, FALSE);
+                                                            0U, maxNRARFCN, NULL, false);
 
   return offset;
 }
@@ -5225,7 +6363,7 @@ dissect_e2ap_NR_ARFCN(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, p
 static int
 dissect_e2ap_E_UTRA_ARFCN(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_per_constrained_integer(tvb, offset, actx, tree, hf_index,
-                                                            0U, maxEARFCN, NULL, FALSE);
+                                                            0U, maxEARFCN, NULL, false);
 
   return offset;
 }
@@ -5257,7 +6395,7 @@ dissect_e2ap_ServingCell_ARFCN(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *ac
 static int
 dissect_e2ap_NR_PCI(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_per_constrained_integer(tvb, offset, actx, tree, hf_index,
-                                                            0U, 1007U, NULL, FALSE);
+                                                            0U, 1007U, NULL, false);
 
   return offset;
 }
@@ -5267,7 +6405,7 @@ dissect_e2ap_NR_PCI(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, pro
 static int
 dissect_e2ap_E_UTRA_PCI(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_per_constrained_integer(tvb, offset, actx, tree, hf_index,
-                                                            0U, 503U, NULL, TRUE);
+                                                            0U, 503U, NULL, true);
 
   return offset;
 }
@@ -5299,7 +6437,7 @@ dissect_e2ap_ServingCell_PCI(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx
 static int
 dissect_e2ap_AMF_UE_NGAP_ID(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_per_constrained_integer_64b(tvb, offset, actx, tree, hf_index,
-                                                            0U, G_GUINT64_CONSTANT(1099511627775), NULL, FALSE);
+                                                            0U, UINT64_C(1099511627775), NULL, false);
 
   return offset;
 }
@@ -5309,7 +6447,7 @@ dissect_e2ap_AMF_UE_NGAP_ID(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx 
 static int
 dissect_e2ap_GNB_CU_UE_F1AP_ID(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_per_constrained_integer(tvb, offset, actx, tree, hf_index,
-                                                            0U, 4294967295U, NULL, FALSE);
+                                                            0U, 4294967295U, NULL, false);
 
   return offset;
 }
@@ -5337,7 +6475,7 @@ static int
 dissect_e2ap_UEID_GNB_CU_F1AP_ID_List(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_per_constrained_sequence_of(tvb, offset, actx, tree, hf_index,
                                                   ett_e2ap_UEID_GNB_CU_F1AP_ID_List, UEID_GNB_CU_F1AP_ID_List_sequence_of,
-                                                  1, maxF1APid, FALSE);
+                                                  1, maxF1APid, false);
 
   return offset;
 }
@@ -5347,7 +6485,7 @@ dissect_e2ap_UEID_GNB_CU_F1AP_ID_List(tvbuff_t *tvb _U_, int offset _U_, asn1_ct
 static int
 dissect_e2ap_GNB_CU_CP_UE_E1AP_ID(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_per_constrained_integer(tvb, offset, actx, tree, hf_index,
-                                                            0U, 4294967295U, NULL, FALSE);
+                                                            0U, 4294967295U, NULL, false);
 
   return offset;
 }
@@ -5375,7 +6513,7 @@ static int
 dissect_e2ap_UEID_GNB_CU_CP_E1AP_ID_List(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_per_constrained_sequence_of(tvb, offset, actx, tree, hf_index,
                                                   ett_e2ap_UEID_GNB_CU_CP_E1AP_ID_List, UEID_GNB_CU_CP_E1AP_ID_List_sequence_of,
-                                                  1, maxE1APid, FALSE);
+                                                  1, maxE1APid, false);
 
   return offset;
 }
@@ -5385,7 +6523,7 @@ dissect_e2ap_UEID_GNB_CU_CP_E1AP_ID_List(tvbuff_t *tvb _U_, int offset _U_, asn1
 static int
 dissect_e2ap_RANUEID(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_per_octet_string(tvb, offset, actx, tree, hf_index,
-                                       8, 8, FALSE, NULL);
+                                       8, 8, false, NULL);
 
   return offset;
 }
@@ -5395,7 +6533,7 @@ dissect_e2ap_RANUEID(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, pr
 static int
 dissect_e2ap_NG_RANnodeUEXnAPID(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_per_constrained_integer(tvb, offset, actx, tree, hf_index,
-                                                            0U, 4294967295U, NULL, FALSE);
+                                                            0U, 4294967295U, NULL, false);
 
   return offset;
 }
@@ -5456,7 +6594,7 @@ dissect_e2ap_UEID_GNB_CU_UP(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx 
 static int
 dissect_e2ap_NGENB_CU_UE_W1AP_ID(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_per_constrained_integer(tvb, offset, actx, tree, hf_index,
-                                                            0U, 4294967295U, NULL, FALSE);
+                                                            0U, 4294967295U, NULL, false);
 
   return offset;
 }
@@ -5499,7 +6637,7 @@ dissect_e2ap_UEID_NG_ENB_DU(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx 
 static int
 dissect_e2ap_ENB_UE_X2AP_ID(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_per_constrained_integer(tvb, offset, actx, tree, hf_index,
-                                                            0U, 4095U, NULL, FALSE);
+                                                            0U, 4095U, NULL, false);
 
   return offset;
 }
@@ -5509,7 +6647,7 @@ dissect_e2ap_ENB_UE_X2AP_ID(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx 
 static int
 dissect_e2ap_ENB_UE_X2AP_ID_Extension(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_per_constrained_integer(tvb, offset, actx, tree, hf_index,
-                                                            0U, 4095U, NULL, TRUE);
+                                                            0U, 4095U, NULL, true);
 
   return offset;
 }
@@ -5538,7 +6676,7 @@ dissect_e2ap_UEID_EN_GNB(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_
 static int
 dissect_e2ap_MME_UE_S1AP_ID(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_per_constrained_integer(tvb, offset, actx, tree, hf_index,
-                                                            0U, 4294967295U, NULL, FALSE);
+                                                            0U, 4294967295U, NULL, false);
 
   return offset;
 }
@@ -5598,7 +6736,7 @@ dissect_e2ap_UEID(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto
 static int
 dissect_e2ap_QCI(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_per_constrained_integer(tvb, offset, actx, tree, hf_index,
-                                                            0U, 255U, NULL, FALSE);
+                                                            0U, 255U, NULL, false);
 
   return offset;
 }
@@ -5608,7 +6746,7 @@ dissect_e2ap_QCI(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_
 static int
 dissect_e2ap_E_UTRA_TAC(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_per_octet_string(tvb, offset, actx, tree, hf_index,
-                                       2, 2, FALSE, NULL);
+                                       2, 2, false, NULL);
 
   return offset;
 }
@@ -5618,7 +6756,7 @@ dissect_e2ap_E_UTRA_TAC(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_,
 static int
 dissect_e2ap_FiveQI(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_per_constrained_integer(tvb, offset, actx, tree, hf_index,
-                                                            0U, 255U, NULL, TRUE);
+                                                            0U, 255U, NULL, true);
 
   return offset;
 }
@@ -5628,7 +6766,7 @@ dissect_e2ap_FiveQI(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, pro
 static int
 dissect_e2ap_QosFlowIdentifier(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_per_constrained_integer(tvb, offset, actx, tree, hf_index,
-                                                            0U, 63U, NULL, TRUE);
+                                                            0U, 63U, NULL, true);
 
   return offset;
 }
@@ -5638,7 +6776,7 @@ dissect_e2ap_QosFlowIdentifier(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *ac
 static int
 dissect_e2ap_SD(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_per_octet_string(tvb, offset, actx, tree, hf_index,
-                                       3, 3, FALSE, NULL);
+                                       3, 3, false, NULL);
 
   return offset;
 }
@@ -5648,7 +6786,7 @@ dissect_e2ap_SD(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_t
 static int
 dissect_e2ap_SST(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_per_octet_string(tvb, offset, actx, tree, hf_index,
-                                       1, 1, FALSE, NULL);
+                                       1, 1, false, NULL);
 
   return offset;
 }
@@ -5673,7 +6811,7 @@ dissect_e2ap_S_NSSAI(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, pr
 static int
 dissect_e2ap_FiveGS_TAC(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_per_octet_string(tvb, offset, actx, tree, hf_index,
-                                       3, 3, FALSE, NULL);
+                                       3, 3, false, NULL);
 
   return offset;
 }
@@ -5683,7 +6821,7 @@ dissect_e2ap_FiveGS_TAC(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_,
 static int
 dissect_e2ap_INTEGER_1_1024_(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_per_constrained_integer(tvb, offset, actx, tree, hf_index,
-                                                            1U, 1024U, NULL, TRUE);
+                                                            1U, 1024U, NULL, true);
 
   return offset;
 }
@@ -5711,7 +6849,7 @@ static int
 dissect_e2ap_SupportedSULBandList(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_per_constrained_sequence_of(tvb, offset, actx, tree, hf_index,
                                                   ett_e2ap_SupportedSULBandList, SupportedSULBandList_sequence_of,
-                                                  0, maxnoofNrCellBands, FALSE);
+                                                  0, maxnoofNrCellBands, false);
 
   return offset;
 }
@@ -5740,7 +6878,7 @@ static int
 dissect_e2ap_NRFrequencyBand_List(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_per_constrained_sequence_of(tvb, offset, actx, tree, hf_index,
                                                   ett_e2ap_NRFrequencyBand_List, NRFrequencyBand_List_sequence_of,
-                                                  1, maxnoofNrCellBands, FALSE);
+                                                  1, maxnoofNrCellBands, false);
 
   return offset;
 }
@@ -5756,7 +6894,7 @@ static const value_string e2ap_NRFrequencyShift7p5khz_vals[] = {
 static int
 dissect_e2ap_NRFrequencyShift7p5khz(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_per_enumerated(tvb, offset, actx, tree, hf_index,
-                                     2, NULL, TRUE, 0, NULL);
+                                     2, NULL, true, 0, NULL);
 
   return offset;
 }
@@ -5788,7 +6926,7 @@ static const value_string e2ap_LogicalOR_vals[] = {
 static int
 dissect_e2ap_LogicalOR(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_per_enumerated(tvb, offset, actx, tree, hf_index,
-                                     2, NULL, TRUE, 0, NULL);
+                                     2, NULL, true, 0, NULL);
 
   return offset;
 }
@@ -5804,7 +6942,7 @@ static const value_string e2ap_T_nR_mode_info_vals[] = {
 static int
 dissect_e2ap_T_nR_mode_info(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_per_enumerated(tvb, offset, actx, tree, hf_index,
-                                     2, NULL, TRUE, 0, NULL);
+                                     2, NULL, true, 0, NULL);
 
   return offset;
 }
@@ -5820,7 +6958,7 @@ static const value_string e2ap_T_x2_Xn_established_vals[] = {
 static int
 dissect_e2ap_T_x2_Xn_established(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_per_enumerated(tvb, offset, actx, tree, hf_index,
-                                     2, NULL, TRUE, 0, NULL);
+                                     2, NULL, true, 0, NULL);
 
   return offset;
 }
@@ -5836,7 +6974,7 @@ static const value_string e2ap_T_hO_validated_vals[] = {
 static int
 dissect_e2ap_T_hO_validated(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_per_enumerated(tvb, offset, actx, tree, hf_index,
-                                     2, NULL, TRUE, 0, NULL);
+                                     2, NULL, true, 0, NULL);
 
   return offset;
 }
@@ -5846,7 +6984,7 @@ dissect_e2ap_T_hO_validated(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx 
 static int
 dissect_e2ap_INTEGER_1_65535_(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_per_constrained_integer(tvb, offset, actx, tree, hf_index,
-                                                            1U, 65535U, NULL, TRUE);
+                                                            1U, 65535U, NULL, true);
 
   return offset;
 }
@@ -5883,7 +7021,7 @@ static const value_string e2ap_T_x2_Xn_established_01_vals[] = {
 static int
 dissect_e2ap_T_x2_Xn_established_01(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_per_enumerated(tvb, offset, actx, tree, hf_index,
-                                     2, NULL, TRUE, 0, NULL);
+                                     2, NULL, true, 0, NULL);
 
   return offset;
 }
@@ -5899,7 +7037,7 @@ static const value_string e2ap_T_hO_validated_01_vals[] = {
 static int
 dissect_e2ap_T_hO_validated_01(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_per_enumerated(tvb, offset, actx, tree, hf_index,
-                                     2, NULL, TRUE, 0, NULL);
+                                     2, NULL, true, 0, NULL);
 
   return offset;
 }
@@ -5955,7 +7093,7 @@ static int
 dissect_e2ap_NeighborCell_List(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_per_constrained_sequence_of(tvb, offset, actx, tree, hf_index,
                                                   ett_e2ap_NeighborCell_List, NeighborCell_List_sequence_of,
-                                                  1, maxnoofNeighbourCell, FALSE);
+                                                  1, maxnoofNeighbourCell, false);
 
   return offset;
 }
@@ -5989,7 +7127,7 @@ static const value_string e2ap_RRC_State_vals[] = {
 static int
 dissect_e2ap_RRC_State(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_per_enumerated(tvb, offset, actx, tree, hf_index,
-                                     4, NULL, TRUE, 0, NULL);
+                                     4, NULL, true, 0, NULL);
 
   return offset;
 }
@@ -5999,7 +7137,7 @@ dissect_e2ap_RRC_State(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, 
 static int
 dissect_e2ap_RIC_EventTrigger_Cell_ID(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_per_constrained_integer(tvb, offset, actx, tree, hf_index,
-                                                            1U, 65535U, NULL, TRUE);
+                                                            1U, 65535U, NULL, true);
 
   return offset;
 }
@@ -6023,7 +7161,7 @@ dissect_e2ap_EventTrigger_Cell_Info_Item_Choice_Individual(tvbuff_t *tvb _U_, in
 static int
 dissect_e2ap_RANParameter_ID(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_per_constrained_integer_64b(tvb, offset, actx, tree, hf_index,
-                                                            1U, G_GUINT64_CONSTANT(4294967296), NULL, TRUE);
+                                                            1U, UINT64_C(4294967296), NULL, true);
 
   return offset;
 }
@@ -6037,7 +7175,7 @@ static int
 dissect_e2ap_RANParameter_Testing_LIST(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_per_constrained_sequence_of(tvb, offset, actx, tree, hf_index,
                                                   ett_e2ap_RANParameter_Testing_LIST, RANParameter_Testing_LIST_sequence_of,
-                                                  1, maxnoofItemsinList, FALSE);
+                                                  1, maxnoofItemsinList, false);
 
   return offset;
 }
@@ -6065,7 +7203,7 @@ static int
 dissect_e2ap_RANParameter_Testing_STRUCTURE(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_per_constrained_sequence_of(tvb, offset, actx, tree, hf_index,
                                                   ett_e2ap_RANParameter_Testing_STRUCTURE, RANParameter_Testing_STRUCTURE_sequence_of,
-                                                  1, maxnoofParametersinStructure, FALSE);
+                                                  1, maxnoofParametersinStructure, false);
 
   return offset;
 }
@@ -6107,7 +7245,7 @@ dissect_e2ap_REAL(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto
 static int
 dissect_e2ap_BIT_STRING(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_per_bit_string(tvb, offset, actx, tree, hf_index,
-                                     NO_BOUND, NO_BOUND, FALSE, NULL, 0, NULL, NULL);
+                                     NO_BOUND, NO_BOUND, false, NULL, 0, NULL, NULL);
 
   return offset;
 }
@@ -6117,7 +7255,7 @@ dissect_e2ap_BIT_STRING(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_,
 static int
 dissect_e2ap_OCTET_STRING(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_per_octet_string(tvb, offset, actx, tree, hf_index,
-                                       NO_BOUND, NO_BOUND, FALSE, NULL);
+                                       NO_BOUND, NO_BOUND, false, NULL);
 
   return offset;
 }
@@ -6127,7 +7265,7 @@ dissect_e2ap_OCTET_STRING(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U
 static int
 dissect_e2ap_PrintableString(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_per_PrintableString(tvb, offset, actx, tree, hf_index,
-                                          NO_BOUND, NO_BOUND, FALSE,
+                                          NO_BOUND, NO_BOUND, false,
                                           NULL);
 
   return offset;
@@ -6192,7 +7330,7 @@ static const value_string e2ap_T_ranP_Choice_comparison_vals[] = {
 static int
 dissect_e2ap_T_ranP_Choice_comparison(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_per_enumerated(tvb, offset, actx, tree, hf_index,
-                                     6, NULL, TRUE, 0, NULL);
+                                     6, NULL, true, 0, NULL);
 
   return offset;
 }
@@ -6210,7 +7348,7 @@ static const value_string e2ap_T_ranP_Choice_presence_vals[] = {
 static int
 dissect_e2ap_T_ranP_Choice_presence(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_per_enumerated(tvb, offset, actx, tree, hf_index,
-                                     4, NULL, TRUE, 0, NULL);
+                                     4, NULL, true, 0, NULL);
 
   return offset;
 }
@@ -6288,9 +7426,14 @@ static const per_sequence_t RANParameter_Testing_Item_sequence[] = {
 
 static int
 dissect_e2ap_RANParameter_Testing_Item(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+  // RANParameter-Testing-Item -> RANParameter-Testing-Item/ranParameter-Type -> RANParameter-Testing-Item-Choice-List -> RANParameter-Testing-LIST -> RANParameter-Testing-Item
+  actx->pinfo->dissection_depth += 4;
+  increment_dissection_depth(actx->pinfo);
   offset = dissect_per_sequence(tvb, offset, actx, tree, hf_index,
                                    ett_e2ap_RANParameter_Testing_Item, RANParameter_Testing_Item_sequence);
 
+  actx->pinfo->dissection_depth -= 4;
+  decrement_dissection_depth(actx->pinfo);
   return offset;
 }
 
@@ -6303,7 +7446,7 @@ static int
 dissect_e2ap_RANParameter_Testing(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_per_constrained_sequence_of(tvb, offset, actx, tree, hf_index,
                                                   ett_e2ap_RANParameter_Testing, RANParameter_Testing_sequence_of,
-                                                  1, maxnoofRANparamTest, FALSE);
+                                                  1, maxnoofRANparamTest, false);
 
   return offset;
 }
@@ -6369,7 +7512,7 @@ static int
 dissect_e2ap_SEQUENCE_SIZE_1_maxnoofCellInfo_OF_EventTrigger_Cell_Info_Item(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_per_constrained_sequence_of(tvb, offset, actx, tree, hf_index,
                                                   ett_e2ap_SEQUENCE_SIZE_1_maxnoofCellInfo_OF_EventTrigger_Cell_Info_Item, SEQUENCE_SIZE_1_maxnoofCellInfo_OF_EventTrigger_Cell_Info_Item_sequence_of,
-                                                  1, maxnoofCellInfo, FALSE);
+                                                  1, maxnoofCellInfo, false);
 
   return offset;
 }
@@ -6393,7 +7536,7 @@ dissect_e2ap_EventTrigger_Cell_Info(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_
 static int
 dissect_e2ap_RIC_EventTrigger_UE_ID(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_per_constrained_integer(tvb, offset, actx, tree, hf_index,
-                                                            1U, 65535U, NULL, TRUE);
+                                                            1U, 65535U, NULL, true);
 
   return offset;
 }
@@ -6474,7 +7617,7 @@ static int
 dissect_e2ap_SEQUENCE_SIZE_1_maxnoofUEInfo_OF_EventTrigger_UE_Info_Item(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_per_constrained_sequence_of(tvb, offset, actx, tree, hf_index,
                                                   ett_e2ap_SEQUENCE_SIZE_1_maxnoofUEInfo_OF_EventTrigger_UE_Info_Item, SEQUENCE_SIZE_1_maxnoofUEInfo_OF_EventTrigger_UE_Info_Item_sequence_of,
-                                                  1, maxnoofUEInfo, FALSE);
+                                                  1, maxnoofUEInfo, false);
 
   return offset;
 }
@@ -6498,7 +7641,7 @@ dissect_e2ap_EventTrigger_UE_Info(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t 
 static int
 dissect_e2ap_RIC_EventTrigger_UEevent_ID(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_per_constrained_integer(tvb, offset, actx, tree, hf_index,
-                                                            1U, 65535U, NULL, TRUE);
+                                                            1U, 65535U, NULL, true);
 
   return offset;
 }
@@ -6527,7 +7670,7 @@ static int
 dissect_e2ap_SEQUENCE_SIZE_1_maxnoofUEeventInfo_OF_EventTrigger_UEevent_Info_Item(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_per_constrained_sequence_of(tvb, offset, actx, tree, hf_index,
                                                   ett_e2ap_SEQUENCE_SIZE_1_maxnoofUEeventInfo_OF_EventTrigger_UEevent_Info_Item, SEQUENCE_SIZE_1_maxnoofUEeventInfo_OF_EventTrigger_UEevent_Info_Item_sequence_of,
-                                                  1, maxnoofUEeventInfo, FALSE);
+                                                  1, maxnoofUEeventInfo, false);
 
   return offset;
 }
@@ -6551,7 +7694,7 @@ dissect_e2ap_EventTrigger_UEevent_Info(tvbuff_t *tvb _U_, int offset _U_, asn1_c
 static int
 dissect_e2ap_RANParameter_Name(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_per_PrintableString(tvb, offset, actx, tree, hf_index,
-                                          1, 150, TRUE,
+                                          1, 150, true,
                                           NULL);
 
   return offset;
@@ -6582,7 +7725,7 @@ static int
 dissect_e2ap_SEQUENCE_SIZE_1_maxnoofItemsinList_OF_RANParameter_Definition_Choice_LIST_Item(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_per_constrained_sequence_of(tvb, offset, actx, tree, hf_index,
                                                   ett_e2ap_SEQUENCE_SIZE_1_maxnoofItemsinList_OF_RANParameter_Definition_Choice_LIST_Item, SEQUENCE_SIZE_1_maxnoofItemsinList_OF_RANParameter_Definition_Choice_LIST_Item_sequence_of,
-                                                  1, maxnoofItemsinList, FALSE);
+                                                  1, maxnoofItemsinList, false);
 
   return offset;
 }
@@ -6626,7 +7769,7 @@ static int
 dissect_e2ap_SEQUENCE_SIZE_1_maxnoofParametersinStructure_OF_RANParameter_Definition_Choice_STRUCTURE_Item(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_per_constrained_sequence_of(tvb, offset, actx, tree, hf_index,
                                                   ett_e2ap_SEQUENCE_SIZE_1_maxnoofParametersinStructure_OF_RANParameter_Definition_Choice_STRUCTURE_Item, SEQUENCE_SIZE_1_maxnoofParametersinStructure_OF_RANParameter_Definition_Choice_STRUCTURE_Item_sequence_of,
-                                                  1, maxnoofParametersinStructure, FALSE);
+                                                  1, maxnoofParametersinStructure, false);
 
   return offset;
 }
@@ -6675,9 +7818,14 @@ static const per_sequence_t RANParameter_Definition_sequence[] = {
 
 static int
 dissect_e2ap_RANParameter_Definition(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+  // RANParameter-Definition -> RANParameter-Definition-Choice -> RANParameter-Definition-Choice-LIST -> RANParameter-Definition-Choice-LIST/ranParameter-List -> RANParameter-Definition-Choice-LIST-Item -> RANParameter-Definition
+  actx->pinfo->dissection_depth += 5;
+  increment_dissection_depth(actx->pinfo);
   offset = dissect_per_sequence(tvb, offset, actx, tree, hf_index,
                                    ett_e2ap_RANParameter_Definition, RANParameter_Definition_sequence);
 
+  actx->pinfo->dissection_depth -= 5;
+  decrement_dissection_depth(actx->pinfo);
   return offset;
 }
 
@@ -6733,7 +7881,7 @@ static int
 dissect_e2ap_SEQUENCE_SIZE_1_maxnoofParametersinStructure_OF_RANParameter_STRUCTURE_Item(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_per_constrained_sequence_of(tvb, offset, actx, tree, hf_index,
                                                   ett_e2ap_SEQUENCE_SIZE_1_maxnoofParametersinStructure_OF_RANParameter_STRUCTURE_Item, SEQUENCE_SIZE_1_maxnoofParametersinStructure_OF_RANParameter_STRUCTURE_Item_sequence_of,
-                                                  1, maxnoofParametersinStructure, FALSE);
+                                                  1, maxnoofParametersinStructure, false);
 
   return offset;
 }
@@ -6775,7 +7923,7 @@ static int
 dissect_e2ap_SEQUENCE_SIZE_1_maxnoofItemsinList_OF_RANParameter_STRUCTURE(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_per_constrained_sequence_of(tvb, offset, actx, tree, hf_index,
                                                   ett_e2ap_SEQUENCE_SIZE_1_maxnoofItemsinList_OF_RANParameter_STRUCTURE, SEQUENCE_SIZE_1_maxnoofItemsinList_OF_RANParameter_STRUCTURE_sequence_of,
-                                                  1, maxnoofItemsinList, FALSE);
+                                                  1, maxnoofItemsinList, false);
 
   return offset;
 }
@@ -6827,10 +7975,15 @@ static const per_choice_t RANParameter_ValueType_choice[] = {
 
 static int
 dissect_e2ap_RANParameter_ValueType(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+  // RANParameter-ValueType -> RANParameter-ValueType-Choice-Structure -> RANParameter-STRUCTURE -> RANParameter-STRUCTURE/sequence-of-ranParameters -> RANParameter-STRUCTURE-Item -> RANParameter-ValueType
+  actx->pinfo->dissection_depth += 5;
+  increment_dissection_depth(actx->pinfo);
   offset = dissect_per_choice(tvb, offset, actx, tree, hf_index,
                                  ett_e2ap_RANParameter_ValueType, RANParameter_ValueType_choice,
                                  NULL);
 
+  actx->pinfo->dissection_depth -= 5;
+  decrement_dissection_depth(actx->pinfo);
   return offset;
 }
 
@@ -6839,7 +7992,7 @@ dissect_e2ap_RANParameter_ValueType(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_
 static int
 dissect_e2ap_RAN_CallProcess_ID(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_per_constrained_integer(tvb, offset, actx, tree, hf_index,
-                                                            1U, 232U, NULL, TRUE);
+                                                            1U, 232U, NULL, true);
 
   return offset;
 }
@@ -6849,7 +8002,7 @@ dissect_e2ap_RAN_CallProcess_ID(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *a
 static int
 dissect_e2ap_RIC_CallProcessType_ID(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_per_constrained_integer(tvb, offset, actx, tree, hf_index,
-                                                            1U, 65535U, NULL, TRUE);
+                                                            1U, 65535U, NULL, true);
 
   return offset;
 }
@@ -6859,7 +8012,7 @@ dissect_e2ap_RIC_CallProcessType_ID(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_
 static int
 dissect_e2ap_RIC_CallProcessType_Name(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_per_PrintableString(tvb, offset, actx, tree, hf_index,
-                                          1, 150, TRUE,
+                                          1, 150, true,
                                           NULL);
 
   return offset;
@@ -6870,7 +8023,7 @@ dissect_e2ap_RIC_CallProcessType_Name(tvbuff_t *tvb _U_, int offset _U_, asn1_ct
 static int
 dissect_e2ap_RIC_CallProcessBreakpoint_ID(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_per_constrained_integer(tvb, offset, actx, tree, hf_index,
-                                                            1U, 65535U, NULL, TRUE);
+                                                            1U, 65535U, NULL, true);
 
   return offset;
 }
@@ -6880,7 +8033,7 @@ dissect_e2ap_RIC_CallProcessBreakpoint_ID(tvbuff_t *tvb _U_, int offset _U_, asn
 static int
 dissect_e2ap_RIC_CallProcessBreakpoint_Name(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_per_PrintableString(tvb, offset, actx, tree, hf_index,
-                                          1, 150, TRUE,
+                                          1, 150, true,
                                           NULL);
 
   return offset;
@@ -6891,7 +8044,7 @@ dissect_e2ap_RIC_CallProcessBreakpoint_Name(tvbuff_t *tvb _U_, int offset _U_, a
 static int
 dissect_e2ap_RIC_ControlAction_ID(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_per_constrained_integer(tvb, offset, actx, tree, hf_index,
-                                                            1U, 65535U, NULL, TRUE);
+                                                            1U, 65535U, NULL, true);
 
   return offset;
 }
@@ -6901,7 +8054,7 @@ dissect_e2ap_RIC_ControlAction_ID(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t 
 static int
 dissect_e2ap_RIC_ControlAction_Name(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_per_PrintableString(tvb, offset, actx, tree, hf_index,
-                                          1, 150, TRUE,
+                                          1, 150, true,
                                           NULL);
 
   return offset;
@@ -6912,7 +8065,7 @@ dissect_e2ap_RIC_ControlAction_Name(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_
 static int
 dissect_e2ap_RIC_EventTriggerCondition_ID(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_per_constrained_integer(tvb, offset, actx, tree, hf_index,
-                                                            1U, 65535U, NULL, TRUE);
+                                                            1U, 65535U, NULL, true);
 
   return offset;
 }
@@ -6922,7 +8075,7 @@ dissect_e2ap_RIC_EventTriggerCondition_ID(tvbuff_t *tvb _U_, int offset _U_, asn
 static int
 dissect_e2ap_RIC_InsertIndication_ID(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_per_constrained_integer(tvb, offset, actx, tree, hf_index,
-                                                            1U, 65535U, NULL, TRUE);
+                                                            1U, 65535U, NULL, true);
 
   return offset;
 }
@@ -6932,7 +8085,7 @@ dissect_e2ap_RIC_InsertIndication_ID(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx
 static int
 dissect_e2ap_RIC_InsertIndication_Name(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_per_PrintableString(tvb, offset, actx, tree, hf_index,
-                                          1, 150, TRUE,
+                                          1, 150, true,
                                           NULL);
 
   return offset;
@@ -6962,7 +8115,7 @@ static int
 dissect_e2ap_SEQUENCE_SIZE_1_maxnoofAssociatedRANParameters_OF_RIC_PolicyAction_RANParameter_Item(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_per_constrained_sequence_of(tvb, offset, actx, tree, hf_index,
                                                   ett_e2ap_SEQUENCE_SIZE_1_maxnoofAssociatedRANParameters_OF_RIC_PolicyAction_RANParameter_Item, SEQUENCE_SIZE_1_maxnoofAssociatedRANParameters_OF_RIC_PolicyAction_RANParameter_Item_sequence_of,
-                                                  1, maxnoofAssociatedRANParameters, FALSE);
+                                                  1, maxnoofAssociatedRANParameters, false);
 
   return offset;
 }
@@ -6978,7 +8131,7 @@ static const value_string e2ap_T_ric_PolicyDecision_vals[] = {
 static int
 dissect_e2ap_T_ric_PolicyDecision(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_per_enumerated(tvb, offset, actx, tree, hf_index,
-                                     2, NULL, TRUE, 0, NULL);
+                                     2, NULL, true, 0, NULL);
 
   return offset;
 }
@@ -7062,7 +8215,7 @@ static const value_string e2ap_T_messageDirection_vals[] = {
 static int
 dissect_e2ap_T_messageDirection(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_per_enumerated(tvb, offset, actx, tree, hf_index,
-                                     2, NULL, TRUE, 0, NULL);
+                                     2, NULL, true, 0, NULL);
 
   return offset;
 }
@@ -7095,7 +8248,7 @@ static int
 dissect_e2ap_SEQUENCE_SIZE_1_maxnoofMessages_OF_E2SM_RC_EventTrigger_Format1_Item(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_per_constrained_sequence_of(tvb, offset, actx, tree, hf_index,
                                                   ett_e2ap_SEQUENCE_SIZE_1_maxnoofMessages_OF_E2SM_RC_EventTrigger_Format1_Item, SEQUENCE_SIZE_1_maxnoofMessages_OF_E2SM_RC_EventTrigger_Format1_Item_sequence_of,
-                                                  1, maxnoofMessages, FALSE);
+                                                  1, maxnoofMessages, false);
 
   return offset;
 }
@@ -7137,7 +8290,7 @@ dissect_e2ap_E2SM_RC_EventTrigger_Format2(tvbuff_t *tvb _U_, int offset _U_, asn
 static int
 dissect_e2ap_INTEGER_1_512_(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_per_constrained_integer(tvb, offset, actx, tree, hf_index,
-                                                            1U, 512U, NULL, TRUE);
+                                                            1U, 512U, NULL, true);
 
   return offset;
 }
@@ -7168,7 +8321,7 @@ static int
 dissect_e2ap_SEQUENCE_SIZE_1_maxnoofE2InfoChanges_OF_E2SM_RC_EventTrigger_Format3_Item(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_per_constrained_sequence_of(tvb, offset, actx, tree, hf_index,
                                                   ett_e2ap_SEQUENCE_SIZE_1_maxnoofE2InfoChanges_OF_E2SM_RC_EventTrigger_Format3_Item, SEQUENCE_SIZE_1_maxnoofE2InfoChanges_OF_E2SM_RC_EventTrigger_Format3_Item_sequence_of,
-                                                  1, maxnoofE2InfoChanges, FALSE);
+                                                  1, maxnoofE2InfoChanges, false);
 
   return offset;
 }
@@ -7211,7 +8364,7 @@ static int
 dissect_e2ap_SEQUENCE_SIZE_1_maxnoofRRCstate_OF_TriggerType_Choice_RRCstate_Item(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_per_constrained_sequence_of(tvb, offset, actx, tree, hf_index,
                                                   ett_e2ap_SEQUENCE_SIZE_1_maxnoofRRCstate_OF_TriggerType_Choice_RRCstate_Item, SEQUENCE_SIZE_1_maxnoofRRCstate_OF_TriggerType_Choice_RRCstate_Item_sequence_of,
-                                                  1, maxnoofRRCstate, FALSE);
+                                                  1, maxnoofRRCstate, false);
 
   return offset;
 }
@@ -7308,7 +8461,7 @@ static int
 dissect_e2ap_SEQUENCE_SIZE_1_maxnoofUEInfoChanges_OF_E2SM_RC_EventTrigger_Format4_Item(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_per_constrained_sequence_of(tvb, offset, actx, tree, hf_index,
                                                   ett_e2ap_SEQUENCE_SIZE_1_maxnoofUEInfoChanges_OF_E2SM_RC_EventTrigger_Format4_Item, SEQUENCE_SIZE_1_maxnoofUEInfoChanges_OF_E2SM_RC_EventTrigger_Format4_Item_sequence_of,
-                                                  1, maxnoofUEInfoChanges, FALSE);
+                                                  1, maxnoofUEInfoChanges, false);
 
   return offset;
 }
@@ -7337,7 +8490,7 @@ static const value_string e2ap_T_onDemand_vals[] = {
 static int
 dissect_e2ap_T_onDemand(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_per_enumerated(tvb, offset, actx, tree, hf_index,
-                                     1, NULL, TRUE, 0, NULL);
+                                     1, NULL, true, 0, NULL);
 
   return offset;
 }
@@ -7424,7 +8577,7 @@ static int
 dissect_e2ap_SEQUENCE_SIZE_1_maxnoofParametersToReport_OF_E2SM_RC_ActionDefinition_Format1_Item(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_per_constrained_sequence_of(tvb, offset, actx, tree, hf_index,
                                                   ett_e2ap_SEQUENCE_SIZE_1_maxnoofParametersToReport_OF_E2SM_RC_ActionDefinition_Format1_Item, SEQUENCE_SIZE_1_maxnoofParametersToReport_OF_E2SM_RC_ActionDefinition_Format1_Item_sequence_of,
-                                                  1, maxnoofParametersToReport, FALSE);
+                                                  1, maxnoofParametersToReport, false);
 
   return offset;
 }
@@ -7467,7 +8620,7 @@ static int
 dissect_e2ap_SEQUENCE_SIZE_1_maxnoofPolicyConditions_OF_E2SM_RC_ActionDefinition_Format2_Item(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_per_constrained_sequence_of(tvb, offset, actx, tree, hf_index,
                                                   ett_e2ap_SEQUENCE_SIZE_1_maxnoofPolicyConditions_OF_E2SM_RC_ActionDefinition_Format2_Item, SEQUENCE_SIZE_1_maxnoofPolicyConditions_OF_E2SM_RC_ActionDefinition_Format2_Item_sequence_of,
-                                                  1, maxnoofPolicyConditions, FALSE);
+                                                  1, maxnoofPolicyConditions, false);
 
   return offset;
 }
@@ -7510,7 +8663,7 @@ static int
 dissect_e2ap_SEQUENCE_SIZE_1_maxnoofAssociatedRANParameters_OF_E2SM_RC_ActionDefinition_Format3_Item(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_per_constrained_sequence_of(tvb, offset, actx, tree, hf_index,
                                                   ett_e2ap_SEQUENCE_SIZE_1_maxnoofAssociatedRANParameters_OF_E2SM_RC_ActionDefinition_Format3_Item, SEQUENCE_SIZE_1_maxnoofAssociatedRANParameters_OF_E2SM_RC_ActionDefinition_Format3_Item_sequence_of,
-                                                  1, maxnoofAssociatedRANParameters, FALSE);
+                                                  1, maxnoofAssociatedRANParameters, false);
 
   return offset;
 }
@@ -7555,7 +8708,7 @@ static int
 dissect_e2ap_SEQUENCE_SIZE_1_maxnoofAssociatedRANParameters_OF_E2SM_RC_ActionDefinition_Format4_RANP_Item(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_per_constrained_sequence_of(tvb, offset, actx, tree, hf_index,
                                                   ett_e2ap_SEQUENCE_SIZE_1_maxnoofAssociatedRANParameters_OF_E2SM_RC_ActionDefinition_Format4_RANP_Item, SEQUENCE_SIZE_1_maxnoofAssociatedRANParameters_OF_E2SM_RC_ActionDefinition_Format4_RANP_Item_sequence_of,
-                                                  1, maxnoofAssociatedRANParameters, FALSE);
+                                                  1, maxnoofAssociatedRANParameters, false);
 
   return offset;
 }
@@ -7584,7 +8737,7 @@ static int
 dissect_e2ap_SEQUENCE_SIZE_1_maxnoofInsertIndicationActions_OF_E2SM_RC_ActionDefinition_Format4_Indication_Item(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_per_constrained_sequence_of(tvb, offset, actx, tree, hf_index,
                                                   ett_e2ap_SEQUENCE_SIZE_1_maxnoofInsertIndicationActions_OF_E2SM_RC_ActionDefinition_Format4_Indication_Item, SEQUENCE_SIZE_1_maxnoofInsertIndicationActions_OF_E2SM_RC_ActionDefinition_Format4_Indication_Item_sequence_of,
-                                                  1, maxnoofInsertIndicationActions, FALSE);
+                                                  1, maxnoofInsertIndicationActions, false);
 
   return offset;
 }
@@ -7613,7 +8766,7 @@ static int
 dissect_e2ap_SEQUENCE_SIZE_1_maxnoofRICStyles_OF_E2SM_RC_ActionDefinition_Format4_Style_Item(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_per_constrained_sequence_of(tvb, offset, actx, tree, hf_index,
                                                   ett_e2ap_SEQUENCE_SIZE_1_maxnoofRICStyles_OF_E2SM_RC_ActionDefinition_Format4_Style_Item, SEQUENCE_SIZE_1_maxnoofRICStyles_OF_E2SM_RC_ActionDefinition_Format4_Style_Item_sequence_of,
-                                                  1, maxnoofRICStyles, FALSE);
+                                                  1, maxnoofRICStyles, false);
 
   return offset;
 }
@@ -7781,7 +8934,7 @@ static int
 dissect_e2ap_SEQUENCE_SIZE_1_maxnoofAssociatedRANParameters_OF_E2SM_RC_IndicationMessage_Format1_Item(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_per_constrained_sequence_of(tvb, offset, actx, tree, hf_index,
                                                   ett_e2ap_SEQUENCE_SIZE_1_maxnoofAssociatedRANParameters_OF_E2SM_RC_IndicationMessage_Format1_Item, SEQUENCE_SIZE_1_maxnoofAssociatedRANParameters_OF_E2SM_RC_IndicationMessage_Format1_Item_sequence_of,
-                                                  1, maxnoofAssociatedRANParameters, FALSE);
+                                                  1, maxnoofAssociatedRANParameters, false);
 
   return offset;
 }
@@ -7824,7 +8977,7 @@ static int
 dissect_e2ap_SEQUENCE_SIZE_1_maxnoofAssociatedRANParameters_OF_E2SM_RC_IndicationMessage_Format2_RANParameter_Item(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_per_constrained_sequence_of(tvb, offset, actx, tree, hf_index,
                                                   ett_e2ap_SEQUENCE_SIZE_1_maxnoofAssociatedRANParameters_OF_E2SM_RC_IndicationMessage_Format2_RANParameter_Item, SEQUENCE_SIZE_1_maxnoofAssociatedRANParameters_OF_E2SM_RC_IndicationMessage_Format2_RANParameter_Item_sequence_of,
-                                                  1, maxnoofAssociatedRANParameters, FALSE);
+                                                  1, maxnoofAssociatedRANParameters, false);
 
   return offset;
 }
@@ -7853,7 +9006,7 @@ static int
 dissect_e2ap_SEQUENCE_SIZE_1_maxnoofUEID_OF_E2SM_RC_IndicationMessage_Format2_Item(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_per_constrained_sequence_of(tvb, offset, actx, tree, hf_index,
                                                   ett_e2ap_SEQUENCE_SIZE_1_maxnoofUEID_OF_E2SM_RC_IndicationMessage_Format2_Item, SEQUENCE_SIZE_1_maxnoofUEID_OF_E2SM_RC_IndicationMessage_Format2_Item_sequence_of,
-                                                  1, maxnoofUEID, FALSE);
+                                                  1, maxnoofUEID, false);
 
   return offset;
 }
@@ -7898,7 +9051,7 @@ static int
 dissect_e2ap_SEQUENCE_SIZE_1_maxnoofCellID_OF_E2SM_RC_IndicationMessage_Format3_Item(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_per_constrained_sequence_of(tvb, offset, actx, tree, hf_index,
                                                   ett_e2ap_SEQUENCE_SIZE_1_maxnoofCellID_OF_E2SM_RC_IndicationMessage_Format3_Item, SEQUENCE_SIZE_1_maxnoofCellID_OF_E2SM_RC_IndicationMessage_Format3_Item_sequence_of,
-                                                  1, maxnoofCellID, FALSE);
+                                                  1, maxnoofCellID, false);
 
   return offset;
 }
@@ -7942,7 +9095,7 @@ static int
 dissect_e2ap_SEQUENCE_SIZE_0_maxnoofUEID_OF_E2SM_RC_IndicationMessage_Format4_ItemUE(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_per_constrained_sequence_of(tvb, offset, actx, tree, hf_index,
                                                   ett_e2ap_SEQUENCE_SIZE_0_maxnoofUEID_OF_E2SM_RC_IndicationMessage_Format4_ItemUE, SEQUENCE_SIZE_0_maxnoofUEID_OF_E2SM_RC_IndicationMessage_Format4_ItemUE_sequence_of,
-                                                  0, maxnoofUEID, FALSE);
+                                                  0, maxnoofUEID, false);
 
   return offset;
 }
@@ -7972,7 +9125,7 @@ static int
 dissect_e2ap_SEQUENCE_SIZE_0_maxnoofCellID_OF_E2SM_RC_IndicationMessage_Format4_ItemCell(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_per_constrained_sequence_of(tvb, offset, actx, tree, hf_index,
                                                   ett_e2ap_SEQUENCE_SIZE_0_maxnoofCellID_OF_E2SM_RC_IndicationMessage_Format4_ItemCell, SEQUENCE_SIZE_0_maxnoofCellID_OF_E2SM_RC_IndicationMessage_Format4_ItemCell_sequence_of,
-                                                  0, maxnoofCellID, FALSE);
+                                                  0, maxnoofCellID, false);
 
   return offset;
 }
@@ -8016,7 +9169,7 @@ static int
 dissect_e2ap_SEQUENCE_SIZE_0_maxnoofAssociatedRANParameters_OF_E2SM_RC_IndicationMessage_Format5_Item(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_per_constrained_sequence_of(tvb, offset, actx, tree, hf_index,
                                                   ett_e2ap_SEQUENCE_SIZE_0_maxnoofAssociatedRANParameters_OF_E2SM_RC_IndicationMessage_Format5_Item, SEQUENCE_SIZE_0_maxnoofAssociatedRANParameters_OF_E2SM_RC_IndicationMessage_Format5_Item_sequence_of,
-                                                  0, maxnoofAssociatedRANParameters, FALSE);
+                                                  0, maxnoofAssociatedRANParameters, false);
 
   return offset;
 }
@@ -8059,7 +9212,7 @@ static int
 dissect_e2ap_SEQUENCE_SIZE_0_maxnoofAssociatedRANParameters_OF_E2SM_RC_IndicationMessage_Format6_RANP_Item(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_per_constrained_sequence_of(tvb, offset, actx, tree, hf_index,
                                                   ett_e2ap_SEQUENCE_SIZE_0_maxnoofAssociatedRANParameters_OF_E2SM_RC_IndicationMessage_Format6_RANP_Item, SEQUENCE_SIZE_0_maxnoofAssociatedRANParameters_OF_E2SM_RC_IndicationMessage_Format6_RANP_Item_sequence_of,
-                                                  0, maxnoofAssociatedRANParameters, FALSE);
+                                                  0, maxnoofAssociatedRANParameters, false);
 
   return offset;
 }
@@ -8088,7 +9241,7 @@ static int
 dissect_e2ap_SEQUENCE_SIZE_1_maxnoofInsertIndicationActions_OF_E2SM_RC_IndicationMessage_Format6_Indication_Item(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_per_constrained_sequence_of(tvb, offset, actx, tree, hf_index,
                                                   ett_e2ap_SEQUENCE_SIZE_1_maxnoofInsertIndicationActions_OF_E2SM_RC_IndicationMessage_Format6_Indication_Item, SEQUENCE_SIZE_1_maxnoofInsertIndicationActions_OF_E2SM_RC_IndicationMessage_Format6_Indication_Item_sequence_of,
-                                                  1, maxnoofInsertIndicationActions, FALSE);
+                                                  1, maxnoofInsertIndicationActions, false);
 
   return offset;
 }
@@ -8117,7 +9270,7 @@ static int
 dissect_e2ap_SEQUENCE_SIZE_1_maxnoofRICStyles_OF_E2SM_RC_IndicationMessage_Format6_Style_Item(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_per_constrained_sequence_of(tvb, offset, actx, tree, hf_index,
                                                   ett_e2ap_SEQUENCE_SIZE_1_maxnoofRICStyles_OF_E2SM_RC_IndicationMessage_Format6_Style_Item, SEQUENCE_SIZE_1_maxnoofRICStyles_OF_E2SM_RC_IndicationMessage_Format6_Style_Item_sequence_of,
-                                                  1, maxnoofRICStyles, FALSE);
+                                                  1, maxnoofRICStyles, false);
 
   return offset;
 }
@@ -8239,7 +9392,7 @@ static const value_string e2ap_T_ric_ControlDecision_vals[] = {
 static int
 dissect_e2ap_T_ric_ControlDecision(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_per_enumerated(tvb, offset, actx, tree, hf_index,
-                                     2, NULL, TRUE, 0, NULL);
+                                     2, NULL, true, 0, NULL);
 
   return offset;
 }
@@ -8272,7 +9425,7 @@ static const value_string e2ap_T_ric_ControlDecision_01_vals[] = {
 static int
 dissect_e2ap_T_ric_ControlDecision_01(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_per_enumerated(tvb, offset, actx, tree, hf_index,
-                                     2, NULL, TRUE, 0, NULL);
+                                     2, NULL, true, 0, NULL);
 
   return offset;
 }
@@ -8352,7 +9505,7 @@ static int
 dissect_e2ap_SEQUENCE_SIZE_0_maxnoofAssociatedRANParameters_OF_E2SM_RC_ControlMessage_Format1_Item(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_per_constrained_sequence_of(tvb, offset, actx, tree, hf_index,
                                                   ett_e2ap_SEQUENCE_SIZE_0_maxnoofAssociatedRANParameters_OF_E2SM_RC_ControlMessage_Format1_Item, SEQUENCE_SIZE_0_maxnoofAssociatedRANParameters_OF_E2SM_RC_ControlMessage_Format1_Item_sequence_of,
-                                                  0, maxnoofAssociatedRANParameters, FALSE);
+                                                  0, maxnoofAssociatedRANParameters, false);
 
   return offset;
 }
@@ -8395,7 +9548,7 @@ static int
 dissect_e2ap_SEQUENCE_SIZE_1_maxnoofMulCtrlActions_OF_E2SM_RC_ControlMessage_Format2_ControlAction_Item(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_per_constrained_sequence_of(tvb, offset, actx, tree, hf_index,
                                                   ett_e2ap_SEQUENCE_SIZE_1_maxnoofMulCtrlActions_OF_E2SM_RC_ControlMessage_Format2_ControlAction_Item, SEQUENCE_SIZE_1_maxnoofMulCtrlActions_OF_E2SM_RC_ControlMessage_Format2_ControlAction_Item_sequence_of,
-                                                  1, maxnoofMulCtrlActions, FALSE);
+                                                  1, maxnoofMulCtrlActions, false);
 
   return offset;
 }
@@ -8424,7 +9577,7 @@ static int
 dissect_e2ap_SEQUENCE_SIZE_1_maxnoofRICStyles_OF_E2SM_RC_ControlMessage_Format2_Style_Item(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_per_constrained_sequence_of(tvb, offset, actx, tree, hf_index,
                                                   ett_e2ap_SEQUENCE_SIZE_1_maxnoofRICStyles_OF_E2SM_RC_ControlMessage_Format2_Style_Item, SEQUENCE_SIZE_1_maxnoofRICStyles_OF_E2SM_RC_ControlMessage_Format2_Style_Item_sequence_of,
-                                                  1, maxnoofRICStyles, FALSE);
+                                                  1, maxnoofRICStyles, false);
 
   return offset;
 }
@@ -8503,7 +9656,7 @@ static int
 dissect_e2ap_SEQUENCE_SIZE_0_maxnoofRANOutcomeParameters_OF_E2SM_RC_ControlOutcome_Format1_Item(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_per_constrained_sequence_of(tvb, offset, actx, tree, hf_index,
                                                   ett_e2ap_SEQUENCE_SIZE_0_maxnoofRANOutcomeParameters_OF_E2SM_RC_ControlOutcome_Format1_Item, SEQUENCE_SIZE_0_maxnoofRANOutcomeParameters_OF_E2SM_RC_ControlOutcome_Format1_Item_sequence_of,
-                                                  0, maxnoofRANOutcomeParameters, FALSE);
+                                                  0, maxnoofRANOutcomeParameters, false);
 
   return offset;
 }
@@ -8546,7 +9699,7 @@ static int
 dissect_e2ap_SEQUENCE_SIZE_1_maxnoofAssociatedRANParameters_OF_E2SM_RC_ControlOutcome_Format2_RANP_Item(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_per_constrained_sequence_of(tvb, offset, actx, tree, hf_index,
                                                   ett_e2ap_SEQUENCE_SIZE_1_maxnoofAssociatedRANParameters_OF_E2SM_RC_ControlOutcome_Format2_RANP_Item, SEQUENCE_SIZE_1_maxnoofAssociatedRANParameters_OF_E2SM_RC_ControlOutcome_Format2_RANP_Item_sequence_of,
-                                                  1, maxnoofAssociatedRANParameters, FALSE);
+                                                  1, maxnoofAssociatedRANParameters, false);
 
   return offset;
 }
@@ -8575,7 +9728,7 @@ static int
 dissect_e2ap_SEQUENCE_SIZE_1_maxnoofMulCtrlActions_OF_E2SM_RC_ControlOutcome_Format2_ControlOutcome_Item(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_per_constrained_sequence_of(tvb, offset, actx, tree, hf_index,
                                                   ett_e2ap_SEQUENCE_SIZE_1_maxnoofMulCtrlActions_OF_E2SM_RC_ControlOutcome_Format2_ControlOutcome_Item, SEQUENCE_SIZE_1_maxnoofMulCtrlActions_OF_E2SM_RC_ControlOutcome_Format2_ControlOutcome_Item_sequence_of,
-                                                  1, maxnoofMulCtrlActions, FALSE);
+                                                  1, maxnoofMulCtrlActions, false);
 
   return offset;
 }
@@ -8604,7 +9757,7 @@ static int
 dissect_e2ap_SEQUENCE_SIZE_1_maxnoofRICStyles_OF_E2SM_RC_ControlOutcome_Format2_Style_Item(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_per_constrained_sequence_of(tvb, offset, actx, tree, hf_index,
                                                   ett_e2ap_SEQUENCE_SIZE_1_maxnoofRICStyles_OF_E2SM_RC_ControlOutcome_Format2_Style_Item, SEQUENCE_SIZE_1_maxnoofRICStyles_OF_E2SM_RC_ControlOutcome_Format2_Style_Item_sequence_of,
-                                                  1, maxnoofRICStyles, FALSE);
+                                                  1, maxnoofRICStyles, false);
 
   return offset;
 }
@@ -8647,7 +9800,7 @@ static int
 dissect_e2ap_SEQUENCE_SIZE_0_maxnoofRANOutcomeParameters_OF_E2SM_RC_ControlOutcome_Format3_Item(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_per_constrained_sequence_of(tvb, offset, actx, tree, hf_index,
                                                   ett_e2ap_SEQUENCE_SIZE_0_maxnoofRANOutcomeParameters_OF_E2SM_RC_ControlOutcome_Format3_Item, SEQUENCE_SIZE_0_maxnoofRANOutcomeParameters_OF_E2SM_RC_ControlOutcome_Format3_Item_sequence_of,
-                                                  0, maxnoofRANOutcomeParameters, FALSE);
+                                                  0, maxnoofRANOutcomeParameters, false);
 
   return offset;
 }
@@ -8729,7 +9882,7 @@ static int
 dissect_e2ap_SEQUENCE_SIZE_1_maxnoofRICStyles_OF_RANFunctionDefinition_EventTrigger_Style_Item(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_per_constrained_sequence_of(tvb, offset, actx, tree, hf_index,
                                                   ett_e2ap_SEQUENCE_SIZE_1_maxnoofRICStyles_OF_RANFunctionDefinition_EventTrigger_Style_Item, SEQUENCE_SIZE_1_maxnoofRICStyles_OF_RANFunctionDefinition_EventTrigger_Style_Item_sequence_of,
-                                                  1, maxnoofRICStyles, FALSE);
+                                                  1, maxnoofRICStyles, false);
 
   return offset;
 }
@@ -8759,7 +9912,7 @@ static int
 dissect_e2ap_SEQUENCE_SIZE_1_maxnoofAssociatedRANParameters_OF_L2Parameters_RANParameter_Item(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_per_constrained_sequence_of(tvb, offset, actx, tree, hf_index,
                                                   ett_e2ap_SEQUENCE_SIZE_1_maxnoofAssociatedRANParameters_OF_L2Parameters_RANParameter_Item, SEQUENCE_SIZE_1_maxnoofAssociatedRANParameters_OF_L2Parameters_RANParameter_Item_sequence_of,
-                                                  1, maxnoofAssociatedRANParameters, FALSE);
+                                                  1, maxnoofAssociatedRANParameters, false);
 
   return offset;
 }
@@ -8789,7 +9942,7 @@ static int
 dissect_e2ap_SEQUENCE_SIZE_1_maxnoofAssociatedRANParameters_OF_CallProcessBreakpoint_RANParameter_Item(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_per_constrained_sequence_of(tvb, offset, actx, tree, hf_index,
                                                   ett_e2ap_SEQUENCE_SIZE_1_maxnoofAssociatedRANParameters_OF_CallProcessBreakpoint_RANParameter_Item, SEQUENCE_SIZE_1_maxnoofAssociatedRANParameters_OF_CallProcessBreakpoint_RANParameter_Item_sequence_of,
-                                                  1, maxnoofAssociatedRANParameters, FALSE);
+                                                  1, maxnoofAssociatedRANParameters, false);
 
   return offset;
 }
@@ -8819,7 +9972,7 @@ static int
 dissect_e2ap_SEQUENCE_SIZE_1_maxnoofCallProcessBreakpoints_OF_RANFunctionDefinition_EventTrigger_Breakpoint_Item(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_per_constrained_sequence_of(tvb, offset, actx, tree, hf_index,
                                                   ett_e2ap_SEQUENCE_SIZE_1_maxnoofCallProcessBreakpoints_OF_RANFunctionDefinition_EventTrigger_Breakpoint_Item, SEQUENCE_SIZE_1_maxnoofCallProcessBreakpoints_OF_RANFunctionDefinition_EventTrigger_Breakpoint_Item_sequence_of,
-                                                  1, maxnoofCallProcessBreakpoints, FALSE);
+                                                  1, maxnoofCallProcessBreakpoints, false);
 
   return offset;
 }
@@ -8849,7 +10002,7 @@ static int
 dissect_e2ap_SEQUENCE_SIZE_1_maxnoofCallProcessTypes_OF_RANFunctionDefinition_EventTrigger_CallProcess_Item(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_per_constrained_sequence_of(tvb, offset, actx, tree, hf_index,
                                                   ett_e2ap_SEQUENCE_SIZE_1_maxnoofCallProcessTypes_OF_RANFunctionDefinition_EventTrigger_CallProcess_Item, SEQUENCE_SIZE_1_maxnoofCallProcessTypes_OF_RANFunctionDefinition_EventTrigger_CallProcess_Item_sequence_of,
-                                                  1, maxnoofCallProcessTypes, FALSE);
+                                                  1, maxnoofCallProcessTypes, false);
 
   return offset;
 }
@@ -8879,7 +10032,7 @@ static int
 dissect_e2ap_SEQUENCE_SIZE_1_maxnoofAssociatedRANParameters_OF_UEIdentification_RANParameter_Item(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_per_constrained_sequence_of(tvb, offset, actx, tree, hf_index,
                                                   ett_e2ap_SEQUENCE_SIZE_1_maxnoofAssociatedRANParameters_OF_UEIdentification_RANParameter_Item, SEQUENCE_SIZE_1_maxnoofAssociatedRANParameters_OF_UEIdentification_RANParameter_Item_sequence_of,
-                                                  1, maxnoofAssociatedRANParameters, FALSE);
+                                                  1, maxnoofAssociatedRANParameters, false);
 
   return offset;
 }
@@ -8909,7 +10062,7 @@ static int
 dissect_e2ap_SEQUENCE_SIZE_1_maxnoofAssociatedRANParameters_OF_CellIdentification_RANParameter_Item(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_per_constrained_sequence_of(tvb, offset, actx, tree, hf_index,
                                                   ett_e2ap_SEQUENCE_SIZE_1_maxnoofAssociatedRANParameters_OF_CellIdentification_RANParameter_Item, SEQUENCE_SIZE_1_maxnoofAssociatedRANParameters_OF_CellIdentification_RANParameter_Item_sequence_of,
-                                                  1, maxnoofAssociatedRANParameters, FALSE);
+                                                  1, maxnoofAssociatedRANParameters, false);
 
   return offset;
 }
@@ -8957,7 +10110,7 @@ static int
 dissect_e2ap_SEQUENCE_SIZE_1_maxnoofAssociatedRANParameters_OF_Report_RANParameter_Item(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_per_constrained_sequence_of(tvb, offset, actx, tree, hf_index,
                                                   ett_e2ap_SEQUENCE_SIZE_1_maxnoofAssociatedRANParameters_OF_Report_RANParameter_Item, SEQUENCE_SIZE_1_maxnoofAssociatedRANParameters_OF_Report_RANParameter_Item_sequence_of,
-                                                  1, maxnoofAssociatedRANParameters, FALSE);
+                                                  1, maxnoofAssociatedRANParameters, false);
 
   return offset;
 }
@@ -8991,7 +10144,7 @@ static int
 dissect_e2ap_SEQUENCE_SIZE_1_maxnoofRICStyles_OF_RANFunctionDefinition_Report_Item(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_per_constrained_sequence_of(tvb, offset, actx, tree, hf_index,
                                                   ett_e2ap_SEQUENCE_SIZE_1_maxnoofRICStyles_OF_RANFunctionDefinition_Report_Item, SEQUENCE_SIZE_1_maxnoofRICStyles_OF_RANFunctionDefinition_Report_Item_sequence_of,
-                                                  1, maxnoofRICStyles, FALSE);
+                                                  1, maxnoofRICStyles, false);
 
   return offset;
 }
@@ -9035,7 +10188,7 @@ static int
 dissect_e2ap_SEQUENCE_SIZE_1_maxnoofAssociatedRANParameters_OF_InsertIndication_RANParameter_Item(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_per_constrained_sequence_of(tvb, offset, actx, tree, hf_index,
                                                   ett_e2ap_SEQUENCE_SIZE_1_maxnoofAssociatedRANParameters_OF_InsertIndication_RANParameter_Item, SEQUENCE_SIZE_1_maxnoofAssociatedRANParameters_OF_InsertIndication_RANParameter_Item_sequence_of,
-                                                  1, maxnoofAssociatedRANParameters, FALSE);
+                                                  1, maxnoofAssociatedRANParameters, false);
 
   return offset;
 }
@@ -9065,7 +10218,7 @@ static int
 dissect_e2ap_SEQUENCE_SIZE_1_maxnoofInsertIndication_OF_RANFunctionDefinition_Insert_Indication_Item(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_per_constrained_sequence_of(tvb, offset, actx, tree, hf_index,
                                                   ett_e2ap_SEQUENCE_SIZE_1_maxnoofInsertIndication_OF_RANFunctionDefinition_Insert_Indication_Item, SEQUENCE_SIZE_1_maxnoofInsertIndication_OF_RANFunctionDefinition_Insert_Indication_Item_sequence_of,
-                                                  1, maxnoofInsertIndication, FALSE);
+                                                  1, maxnoofInsertIndication, false);
 
   return offset;
 }
@@ -9100,7 +10253,7 @@ static int
 dissect_e2ap_SEQUENCE_SIZE_1_maxnoofRICStyles_OF_RANFunctionDefinition_Insert_Item(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_per_constrained_sequence_of(tvb, offset, actx, tree, hf_index,
                                                   ett_e2ap_SEQUENCE_SIZE_1_maxnoofRICStyles_OF_RANFunctionDefinition_Insert_Item, SEQUENCE_SIZE_1_maxnoofRICStyles_OF_RANFunctionDefinition_Insert_Item_sequence_of,
-                                                  1, maxnoofRICStyles, FALSE);
+                                                  1, maxnoofRICStyles, false);
 
   return offset;
 }
@@ -9144,7 +10297,7 @@ static int
 dissect_e2ap_SEQUENCE_SIZE_1_maxnoofAssociatedRANParameters_OF_ControlAction_RANParameter_Item(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_per_constrained_sequence_of(tvb, offset, actx, tree, hf_index,
                                                   ett_e2ap_SEQUENCE_SIZE_1_maxnoofAssociatedRANParameters_OF_ControlAction_RANParameter_Item, SEQUENCE_SIZE_1_maxnoofAssociatedRANParameters_OF_ControlAction_RANParameter_Item_sequence_of,
-                                                  1, maxnoofAssociatedRANParameters, FALSE);
+                                                  1, maxnoofAssociatedRANParameters, false);
 
   return offset;
 }
@@ -9174,7 +10327,7 @@ static int
 dissect_e2ap_SEQUENCE_SIZE_1_maxnoofControlAction_OF_RANFunctionDefinition_Control_Action_Item(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_per_constrained_sequence_of(tvb, offset, actx, tree, hf_index,
                                                   ett_e2ap_SEQUENCE_SIZE_1_maxnoofControlAction_OF_RANFunctionDefinition_Control_Action_Item, SEQUENCE_SIZE_1_maxnoofControlAction_OF_RANFunctionDefinition_Control_Action_Item_sequence_of,
-                                                  1, maxnoofControlAction, FALSE);
+                                                  1, maxnoofControlAction, false);
 
   return offset;
 }
@@ -9204,7 +10357,7 @@ static int
 dissect_e2ap_SEQUENCE_SIZE_1_maxnoofRANOutcomeParameters_OF_ControlOutcome_RANParameter_Item(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_per_constrained_sequence_of(tvb, offset, actx, tree, hf_index,
                                                   ett_e2ap_SEQUENCE_SIZE_1_maxnoofRANOutcomeParameters_OF_ControlOutcome_RANParameter_Item, SEQUENCE_SIZE_1_maxnoofRANOutcomeParameters_OF_ControlOutcome_RANParameter_Item_sequence_of,
-                                                  1, maxnoofRANOutcomeParameters, FALSE);
+                                                  1, maxnoofRANOutcomeParameters, false);
 
   return offset;
 }
@@ -9239,7 +10392,7 @@ static int
 dissect_e2ap_SEQUENCE_SIZE_1_maxnoofRICStyles_OF_RANFunctionDefinition_Control_Item(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_per_constrained_sequence_of(tvb, offset, actx, tree, hf_index,
                                                   ett_e2ap_SEQUENCE_SIZE_1_maxnoofRICStyles_OF_RANFunctionDefinition_Control_Item, SEQUENCE_SIZE_1_maxnoofRICStyles_OF_RANFunctionDefinition_Control_Item_sequence_of,
-                                                  1, maxnoofRICStyles, FALSE);
+                                                  1, maxnoofRICStyles, false);
 
   return offset;
 }
@@ -9283,7 +10436,7 @@ static int
 dissect_e2ap_SEQUENCE_SIZE_1_maxnoofAssociatedRANParameters_OF_PolicyAction_RANParameter_Item(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_per_constrained_sequence_of(tvb, offset, actx, tree, hf_index,
                                                   ett_e2ap_SEQUENCE_SIZE_1_maxnoofAssociatedRANParameters_OF_PolicyAction_RANParameter_Item, SEQUENCE_SIZE_1_maxnoofAssociatedRANParameters_OF_PolicyAction_RANParameter_Item_sequence_of,
-                                                  1, maxnoofAssociatedRANParameters, FALSE);
+                                                  1, maxnoofAssociatedRANParameters, false);
 
   return offset;
 }
@@ -9313,7 +10466,7 @@ static int
 dissect_e2ap_SEQUENCE_SIZE_1_maxnoofAssociatedRANParameters_OF_PolicyCondition_RANParameter_Item(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_per_constrained_sequence_of(tvb, offset, actx, tree, hf_index,
                                                   ett_e2ap_SEQUENCE_SIZE_1_maxnoofAssociatedRANParameters_OF_PolicyCondition_RANParameter_Item, SEQUENCE_SIZE_1_maxnoofAssociatedRANParameters_OF_PolicyCondition_RANParameter_Item_sequence_of,
-                                                  1, maxnoofAssociatedRANParameters, FALSE);
+                                                  1, maxnoofAssociatedRANParameters, false);
 
   return offset;
 }
@@ -9345,7 +10498,7 @@ static int
 dissect_e2ap_SEQUENCE_SIZE_1_maxnoofPolicyAction_OF_RANFunctionDefinition_Policy_Action_Item(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_per_constrained_sequence_of(tvb, offset, actx, tree, hf_index,
                                                   ett_e2ap_SEQUENCE_SIZE_1_maxnoofPolicyAction_OF_RANFunctionDefinition_Policy_Action_Item, SEQUENCE_SIZE_1_maxnoofPolicyAction_OF_RANFunctionDefinition_Policy_Action_Item_sequence_of,
-                                                  1, maxnoofPolicyAction, FALSE);
+                                                  1, maxnoofPolicyAction, false);
 
   return offset;
 }
@@ -9376,7 +10529,7 @@ static int
 dissect_e2ap_SEQUENCE_SIZE_1_maxnoofRICStyles_OF_RANFunctionDefinition_Policy_Item(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_per_constrained_sequence_of(tvb, offset, actx, tree, hf_index,
                                                   ett_e2ap_SEQUENCE_SIZE_1_maxnoofRICStyles_OF_RANFunctionDefinition_Policy_Item, SEQUENCE_SIZE_1_maxnoofRICStyles_OF_RANFunctionDefinition_Policy_Item_sequence_of,
-                                                  1, maxnoofRICStyles, FALSE);
+                                                  1, maxnoofRICStyles, false);
 
   return offset;
 }
@@ -9419,7 +10572,39 @@ dissect_e2ap_E2SM_RC_RANFunctionDefinition(tvbuff_t *tvb _U_, int offset _U_, as
 static int
 dissect_e2ap_TimeStamp(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_per_octet_string(tvb, offset, actx, tree, hf_index,
-                                       4, 4, FALSE, NULL);
+                                       8, 8, false, NULL);
+
+  return offset;
+}
+
+
+
+static int
+dissect_e2ap_BinIndex(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+  offset = dissect_per_constrained_integer(tvb, offset, actx, tree, hf_index,
+                                                            1U, 65535U, NULL, true);
+
+  return offset;
+}
+
+
+static const value_string e2ap_BinRangeValue_vals[] = {
+  {   0, "valueInt" },
+  {   1, "valueReal" },
+  { 0, NULL }
+};
+
+static const per_choice_t BinRangeValue_choice[] = {
+  {   0, &hf_e2ap_valueInt       , ASN1_EXTENSION_ROOT    , dissect_e2ap_INTEGER },
+  {   1, &hf_e2ap_valueReal      , ASN1_EXTENSION_ROOT    , dissect_e2ap_REAL },
+  { 0, NULL, 0, NULL }
+};
+
+static int
+dissect_e2ap_BinRangeValue(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+  offset = dissect_per_choice(tvb, offset, actx, tree, hf_index,
+                                 ett_e2ap_BinRangeValue, BinRangeValue_choice,
+                                 NULL);
 
   return offset;
 }
@@ -9429,7 +10614,7 @@ dissect_e2ap_TimeStamp(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, 
 static int
 dissect_e2ap_GranularityPeriod(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_per_constrained_integer(tvb, offset, actx, tree, hf_index,
-                                                            1U, 4294967295U, NULL, FALSE);
+                                                            1U, 4294967295U, NULL, false);
 
   return offset;
 }
@@ -9439,7 +10624,7 @@ dissect_e2ap_GranularityPeriod(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *ac
 static int
 dissect_e2ap_MeasurementTypeName(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_per_PrintableString(tvb, offset, actx, tree, hf_index,
-                                          1, 150, TRUE,
+                                          1, 150, true,
                                           NULL);
 
   return offset;
@@ -9450,7 +10635,7 @@ dissect_e2ap_MeasurementTypeName(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *
 static int
 dissect_e2ap_MeasurementTypeID(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_per_constrained_integer(tvb, offset, actx, tree, hf_index,
-                                                            1U, 65536U, NULL, TRUE);
+                                                            1U, 65536U, NULL, true);
 
   return offset;
 }
@@ -9487,7 +10672,7 @@ static const value_string e2ap_T_noLabel_vals[] = {
 static int
 dissect_e2ap_T_noLabel(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_per_enumerated(tvb, offset, actx, tree, hf_index,
-                                     1, NULL, TRUE, 0, NULL);
+                                     1, NULL, true, 0, NULL);
 
   return offset;
 }
@@ -9497,7 +10682,7 @@ dissect_e2ap_T_noLabel(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, 
 static int
 dissect_e2ap_INTEGER_1_15_(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_per_constrained_integer(tvb, offset, actx, tree, hf_index,
-                                                            1U, 15U, NULL, TRUE);
+                                                            1U, 15U, NULL, true);
 
   return offset;
 }
@@ -9512,7 +10697,7 @@ static const value_string e2ap_T_sUM_vals[] = {
 static int
 dissect_e2ap_T_sUM(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_per_enumerated(tvb, offset, actx, tree, hf_index,
-                                     1, NULL, TRUE, 0, NULL);
+                                     1, NULL, true, 0, NULL);
 
   return offset;
 }
@@ -9527,7 +10712,7 @@ static const value_string e2ap_T_preLabelOverride_vals[] = {
 static int
 dissect_e2ap_T_preLabelOverride(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_per_enumerated(tvb, offset, actx, tree, hf_index,
-                                     1, NULL, TRUE, 0, NULL);
+                                     1, NULL, true, 0, NULL);
 
   return offset;
 }
@@ -9543,7 +10728,7 @@ static const value_string e2ap_T_startEndInd_vals[] = {
 static int
 dissect_e2ap_T_startEndInd(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_per_enumerated(tvb, offset, actx, tree, hf_index,
-                                     2, NULL, TRUE, 0, NULL);
+                                     2, NULL, true, 0, NULL);
 
   return offset;
 }
@@ -9558,7 +10743,7 @@ static const value_string e2ap_T_min_vals[] = {
 static int
 dissect_e2ap_T_min(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_per_enumerated(tvb, offset, actx, tree, hf_index,
-                                     1, NULL, TRUE, 0, NULL);
+                                     1, NULL, true, 0, NULL);
 
   return offset;
 }
@@ -9573,7 +10758,7 @@ static const value_string e2ap_T_max_vals[] = {
 static int
 dissect_e2ap_T_max(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_per_enumerated(tvb, offset, actx, tree, hf_index,
-                                     1, NULL, TRUE, 0, NULL);
+                                     1, NULL, true, 0, NULL);
 
   return offset;
 }
@@ -9588,7 +10773,17 @@ static const value_string e2ap_T_avg_vals[] = {
 static int
 dissect_e2ap_T_avg(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_per_enumerated(tvb, offset, actx, tree, hf_index,
-                                     1, NULL, TRUE, 0, NULL);
+                                     1, NULL, true, 0, NULL);
+
+  return offset;
+}
+
+
+
+static int
+dissect_e2ap_INTEGER_1_2_(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+  offset = dissect_per_constrained_integer(tvb, offset, actx, tree, hf_index,
+                                                            1U, 2U, NULL, true);
 
   return offset;
 }
@@ -9596,7 +10791,7 @@ dissect_e2ap_T_avg(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, prot
 
 static const per_sequence_t MeasurementLabel_sequence[] = {
   { &hf_e2ap_noLabel        , ASN1_EXTENSION_ROOT    , ASN1_OPTIONAL    , dissect_e2ap_T_noLabel },
-  { &hf_e2ap_plmnID         , ASN1_EXTENSION_ROOT    , ASN1_OPTIONAL    , dissect_e2ap_PLMN_Identity },
+  { &hf_e2ap_plmnID         , ASN1_EXTENSION_ROOT    , ASN1_OPTIONAL    , dissect_e2ap_PLMNIdentity },
   { &hf_e2ap_sliceID        , ASN1_EXTENSION_ROOT    , ASN1_OPTIONAL    , dissect_e2ap_S_NSSAI },
   { &hf_e2ap_fiveQI         , ASN1_EXTENSION_ROOT    , ASN1_OPTIONAL    , dissect_e2ap_FiveQI },
   { &hf_e2ap_qFI            , ASN1_EXTENSION_ROOT    , ASN1_OPTIONAL    , dissect_e2ap_QosFlowIdentifier },
@@ -9616,6 +10811,9 @@ static const per_sequence_t MeasurementLabel_sequence[] = {
   { &hf_e2ap_min            , ASN1_EXTENSION_ROOT    , ASN1_OPTIONAL    , dissect_e2ap_T_min },
   { &hf_e2ap_max            , ASN1_EXTENSION_ROOT    , ASN1_OPTIONAL    , dissect_e2ap_T_max },
   { &hf_e2ap_avg            , ASN1_EXTENSION_ROOT    , ASN1_OPTIONAL    , dissect_e2ap_T_avg },
+  { &hf_e2ap_ssbIndex       , ASN1_NOT_EXTENSION_ROOT, ASN1_OPTIONAL    , dissect_e2ap_INTEGER_1_65535_ },
+  { &hf_e2ap_nonGoB_BFmode_Index, ASN1_NOT_EXTENSION_ROOT, ASN1_OPTIONAL    , dissect_e2ap_INTEGER_1_65535_ },
+  { &hf_e2ap_mIMO_mode_Index, ASN1_NOT_EXTENSION_ROOT, ASN1_OPTIONAL    , dissect_e2ap_INTEGER_1_2_ },
   { NULL, 0, 0, NULL }
 };
 
@@ -9637,7 +10835,7 @@ static const value_string e2ap_T_gBR_vals[] = {
 static int
 dissect_e2ap_T_gBR(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_per_enumerated(tvb, offset, actx, tree, hf_index,
-                                     1, NULL, TRUE, 0, NULL);
+                                     1, NULL, true, 0, NULL);
 
   return offset;
 }
@@ -9652,7 +10850,7 @@ static const value_string e2ap_T_aMBR_vals[] = {
 static int
 dissect_e2ap_T_aMBR(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_per_enumerated(tvb, offset, actx, tree, hf_index,
-                                     1, NULL, TRUE, 0, NULL);
+                                     1, NULL, true, 0, NULL);
 
   return offset;
 }
@@ -9667,7 +10865,7 @@ static const value_string e2ap_T_isStat_vals[] = {
 static int
 dissect_e2ap_T_isStat(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_per_enumerated(tvb, offset, actx, tree, hf_index,
-                                     1, NULL, TRUE, 0, NULL);
+                                     1, NULL, true, 0, NULL);
 
   return offset;
 }
@@ -9682,7 +10880,7 @@ static const value_string e2ap_T_isCatM_vals[] = {
 static int
 dissect_e2ap_T_isCatM(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_per_enumerated(tvb, offset, actx, tree, hf_index,
-                                     1, NULL, TRUE, 0, NULL);
+                                     1, NULL, true, 0, NULL);
 
   return offset;
 }
@@ -9697,7 +10895,7 @@ static const value_string e2ap_T_rSRP_vals[] = {
 static int
 dissect_e2ap_T_rSRP(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_per_enumerated(tvb, offset, actx, tree, hf_index,
-                                     1, NULL, TRUE, 0, NULL);
+                                     1, NULL, true, 0, NULL);
 
   return offset;
 }
@@ -9712,7 +10910,7 @@ static const value_string e2ap_T_rSRQ_vals[] = {
 static int
 dissect_e2ap_T_rSRQ(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_per_enumerated(tvb, offset, actx, tree, hf_index,
-                                     1, NULL, TRUE, 0, NULL);
+                                     1, NULL, true, 0, NULL);
 
   return offset;
 }
@@ -9727,7 +10925,7 @@ static const value_string e2ap_T_ul_rSRP_vals[] = {
 static int
 dissect_e2ap_T_ul_rSRP(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_per_enumerated(tvb, offset, actx, tree, hf_index,
-                                     1, NULL, TRUE, 0, NULL);
+                                     1, NULL, true, 0, NULL);
 
   return offset;
 }
@@ -9742,7 +10940,7 @@ static const value_string e2ap_T_cQI_vals[] = {
 static int
 dissect_e2ap_T_cQI(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_per_enumerated(tvb, offset, actx, tree, hf_index,
-                                     1, NULL, TRUE, 0, NULL);
+                                     1, NULL, true, 0, NULL);
 
   return offset;
 }
@@ -9757,7 +10955,7 @@ static const value_string e2ap_T_fiveQI_vals[] = {
 static int
 dissect_e2ap_T_fiveQI(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_per_enumerated(tvb, offset, actx, tree, hf_index,
-                                     1, NULL, TRUE, 0, NULL);
+                                     1, NULL, true, 0, NULL);
 
   return offset;
 }
@@ -9772,7 +10970,7 @@ static const value_string e2ap_T_qCI_vals[] = {
 static int
 dissect_e2ap_T_qCI(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_per_enumerated(tvb, offset, actx, tree, hf_index,
-                                     1, NULL, TRUE, 0, NULL);
+                                     1, NULL, true, 0, NULL);
 
   return offset;
 }
@@ -9787,7 +10985,7 @@ static const value_string e2ap_T_sNSSAI_vals[] = {
 static int
 dissect_e2ap_T_sNSSAI(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_per_enumerated(tvb, offset, actx, tree, hf_index,
-                                     1, NULL, TRUE, 0, NULL);
+                                     1, NULL, true, 0, NULL);
 
   return offset;
 }
@@ -9846,7 +11044,7 @@ static const value_string e2ap_TestCond_Expression_vals[] = {
 static int
 dissect_e2ap_TestCond_Expression(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_per_enumerated(tvb, offset, actx, tree, hf_index,
-                                     5, NULL, TRUE, 0, NULL);
+                                     5, NULL, true, 0, NULL);
 
   return offset;
 }
@@ -9900,6 +11098,81 @@ dissect_e2ap_TestCondInfo(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U
 }
 
 
+static const per_sequence_t BinRangeItem_sequence[] = {
+  { &hf_e2ap_binIndex       , ASN1_EXTENSION_ROOT    , ASN1_NOT_OPTIONAL, dissect_e2ap_BinIndex },
+  { &hf_e2ap_startValue     , ASN1_EXTENSION_ROOT    , ASN1_NOT_OPTIONAL, dissect_e2ap_BinRangeValue },
+  { &hf_e2ap_endValue       , ASN1_EXTENSION_ROOT    , ASN1_NOT_OPTIONAL, dissect_e2ap_BinRangeValue },
+  { NULL, 0, 0, NULL }
+};
+
+static int
+dissect_e2ap_BinRangeItem(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+  offset = dissect_per_sequence(tvb, offset, actx, tree, hf_index,
+                                   ett_e2ap_BinRangeItem, BinRangeItem_sequence);
+
+  return offset;
+}
+
+
+static const per_sequence_t BinRangeList_sequence_of[1] = {
+  { &hf_e2ap_BinRangeList_item, ASN1_NO_EXTENSIONS     , ASN1_NOT_OPTIONAL, dissect_e2ap_BinRangeItem },
+};
+
+static int
+dissect_e2ap_BinRangeList(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+  offset = dissect_per_constrained_sequence_of(tvb, offset, actx, tree, hf_index,
+                                                  ett_e2ap_BinRangeList, BinRangeList_sequence_of,
+                                                  1, maxnoofBin, false);
+
+  return offset;
+}
+
+
+static const per_sequence_t BinRangeDefinition_sequence[] = {
+  { &hf_e2ap_binRangeListX  , ASN1_EXTENSION_ROOT    , ASN1_NOT_OPTIONAL, dissect_e2ap_BinRangeList },
+  { &hf_e2ap_binRangeListY  , ASN1_EXTENSION_ROOT    , ASN1_OPTIONAL    , dissect_e2ap_BinRangeList },
+  { &hf_e2ap_binRangeListZ  , ASN1_EXTENSION_ROOT    , ASN1_OPTIONAL    , dissect_e2ap_BinRangeList },
+  { NULL, 0, 0, NULL }
+};
+
+static int
+dissect_e2ap_BinRangeDefinition(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+  offset = dissect_per_sequence(tvb, offset, actx, tree, hf_index,
+                                   ett_e2ap_BinRangeDefinition, BinRangeDefinition_sequence);
+
+  return offset;
+}
+
+
+static const per_sequence_t DistMeasurementBinRangeItem_sequence[] = {
+  { &hf_e2ap_measType       , ASN1_EXTENSION_ROOT    , ASN1_NOT_OPTIONAL, dissect_e2ap_MeasurementType },
+  { &hf_e2ap_binRangeDef    , ASN1_EXTENSION_ROOT    , ASN1_NOT_OPTIONAL, dissect_e2ap_BinRangeDefinition },
+  { NULL, 0, 0, NULL }
+};
+
+static int
+dissect_e2ap_DistMeasurementBinRangeItem(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+  offset = dissect_per_sequence(tvb, offset, actx, tree, hf_index,
+                                   ett_e2ap_DistMeasurementBinRangeItem, DistMeasurementBinRangeItem_sequence);
+
+  return offset;
+}
+
+
+static const per_sequence_t DistMeasurementBinRangeList_sequence_of[1] = {
+  { &hf_e2ap_DistMeasurementBinRangeList_item, ASN1_NO_EXTENSIONS     , ASN1_NOT_OPTIONAL, dissect_e2ap_DistMeasurementBinRangeItem },
+};
+
+static int
+dissect_e2ap_DistMeasurementBinRangeList(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+  offset = dissect_per_constrained_sequence_of(tvb, offset, actx, tree, hf_index,
+                                                  ett_e2ap_DistMeasurementBinRangeList, DistMeasurementBinRangeList_sequence_of,
+                                                  1, maxnoofMeasurementInfo, false);
+
+  return offset;
+}
+
+
 static const per_sequence_t LabelInfoItem_sequence[] = {
   { &hf_e2ap_measLabel      , ASN1_EXTENSION_ROOT    , ASN1_NOT_OPTIONAL, dissect_e2ap_MeasurementLabel },
   { NULL, 0, 0, NULL }
@@ -9922,7 +11195,7 @@ static int
 dissect_e2ap_LabelInfoList(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_per_constrained_sequence_of(tvb, offset, actx, tree, hf_index,
                                                   ett_e2ap_LabelInfoList, LabelInfoList_sequence_of,
-                                                  1, maxnoofLabelInfo, FALSE);
+                                                  1, maxnoofLabelInfo, false);
 
   return offset;
 }
@@ -9951,7 +11224,7 @@ static int
 dissect_e2ap_MeasurementInfoList(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_per_constrained_sequence_of(tvb, offset, actx, tree, hf_index,
                                                   ett_e2ap_MeasurementInfoList, MeasurementInfoList_sequence_of,
-                                                  1, maxnoofMeasurementInfo, FALSE);
+                                                  1, maxnoofMeasurementInfo, false);
 
   return offset;
 }
@@ -9961,7 +11234,7 @@ dissect_e2ap_MeasurementInfoList(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *
 static int
 dissect_e2ap_INTEGER_0_4294967295(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_per_constrained_integer(tvb, offset, actx, tree, hf_index,
-                                                            0U, 4294967295U, NULL, FALSE);
+                                                            0U, 4294967295U, NULL, false);
 
   return offset;
 }
@@ -10008,7 +11281,7 @@ static int
 dissect_e2ap_MeasurementRecord(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_per_constrained_sequence_of(tvb, offset, actx, tree, hf_index,
                                                   ett_e2ap_MeasurementRecord, MeasurementRecord_sequence_of,
-                                                  1, maxnoofMeasurementValue, FALSE);
+                                                  1, maxnoofMeasurementValue, false);
 
   return offset;
 }
@@ -10023,7 +11296,7 @@ static const value_string e2ap_T_incompleteFlag_vals[] = {
 static int
 dissect_e2ap_T_incompleteFlag(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_per_enumerated(tvb, offset, actx, tree, hf_index,
-                                     1, NULL, TRUE, 0, NULL);
+                                     1, NULL, true, 0, NULL);
 
   return offset;
 }
@@ -10052,7 +11325,7 @@ static int
 dissect_e2ap_MeasurementData(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_per_constrained_sequence_of(tvb, offset, actx, tree, hf_index,
                                                   ett_e2ap_MeasurementData, MeasurementData_sequence_of,
-                                                  1, maxnoofMeasurementRecord, FALSE);
+                                                  1, maxnoofMeasurementRecord, false);
 
   return offset;
 }
@@ -10061,6 +11334,7 @@ dissect_e2ap_MeasurementData(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx
 static const per_sequence_t MeasurementInfo_Action_Item_sequence[] = {
   { &hf_e2ap_measName       , ASN1_EXTENSION_ROOT    , ASN1_NOT_OPTIONAL, dissect_e2ap_MeasurementTypeName },
   { &hf_e2ap_measID         , ASN1_EXTENSION_ROOT    , ASN1_OPTIONAL    , dissect_e2ap_MeasurementTypeID },
+  { &hf_e2ap_binRangeDef    , ASN1_NOT_EXTENSION_ROOT, ASN1_OPTIONAL    , dissect_e2ap_BinRangeDefinition },
   { NULL, 0, 0, NULL }
 };
 
@@ -10081,29 +11355,44 @@ static int
 dissect_e2ap_MeasurementInfo_Action_List(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_per_constrained_sequence_of(tvb, offset, actx, tree, hf_index,
                                                   ett_e2ap_MeasurementInfo_Action_List, MeasurementInfo_Action_List_sequence_of,
-                                                  1, maxnoofMeasurementInfo, FALSE);
+                                                  1, maxnoofMeasurementInfo, false);
 
   return offset;
 }
 
 
-static const value_string e2ap_MatchingCondItem_vals[] = {
+static const value_string e2ap_MatchingCondItem_Choice_vals[] = {
   {   0, "measLabel" },
   {   1, "testCondInfo" },
   { 0, NULL }
 };
 
-static const per_choice_t MatchingCondItem_choice[] = {
+static const per_choice_t MatchingCondItem_Choice_choice[] = {
   {   0, &hf_e2ap_measLabel      , ASN1_EXTENSION_ROOT    , dissect_e2ap_MeasurementLabel },
   {   1, &hf_e2ap_testCondInfo   , ASN1_EXTENSION_ROOT    , dissect_e2ap_TestCondInfo },
   { 0, NULL, 0, NULL }
 };
 
 static int
-dissect_e2ap_MatchingCondItem(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_e2ap_MatchingCondItem_Choice(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_per_choice(tvb, offset, actx, tree, hf_index,
-                                 ett_e2ap_MatchingCondItem, MatchingCondItem_choice,
+                                 ett_e2ap_MatchingCondItem_Choice, MatchingCondItem_Choice_choice,
                                  NULL);
+
+  return offset;
+}
+
+
+static const per_sequence_t MatchingCondItem_sequence[] = {
+  { &hf_e2ap_matchingCondChoice, ASN1_EXTENSION_ROOT    , ASN1_NOT_OPTIONAL, dissect_e2ap_MatchingCondItem_Choice },
+  { &hf_e2ap_logicalOR      , ASN1_EXTENSION_ROOT    , ASN1_OPTIONAL    , dissect_e2ap_LogicalOR },
+  { NULL, 0, 0, NULL }
+};
+
+static int
+dissect_e2ap_MatchingCondItem(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+  offset = dissect_per_sequence(tvb, offset, actx, tree, hf_index,
+                                   ett_e2ap_MatchingCondItem, MatchingCondItem_sequence);
 
   return offset;
 }
@@ -10117,7 +11406,7 @@ static int
 dissect_e2ap_MatchingCondList(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_per_constrained_sequence_of(tvb, offset, actx, tree, hf_index,
                                                   ett_e2ap_MatchingCondList, MatchingCondList_sequence_of,
-                                                  1, maxnoofConditionInfo, FALSE);
+                                                  1, maxnoofConditionInfo, false);
 
   return offset;
 }
@@ -10126,6 +11415,7 @@ dissect_e2ap_MatchingCondList(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *act
 static const per_sequence_t MeasurementCondItem_sequence[] = {
   { &hf_e2ap_measType       , ASN1_EXTENSION_ROOT    , ASN1_NOT_OPTIONAL, dissect_e2ap_MeasurementType },
   { &hf_e2ap_matchingCond   , ASN1_EXTENSION_ROOT    , ASN1_NOT_OPTIONAL, dissect_e2ap_MatchingCondList },
+  { &hf_e2ap_binRangeDef    , ASN1_NOT_EXTENSION_ROOT, ASN1_OPTIONAL    , dissect_e2ap_BinRangeDefinition },
   { NULL, 0, 0, NULL }
 };
 
@@ -10146,7 +11436,7 @@ static int
 dissect_e2ap_MeasurementCondList(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_per_constrained_sequence_of(tvb, offset, actx, tree, hf_index,
                                                   ett_e2ap_MeasurementCondList, MeasurementCondList_sequence_of,
-                                                  1, maxnoofMeasurementInfo, FALSE);
+                                                  1, maxnoofMeasurementInfo, false);
 
   return offset;
 }
@@ -10174,7 +11464,100 @@ static int
 dissect_e2ap_MatchingUEidList(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_per_constrained_sequence_of(tvb, offset, actx, tree, hf_index,
                                                   ett_e2ap_MatchingUEidList, MatchingUEidList_sequence_of,
-                                                  1, maxnoofUEID, FALSE);
+                                                  1, maxnoofUEID, false);
+
+  return offset;
+}
+
+
+static const value_string e2ap_T_noUEmatched_vals[] = {
+  {   0, "true" },
+  { 0, NULL }
+};
+
+
+static int
+dissect_e2ap_T_noUEmatched(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+  offset = dissect_per_enumerated(tvb, offset, actx, tree, hf_index,
+                                     1, NULL, true, 0, NULL);
+
+  return offset;
+}
+
+
+static const per_sequence_t MatchingUEidItem_PerGP_sequence[] = {
+  { &hf_e2ap_ueID           , ASN1_EXTENSION_ROOT    , ASN1_NOT_OPTIONAL, dissect_e2ap_UEID },
+  { NULL, 0, 0, NULL }
+};
+
+static int
+dissect_e2ap_MatchingUEidItem_PerGP(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+  offset = dissect_per_sequence(tvb, offset, actx, tree, hf_index,
+                                   ett_e2ap_MatchingUEidItem_PerGP, MatchingUEidItem_PerGP_sequence);
+
+  return offset;
+}
+
+
+static const per_sequence_t MatchingUEidList_PerGP_sequence_of[1] = {
+  { &hf_e2ap_MatchingUEidList_PerGP_item, ASN1_NO_EXTENSIONS     , ASN1_NOT_OPTIONAL, dissect_e2ap_MatchingUEidItem_PerGP },
+};
+
+static int
+dissect_e2ap_MatchingUEidList_PerGP(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+  offset = dissect_per_constrained_sequence_of(tvb, offset, actx, tree, hf_index,
+                                                  ett_e2ap_MatchingUEidList_PerGP, MatchingUEidList_PerGP_sequence_of,
+                                                  1, maxnoofUEID, false);
+
+  return offset;
+}
+
+
+static const value_string e2ap_T_matchedPerGP_vals[] = {
+  {   0, "noUEmatched" },
+  {   1, "oneOrMoreUEmatched" },
+  { 0, NULL }
+};
+
+static const per_choice_t T_matchedPerGP_choice[] = {
+  {   0, &hf_e2ap_noUEmatched    , ASN1_EXTENSION_ROOT    , dissect_e2ap_T_noUEmatched },
+  {   1, &hf_e2ap_oneOrMoreUEmatched, ASN1_EXTENSION_ROOT    , dissect_e2ap_MatchingUEidList_PerGP },
+  { 0, NULL, 0, NULL }
+};
+
+static int
+dissect_e2ap_T_matchedPerGP(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+  offset = dissect_per_choice(tvb, offset, actx, tree, hf_index,
+                                 ett_e2ap_T_matchedPerGP, T_matchedPerGP_choice,
+                                 NULL);
+
+  return offset;
+}
+
+
+static const per_sequence_t MatchingUEidPerGP_Item_sequence[] = {
+  { &hf_e2ap_matchedPerGP   , ASN1_EXTENSION_ROOT    , ASN1_NOT_OPTIONAL, dissect_e2ap_T_matchedPerGP },
+  { NULL, 0, 0, NULL }
+};
+
+static int
+dissect_e2ap_MatchingUEidPerGP_Item(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+  offset = dissect_per_sequence(tvb, offset, actx, tree, hf_index,
+                                   ett_e2ap_MatchingUEidPerGP_Item, MatchingUEidPerGP_Item_sequence);
+
+  return offset;
+}
+
+
+static const per_sequence_t MatchingUEidPerGP_sequence_of[1] = {
+  { &hf_e2ap_MatchingUEidPerGP_item, ASN1_NO_EXTENSIONS     , ASN1_NOT_OPTIONAL, dissect_e2ap_MatchingUEidPerGP_Item },
+};
+
+static int
+dissect_e2ap_MatchingUEidPerGP(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+  offset = dissect_per_constrained_sequence_of(tvb, offset, actx, tree, hf_index,
+                                                  ett_e2ap_MatchingUEidPerGP, MatchingUEidPerGP_sequence_of,
+                                                  1, maxnoofMeasurementRecord, false);
 
   return offset;
 }
@@ -10184,6 +11567,7 @@ static const per_sequence_t MeasurementCondUEidItem_sequence[] = {
   { &hf_e2ap_measType       , ASN1_EXTENSION_ROOT    , ASN1_NOT_OPTIONAL, dissect_e2ap_MeasurementType },
   { &hf_e2ap_matchingCond   , ASN1_EXTENSION_ROOT    , ASN1_NOT_OPTIONAL, dissect_e2ap_MatchingCondList },
   { &hf_e2ap_matchingUEidList, ASN1_EXTENSION_ROOT    , ASN1_OPTIONAL    , dissect_e2ap_MatchingUEidList },
+  { &hf_e2ap_matchingUEidPerGP, ASN1_NOT_EXTENSION_ROOT, ASN1_OPTIONAL    , dissect_e2ap_MatchingUEidPerGP },
   { NULL, 0, 0, NULL }
 };
 
@@ -10204,7 +11588,7 @@ static int
 dissect_e2ap_MeasurementCondUEidList(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_per_constrained_sequence_of(tvb, offset, actx, tree, hf_index,
                                                   ett_e2ap_MeasurementCondUEidList, MeasurementCondUEidList_sequence_of,
-                                                  1, maxnoofMeasurementInfo, FALSE);
+                                                  1, maxnoofMeasurementInfo, false);
 
   return offset;
 }
@@ -10212,6 +11596,7 @@ dissect_e2ap_MeasurementCondUEidList(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx
 
 static const per_sequence_t MatchingUeCondPerSubItem_sequence[] = {
   { &hf_e2ap_testCondInfo   , ASN1_EXTENSION_ROOT    , ASN1_NOT_OPTIONAL, dissect_e2ap_TestCondInfo },
+  { &hf_e2ap_logicalOR      , ASN1_NOT_EXTENSION_ROOT, ASN1_OPTIONAL    , dissect_e2ap_LogicalOR },
   { NULL, 0, 0, NULL }
 };
 
@@ -10232,7 +11617,7 @@ static int
 dissect_e2ap_MatchingUeCondPerSubList(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_per_constrained_sequence_of(tvb, offset, actx, tree, hf_index,
                                                   ett_e2ap_MatchingUeCondPerSubList, MatchingUeCondPerSubList_sequence_of,
-                                                  1, maxnoofConditionInfoPerSub, FALSE);
+                                                  1, maxnoofConditionInfoPerSub, false);
 
   return offset;
 }
@@ -10260,7 +11645,7 @@ static int
 dissect_e2ap_MatchingUEidPerSubList(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_per_constrained_sequence_of(tvb, offset, actx, tree, hf_index,
                                                   ett_e2ap_MatchingUEidPerSubList, MatchingUEidPerSubList_sequence_of,
-                                                  2, maxnoofUEIDPerSub, FALSE);
+                                                  2, maxnoofUEIDPerSub, false);
 
   return offset;
 }
@@ -10305,7 +11690,7 @@ static int
 dissect_e2ap_UEMeasurementReportList(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_per_constrained_sequence_of(tvb, offset, actx, tree, hf_index,
                                                   ett_e2ap_UEMeasurementReportList, UEMeasurementReportList_sequence_of,
-                                                  1, maxnoofUEMeasReport, FALSE);
+                                                  1, maxnoofUEMeasReport, false);
 
   return offset;
 }
@@ -10315,7 +11700,7 @@ dissect_e2ap_UEMeasurementReportList(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx
 static int
 dissect_e2ap_INTEGER_1_4294967295(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_per_constrained_integer(tvb, offset, actx, tree, hf_index,
-                                                            1U, 4294967295U, NULL, FALSE);
+                                                            1U, 4294967295U, NULL, false);
 
   return offset;
 }
@@ -10373,6 +11758,7 @@ static const per_sequence_t E2SM_KPM_ActionDefinition_Format1_sequence[] = {
   { &hf_e2ap_measInfoList   , ASN1_EXTENSION_ROOT    , ASN1_NOT_OPTIONAL, dissect_e2ap_MeasurementInfoList },
   { &hf_e2ap_granulPeriod   , ASN1_EXTENSION_ROOT    , ASN1_NOT_OPTIONAL, dissect_e2ap_GranularityPeriod },
   { &hf_e2ap_cellGlobalID   , ASN1_EXTENSION_ROOT    , ASN1_OPTIONAL    , dissect_e2ap_CGI },
+  { &hf_e2ap_distMeasBinRangeInfo, ASN1_NOT_EXTENSION_ROOT, ASN1_OPTIONAL    , dissect_e2ap_DistMeasurementBinRangeList },
   { NULL, 0, 0, NULL }
 };
 
@@ -10491,9 +11877,27 @@ dissect_e2ap_E2SM_KPM_ActionDefinition(tvbuff_t *tvb _U_, int offset _U_, asn1_c
 
 
 static int
+dissect_e2ap_T_colletStartTime(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+  int ts_offset = offset;
+    offset = dissect_e2ap_TimeStamp(tvb, offset, actx, tree, hf_index);
+
+  /* Add as a generated field the timestamp decoded */
+  const char *time_str = tvb_ntp_fmt_ts_sec(tvb, (ts_offset+7)/8);
+  proto_item *ti = proto_tree_add_string(tree, hf_e2ap_timestamp_string, tvb, (ts_offset+7)/8, 4, time_str);
+  proto_item_set_generated(ti);
+
+
+
+
+  return offset;
+}
+
+
+
+static int
 dissect_e2ap_PrintableString_SIZE_0_15_(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_per_PrintableString(tvb, offset, actx, tree, hf_index,
-                                          0, 15, TRUE,
+                                          0, 15, true,
                                           NULL);
 
   return offset;
@@ -10504,7 +11908,7 @@ dissect_e2ap_PrintableString_SIZE_0_15_(tvbuff_t *tvb _U_, int offset _U_, asn1_
 static int
 dissect_e2ap_PrintableString_SIZE_0_400_(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_per_PrintableString(tvb, offset, actx, tree, hf_index,
-                                          0, 400, TRUE,
+                                          0, 400, true,
                                           NULL);
 
   return offset;
@@ -10515,7 +11919,7 @@ dissect_e2ap_PrintableString_SIZE_0_400_(tvbuff_t *tvb _U_, int offset _U_, asn1
 static int
 dissect_e2ap_PrintableString_SIZE_0_8_(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_per_PrintableString(tvb, offset, actx, tree, hf_index,
-                                          0, 8, TRUE,
+                                          0, 8, true,
                                           NULL);
 
   return offset;
@@ -10526,7 +11930,7 @@ dissect_e2ap_PrintableString_SIZE_0_8_(tvbuff_t *tvb _U_, int offset _U_, asn1_c
 static int
 dissect_e2ap_PrintableString_SIZE_0_32_(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_per_PrintableString(tvb, offset, actx, tree, hf_index,
-                                          0, 32, TRUE,
+                                          0, 32, true,
                                           NULL);
 
   return offset;
@@ -10534,7 +11938,7 @@ dissect_e2ap_PrintableString_SIZE_0_32_(tvbuff_t *tvb _U_, int offset _U_, asn1_
 
 
 static const per_sequence_t E2SM_KPM_IndicationHeader_Format1_sequence[] = {
-  { &hf_e2ap_colletStartTime, ASN1_EXTENSION_ROOT    , ASN1_NOT_OPTIONAL, dissect_e2ap_TimeStamp },
+  { &hf_e2ap_colletStartTime, ASN1_EXTENSION_ROOT    , ASN1_NOT_OPTIONAL, dissect_e2ap_T_colletStartTime },
   { &hf_e2ap_fileFormatversion, ASN1_EXTENSION_ROOT    , ASN1_OPTIONAL    , dissect_e2ap_PrintableString_SIZE_0_15_ },
   { &hf_e2ap_senderName     , ASN1_EXTENSION_ROOT    , ASN1_OPTIONAL    , dissect_e2ap_PrintableString_SIZE_0_400_ },
   { &hf_e2ap_senderType     , ASN1_EXTENSION_ROOT    , ASN1_OPTIONAL    , dissect_e2ap_PrintableString_SIZE_0_8_ },
@@ -10677,7 +12081,7 @@ static int
 dissect_e2ap_SEQUENCE_SIZE_1_maxnoofRICStyles_OF_RIC_EventTriggerStyle_Item(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_per_constrained_sequence_of(tvb, offset, actx, tree, hf_index,
                                                   ett_e2ap_SEQUENCE_SIZE_1_maxnoofRICStyles_OF_RIC_EventTriggerStyle_Item, SEQUENCE_SIZE_1_maxnoofRICStyles_OF_RIC_EventTriggerStyle_Item_sequence_of,
-                                                  1, maxnoofRICStyles, FALSE);
+                                                  1, maxnoofRICStyles, false);
 
   return offset;
 }
@@ -10710,7 +12114,7 @@ static int
 dissect_e2ap_SEQUENCE_SIZE_1_maxnoofRICStyles_OF_RIC_ReportStyle_Item(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_per_constrained_sequence_of(tvb, offset, actx, tree, hf_index,
                                                   ett_e2ap_SEQUENCE_SIZE_1_maxnoofRICStyles_OF_RIC_ReportStyle_Item, SEQUENCE_SIZE_1_maxnoofRICStyles_OF_RIC_ReportStyle_Item_sequence_of,
-                                                  1, maxnoofRICStyles, FALSE);
+                                                  1, maxnoofRICStyles, false);
 
   return offset;
 }
@@ -10746,7 +12150,7 @@ static const value_string e2ap_NI_Type_vals[] = {
 static int
 dissect_e2ap_NI_Type(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_per_enumerated(tvb, offset, actx, tree, hf_index,
-                                     6, NULL, TRUE, 0, NULL);
+                                     6, NULL, true, 0, NULL);
 
   return offset;
 }
@@ -10848,7 +12252,7 @@ static const value_string e2ap_NI_Direction_vals[] = {
 static int
 dissect_e2ap_NI_Direction(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_per_enumerated(tvb, offset, actx, tree, hf_index,
-                                     3, NULL, TRUE, 0, NULL);
+                                     3, NULL, true, 0, NULL);
 
   return offset;
 }
@@ -10866,7 +12270,7 @@ static const value_string e2ap_TypeOfMessage_vals[] = {
 static int
 dissect_e2ap_TypeOfMessage(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_per_enumerated(tvb, offset, actx, tree, hf_index,
-                                     4, NULL, FALSE, 0, NULL);
+                                     4, NULL, false, 0, NULL);
 
   return offset;
 }
@@ -10993,7 +12397,7 @@ static const value_string e2ap_NI_ProtocolIE_Test_vals[] = {
 static int
 dissect_e2ap_NI_ProtocolIE_Test(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_per_enumerated(tvb, offset, actx, tree, hf_index,
-                                     5, NULL, TRUE, 0, NULL);
+                                     5, NULL, true, 0, NULL);
 
   return offset;
 }
@@ -11053,7 +12457,7 @@ static int
 dissect_e2ap_SEQUENCE_SIZE_1_maxofInterfaceProtocolTests_OF_NI_ProtocolIE_Item(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_per_constrained_sequence_of(tvb, offset, actx, tree, hf_index,
                                                   ett_e2ap_SEQUENCE_SIZE_1_maxofInterfaceProtocolTests_OF_NI_ProtocolIE_Item, SEQUENCE_SIZE_1_maxofInterfaceProtocolTests_OF_NI_ProtocolIE_Item_sequence_of,
-                                                  1, maxofInterfaceProtocolTests, FALSE);
+                                                  1, maxofInterfaceProtocolTests, false);
 
   return offset;
 }
@@ -11101,7 +12505,7 @@ dissect_e2ap_E2SM_NI_EventTriggerDefinition(tvbuff_t *tvb _U_, int offset _U_, a
 static int
 dissect_e2ap_RANparameter_ID(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_per_constrained_integer(tvb, offset, actx, tree, hf_index,
-                                                            0U, maxofRANparameters, NULL, FALSE);
+                                                            0U, maxofRANparameters, NULL, false);
 
   return offset;
 }
@@ -11160,7 +12564,7 @@ static int
 dissect_e2ap_SEQUENCE_SIZE_1_maxofActionParameters_OF_RANparameter_Item(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_per_constrained_sequence_of(tvb, offset, actx, tree, hf_index,
                                                   ett_e2ap_SEQUENCE_SIZE_1_maxofActionParameters_OF_RANparameter_Item, SEQUENCE_SIZE_1_maxofActionParameters_OF_RANparameter_Item_sequence_of,
-                                                  1, maxofActionParameters, FALSE);
+                                                  1, maxofActionParameters, false);
 
   return offset;
 }
@@ -11184,7 +12588,7 @@ dissect_e2ap_E2SM_NI_ActionDefinition_Format1(tvbuff_t *tvb _U_, int offset _U_,
 static int
 dissect_e2ap_RANueGroupID(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_per_constrained_integer(tvb, offset, actx, tree, hf_index,
-                                                            0U, maxofRANueGroups, NULL, FALSE);
+                                                            0U, maxofRANueGroups, NULL, false);
 
   return offset;
 }
@@ -11203,7 +12607,7 @@ static const value_string e2ap_RANparameter_Test_Condition_vals[] = {
 static int
 dissect_e2ap_RANparameter_Test_Condition(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_per_enumerated(tvb, offset, actx, tree, hf_index,
-                                     5, NULL, TRUE, 0, NULL);
+                                     5, NULL, true, 0, NULL);
 
   return offset;
 }
@@ -11233,7 +12637,7 @@ static int
 dissect_e2ap_SEQUENCE_SIZE_1_maxofRANparameters_OF_RANueGroupDef_Item(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_per_constrained_sequence_of(tvb, offset, actx, tree, hf_index,
                                                   ett_e2ap_SEQUENCE_SIZE_1_maxofRANparameters_OF_RANueGroupDef_Item, SEQUENCE_SIZE_1_maxofRANparameters_OF_RANueGroupDef_Item_sequence_of,
-                                                  1, maxofRANparameters, FALSE);
+                                                  1, maxofRANparameters, false);
 
   return offset;
 }
@@ -11261,7 +12665,7 @@ static int
 dissect_e2ap_SEQUENCE_SIZE_1_maxofRANparameters_OF_RANparameter_Item(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_per_constrained_sequence_of(tvb, offset, actx, tree, hf_index,
                                                   ett_e2ap_SEQUENCE_SIZE_1_maxofRANparameters_OF_RANparameter_Item, SEQUENCE_SIZE_1_maxofRANparameters_OF_RANparameter_Item_sequence_of,
-                                                  1, maxofRANparameters, FALSE);
+                                                  1, maxofRANparameters, false);
 
   return offset;
 }
@@ -11305,7 +12709,7 @@ static int
 dissect_e2ap_SEQUENCE_SIZE_1_maxofRANueGroups_OF_RANueGroup_Item(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_per_constrained_sequence_of(tvb, offset, actx, tree, hf_index,
                                                   ett_e2ap_SEQUENCE_SIZE_1_maxofRANueGroups_OF_RANueGroup_Item, SEQUENCE_SIZE_1_maxofRANueGroups_OF_RANueGroup_Item_sequence_of,
-                                                  1, maxofRANueGroups, FALSE);
+                                                  1, maxofRANueGroups, false);
 
   return offset;
 }
@@ -11366,7 +12770,7 @@ dissect_e2ap_E2SM_NI_ActionDefinition(tvbuff_t *tvb _U_, int offset _U_, asn1_ct
 static int
 dissect_e2ap_NI_TimeStamp(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_per_octet_string(tvb, offset, actx, tree, hf_index,
-                                       8, 8, FALSE, NULL);
+                                       8, 8, false, NULL);
 
   return offset;
 }
@@ -11413,7 +12817,7 @@ dissect_e2ap_E2SM_NI_IndicationHeader(tvbuff_t *tvb _U_, int offset _U_, asn1_ct
 static int
 dissect_e2ap_NI_Message(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_per_octet_string(tvb, offset, actx, tree, hf_index,
-                                       NO_BOUND, NO_BOUND, FALSE, NULL);
+                                       NO_BOUND, NO_BOUND, false, NULL);
 
   return offset;
 }
@@ -11480,7 +12884,7 @@ dissect_e2ap_E2SM_NI_CallProcessID_Format1(tvbuff_t *tvb _U_, int offset _U_, as
 static int
 dissect_e2ap_RANcallProcess_ID_string(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_per_PrintableString(tvb, offset, actx, tree, hf_index,
-                                          1, 150, TRUE,
+                                          1, 150, true,
                                           NULL);
 
   return offset;
@@ -11661,7 +13065,7 @@ static int
 dissect_e2ap_SEQUENCE_SIZE_1_maxofRICstyles_OF_RIC_EventTriggerStyle_List(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_per_constrained_sequence_of(tvb, offset, actx, tree, hf_index,
                                                   ett_e2ap_SEQUENCE_SIZE_1_maxofRICstyles_OF_RIC_EventTriggerStyle_List, SEQUENCE_SIZE_1_maxofRICstyles_OF_RIC_EventTriggerStyle_List_sequence_of,
-                                                  1, maxofRICstyles, FALSE);
+                                                  1, maxofRICstyles, false);
 
   return offset;
 }
@@ -11671,7 +13075,7 @@ dissect_e2ap_SEQUENCE_SIZE_1_maxofRICstyles_OF_RIC_EventTriggerStyle_List(tvbuff
 static int
 dissect_e2ap_RANparameter_Name(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_per_PrintableString(tvb, offset, actx, tree, hf_index,
-                                          1, 150, TRUE,
+                                          1, 150, true,
                                           NULL);
 
   return offset;
@@ -11692,7 +13096,7 @@ static const value_string e2ap_RANparameter_Type_vals[] = {
 static int
 dissect_e2ap_RANparameter_Type(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_per_enumerated(tvb, offset, actx, tree, hf_index,
-                                     6, NULL, TRUE, 0, NULL);
+                                     6, NULL, true, 0, NULL);
 
   return offset;
 }
@@ -11722,7 +13126,7 @@ static int
 dissect_e2ap_SEQUENCE_SIZE_1_maxofRANparameters_OF_RANparameterDef_Item(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_per_constrained_sequence_of(tvb, offset, actx, tree, hf_index,
                                                   ett_e2ap_SEQUENCE_SIZE_1_maxofRANparameters_OF_RANparameterDef_Item, SEQUENCE_SIZE_1_maxofRANparameters_OF_RANparameterDef_Item_sequence_of,
-                                                  1, maxofRANparameters, FALSE);
+                                                  1, maxofRANparameters, false);
 
   return offset;
 }
@@ -11755,7 +13159,7 @@ static int
 dissect_e2ap_SEQUENCE_SIZE_1_maxofRICstyles_OF_RIC_ReportStyle_List(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_per_constrained_sequence_of(tvb, offset, actx, tree, hf_index,
                                                   ett_e2ap_SEQUENCE_SIZE_1_maxofRICstyles_OF_RIC_ReportStyle_List, SEQUENCE_SIZE_1_maxofRICstyles_OF_RIC_ReportStyle_List_sequence_of,
-                                                  1, maxofRICstyles, FALSE);
+                                                  1, maxofRICstyles, false);
 
   return offset;
 }
@@ -11789,7 +13193,7 @@ static int
 dissect_e2ap_SEQUENCE_SIZE_1_maxofRICstyles_OF_RIC_InsertStyle_List(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_per_constrained_sequence_of(tvb, offset, actx, tree, hf_index,
                                                   ett_e2ap_SEQUENCE_SIZE_1_maxofRICstyles_OF_RIC_InsertStyle_List, SEQUENCE_SIZE_1_maxofRICstyles_OF_RIC_InsertStyle_List_sequence_of,
-                                                  1, maxofRICstyles, FALSE);
+                                                  1, maxofRICstyles, false);
 
   return offset;
 }
@@ -11824,7 +13228,7 @@ static int
 dissect_e2ap_SEQUENCE_SIZE_1_maxofRICstyles_OF_RIC_ControlStyle_List(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_per_constrained_sequence_of(tvb, offset, actx, tree, hf_index,
                                                   ett_e2ap_SEQUENCE_SIZE_1_maxofRICstyles_OF_RIC_ControlStyle_List, SEQUENCE_SIZE_1_maxofRICstyles_OF_RIC_ControlStyle_List_sequence_of,
-                                                  1, maxofRICstyles, FALSE);
+                                                  1, maxofRICstyles, false);
 
   return offset;
 }
@@ -11855,7 +13259,7 @@ static int
 dissect_e2ap_SEQUENCE_SIZE_1_maxofRICstyles_OF_RIC_PolicyStyle_List(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_per_constrained_sequence_of(tvb, offset, actx, tree, hf_index,
                                                   ett_e2ap_SEQUENCE_SIZE_1_maxofRICstyles_OF_RIC_PolicyStyle_List, SEQUENCE_SIZE_1_maxofRICstyles_OF_RIC_PolicyStyle_List_sequence_of,
-                                                  1, maxofRICstyles, FALSE);
+                                                  1, maxofRICstyles, false);
 
   return offset;
 }
@@ -11888,7 +13292,7 @@ static int
 dissect_e2ap_SEQUENCE_SIZE_1_maxofNItypes_OF_E2SM_NI_RANfunction_Item(tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_per_constrained_sequence_of(tvb, offset, actx, tree, hf_index,
                                                   ett_e2ap_SEQUENCE_SIZE_1_maxofNItypes_OF_E2SM_NI_RANfunction_Item, SEQUENCE_SIZE_1_maxofNItypes_OF_E2SM_NI_RANfunction_Item_sequence_of,
-                                                  1, maxofNItypes, FALSE);
+                                                  1, maxofNItypes, false);
 
   return offset;
 }
@@ -11913,7 +13317,7 @@ dissect_e2ap_E2SM_NI_RANfunction_Description(tvbuff_t *tvb _U_, int offset _U_, 
 static int dissect_Cause_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_PER, TRUE, pinfo);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_PER, true, pinfo);
   offset = dissect_e2ap_Cause(tvb, offset, &asn1_ctx, tree, hf_e2ap_Cause_PDU);
   offset += 7; offset >>= 3;
   return offset;
@@ -11921,7 +13325,7 @@ static int dissect_Cause_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tr
 static int dissect_CriticalityDiagnostics_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_PER, TRUE, pinfo);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_PER, true, pinfo);
   offset = dissect_e2ap_CriticalityDiagnostics(tvb, offset, &asn1_ctx, tree, hf_e2ap_CriticalityDiagnostics_PDU);
   offset += 7; offset >>= 3;
   return offset;
@@ -11929,7 +13333,7 @@ static int dissect_CriticalityDiagnostics_PDU(tvbuff_t *tvb _U_, packet_info *pi
 static int dissect_GlobalE2node_ID_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_PER, TRUE, pinfo);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_PER, true, pinfo);
   offset = dissect_e2ap_GlobalE2node_ID(tvb, offset, &asn1_ctx, tree, hf_e2ap_GlobalE2node_ID_PDU);
   offset += 7; offset >>= 3;
   return offset;
@@ -11937,7 +13341,7 @@ static int dissect_GlobalE2node_ID_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_
 static int dissect_GlobalRIC_ID_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_PER, TRUE, pinfo);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_PER, true, pinfo);
   offset = dissect_e2ap_GlobalRIC_ID(tvb, offset, &asn1_ctx, tree, hf_e2ap_GlobalRIC_ID_PDU);
   offset += 7; offset >>= 3;
   return offset;
@@ -11945,7 +13349,7 @@ static int dissect_GlobalRIC_ID_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, p
 static int dissect_RANfunctionID_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_PER, TRUE, pinfo);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_PER, true, pinfo);
   offset = dissect_e2ap_RANfunctionID(tvb, offset, &asn1_ctx, tree, hf_e2ap_RANfunctionID_PDU);
   offset += 7; offset >>= 3;
   return offset;
@@ -11953,7 +13357,7 @@ static int dissect_RANfunctionID_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, 
 static int dissect_RICactionID_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_PER, TRUE, pinfo);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_PER, true, pinfo);
   offset = dissect_e2ap_RICactionID(tvb, offset, &asn1_ctx, tree, hf_e2ap_RICactionID_PDU);
   offset += 7; offset >>= 3;
   return offset;
@@ -11961,7 +13365,7 @@ static int dissect_RICactionID_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, pr
 static int dissect_RICcallProcessID_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_PER, TRUE, pinfo);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_PER, true, pinfo);
   offset = dissect_e2ap_RICcallProcessID(tvb, offset, &asn1_ctx, tree, hf_e2ap_RICcallProcessID_PDU);
   offset += 7; offset >>= 3;
   return offset;
@@ -11969,7 +13373,7 @@ static int dissect_RICcallProcessID_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U
 static int dissect_RICcontrolAckRequest_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_PER, TRUE, pinfo);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_PER, true, pinfo);
   offset = dissect_e2ap_RICcontrolAckRequest(tvb, offset, &asn1_ctx, tree, hf_e2ap_RICcontrolAckRequest_PDU);
   offset += 7; offset >>= 3;
   return offset;
@@ -11977,7 +13381,7 @@ static int dissect_RICcontrolAckRequest_PDU(tvbuff_t *tvb _U_, packet_info *pinf
 static int dissect_RICcontrolHeader_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_PER, TRUE, pinfo);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_PER, true, pinfo);
   offset = dissect_e2ap_RICcontrolHeader(tvb, offset, &asn1_ctx, tree, hf_e2ap_RICcontrolHeader_PDU);
   offset += 7; offset >>= 3;
   return offset;
@@ -11985,7 +13389,7 @@ static int dissect_RICcontrolHeader_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U
 static int dissect_RICcontrolMessage_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_PER, TRUE, pinfo);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_PER, true, pinfo);
   offset = dissect_e2ap_RICcontrolMessage(tvb, offset, &asn1_ctx, tree, hf_e2ap_RICcontrolMessage_PDU);
   offset += 7; offset >>= 3;
   return offset;
@@ -11993,15 +13397,23 @@ static int dissect_RICcontrolMessage_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _
 static int dissect_RICcontrolOutcome_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_PER, TRUE, pinfo);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_PER, true, pinfo);
   offset = dissect_e2ap_RICcontrolOutcome(tvb, offset, &asn1_ctx, tree, hf_e2ap_RICcontrolOutcome_PDU);
+  offset += 7; offset >>= 3;
+  return offset;
+}
+static int dissect_RICeventTriggerDefinition_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
+  int offset = 0;
+  asn1_ctx_t asn1_ctx;
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_PER, true, pinfo);
+  offset = dissect_e2ap_RICeventTriggerDefinition(tvb, offset, &asn1_ctx, tree, hf_e2ap_RICeventTriggerDefinition_PDU);
   offset += 7; offset >>= 3;
   return offset;
 }
 static int dissect_RICindicationHeader_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_PER, TRUE, pinfo);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_PER, true, pinfo);
   offset = dissect_e2ap_RICindicationHeader(tvb, offset, &asn1_ctx, tree, hf_e2ap_RICindicationHeader_PDU);
   offset += 7; offset >>= 3;
   return offset;
@@ -12009,7 +13421,7 @@ static int dissect_RICindicationHeader_PDU(tvbuff_t *tvb _U_, packet_info *pinfo
 static int dissect_RICindicationMessage_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_PER, TRUE, pinfo);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_PER, true, pinfo);
   offset = dissect_e2ap_RICindicationMessage(tvb, offset, &asn1_ctx, tree, hf_e2ap_RICindicationMessage_PDU);
   offset += 7; offset >>= 3;
   return offset;
@@ -12017,7 +13429,7 @@ static int dissect_RICindicationMessage_PDU(tvbuff_t *tvb _U_, packet_info *pinf
 static int dissect_RICindicationSN_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_PER, TRUE, pinfo);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_PER, true, pinfo);
   offset = dissect_e2ap_RICindicationSN(tvb, offset, &asn1_ctx, tree, hf_e2ap_RICindicationSN_PDU);
   offset += 7; offset >>= 3;
   return offset;
@@ -12025,7 +13437,7 @@ static int dissect_RICindicationSN_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_
 static int dissect_RICindicationType_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_PER, TRUE, pinfo);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_PER, true, pinfo);
   offset = dissect_e2ap_RICindicationType(tvb, offset, &asn1_ctx, tree, hf_e2ap_RICindicationType_PDU);
   offset += 7; offset >>= 3;
   return offset;
@@ -12033,15 +13445,47 @@ static int dissect_RICindicationType_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _
 static int dissect_RICrequestID_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_PER, TRUE, pinfo);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_PER, true, pinfo);
   offset = dissect_e2ap_RICrequestID(tvb, offset, &asn1_ctx, tree, hf_e2ap_RICrequestID_PDU);
+  offset += 7; offset >>= 3;
+  return offset;
+}
+static int dissect_RICsubscriptionTime_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
+  int offset = 0;
+  asn1_ctx_t asn1_ctx;
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_PER, true, pinfo);
+  offset = dissect_e2ap_RICsubscriptionTime(tvb, offset, &asn1_ctx, tree, hf_e2ap_RICsubscriptionTime_PDU);
+  offset += 7; offset >>= 3;
+  return offset;
+}
+static int dissect_RICqueryHeader_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
+  int offset = 0;
+  asn1_ctx_t asn1_ctx;
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_PER, true, pinfo);
+  offset = dissect_e2ap_RICqueryHeader(tvb, offset, &asn1_ctx, tree, hf_e2ap_RICqueryHeader_PDU);
+  offset += 7; offset >>= 3;
+  return offset;
+}
+static int dissect_RICqueryDefinition_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
+  int offset = 0;
+  asn1_ctx_t asn1_ctx;
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_PER, true, pinfo);
+  offset = dissect_e2ap_RICqueryDefinition(tvb, offset, &asn1_ctx, tree, hf_e2ap_RICqueryDefinition_PDU);
+  offset += 7; offset >>= 3;
+  return offset;
+}
+static int dissect_RICqueryOutcome_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
+  int offset = 0;
+  asn1_ctx_t asn1_ctx;
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_PER, true, pinfo);
+  offset = dissect_e2ap_RICqueryOutcome(tvb, offset, &asn1_ctx, tree, hf_e2ap_RICqueryOutcome_PDU);
   offset += 7; offset >>= 3;
   return offset;
 }
 static int dissect_TimeToWait_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_PER, TRUE, pinfo);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_PER, true, pinfo);
   offset = dissect_e2ap_TimeToWait(tvb, offset, &asn1_ctx, tree, hf_e2ap_TimeToWait_PDU);
   offset += 7; offset >>= 3;
   return offset;
@@ -12049,7 +13493,7 @@ static int dissect_TimeToWait_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, pro
 static int dissect_TNLinformation_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_PER, TRUE, pinfo);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_PER, true, pinfo);
   offset = dissect_e2ap_TNLinformation(tvb, offset, &asn1_ctx, tree, hf_e2ap_TNLinformation_PDU);
   offset += 7; offset >>= 3;
   return offset;
@@ -12057,7 +13501,7 @@ static int dissect_TNLinformation_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_,
 static int dissect_TransactionID_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_PER, TRUE, pinfo);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_PER, true, pinfo);
   offset = dissect_e2ap_TransactionID(tvb, offset, &asn1_ctx, tree, hf_e2ap_TransactionID_PDU);
   offset += 7; offset >>= 3;
   return offset;
@@ -12065,7 +13509,7 @@ static int dissect_TransactionID_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, 
 static int dissect_RICsubscriptionRequest_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_PER, TRUE, pinfo);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_PER, true, pinfo);
   offset = dissect_e2ap_RICsubscriptionRequest(tvb, offset, &asn1_ctx, tree, hf_e2ap_RICsubscriptionRequest_PDU);
   offset += 7; offset >>= 3;
   return offset;
@@ -12073,7 +13517,7 @@ static int dissect_RICsubscriptionRequest_PDU(tvbuff_t *tvb _U_, packet_info *pi
 static int dissect_RICsubscriptionDetails_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_PER, TRUE, pinfo);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_PER, true, pinfo);
   offset = dissect_e2ap_RICsubscriptionDetails(tvb, offset, &asn1_ctx, tree, hf_e2ap_RICsubscriptionDetails_PDU);
   offset += 7; offset >>= 3;
   return offset;
@@ -12081,7 +13525,7 @@ static int dissect_RICsubscriptionDetails_PDU(tvbuff_t *tvb _U_, packet_info *pi
 static int dissect_RICaction_ToBeSetup_Item_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_PER, TRUE, pinfo);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_PER, true, pinfo);
   offset = dissect_e2ap_RICaction_ToBeSetup_Item(tvb, offset, &asn1_ctx, tree, hf_e2ap_RICaction_ToBeSetup_Item_PDU);
   offset += 7; offset >>= 3;
   return offset;
@@ -12089,7 +13533,7 @@ static int dissect_RICaction_ToBeSetup_Item_PDU(tvbuff_t *tvb _U_, packet_info *
 static int dissect_RICsubscriptionResponse_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_PER, TRUE, pinfo);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_PER, true, pinfo);
   offset = dissect_e2ap_RICsubscriptionResponse(tvb, offset, &asn1_ctx, tree, hf_e2ap_RICsubscriptionResponse_PDU);
   offset += 7; offset >>= 3;
   return offset;
@@ -12097,7 +13541,7 @@ static int dissect_RICsubscriptionResponse_PDU(tvbuff_t *tvb _U_, packet_info *p
 static int dissect_RICaction_Admitted_List_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_PER, TRUE, pinfo);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_PER, true, pinfo);
   offset = dissect_e2ap_RICaction_Admitted_List(tvb, offset, &asn1_ctx, tree, hf_e2ap_RICaction_Admitted_List_PDU);
   offset += 7; offset >>= 3;
   return offset;
@@ -12105,7 +13549,7 @@ static int dissect_RICaction_Admitted_List_PDU(tvbuff_t *tvb _U_, packet_info *p
 static int dissect_RICaction_Admitted_Item_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_PER, TRUE, pinfo);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_PER, true, pinfo);
   offset = dissect_e2ap_RICaction_Admitted_Item(tvb, offset, &asn1_ctx, tree, hf_e2ap_RICaction_Admitted_Item_PDU);
   offset += 7; offset >>= 3;
   return offset;
@@ -12113,7 +13557,7 @@ static int dissect_RICaction_Admitted_Item_PDU(tvbuff_t *tvb _U_, packet_info *p
 static int dissect_RICaction_NotAdmitted_List_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_PER, TRUE, pinfo);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_PER, true, pinfo);
   offset = dissect_e2ap_RICaction_NotAdmitted_List(tvb, offset, &asn1_ctx, tree, hf_e2ap_RICaction_NotAdmitted_List_PDU);
   offset += 7; offset >>= 3;
   return offset;
@@ -12121,7 +13565,7 @@ static int dissect_RICaction_NotAdmitted_List_PDU(tvbuff_t *tvb _U_, packet_info
 static int dissect_RICaction_NotAdmitted_Item_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_PER, TRUE, pinfo);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_PER, true, pinfo);
   offset = dissect_e2ap_RICaction_NotAdmitted_Item(tvb, offset, &asn1_ctx, tree, hf_e2ap_RICaction_NotAdmitted_Item_PDU);
   offset += 7; offset >>= 3;
   return offset;
@@ -12129,7 +13573,7 @@ static int dissect_RICaction_NotAdmitted_Item_PDU(tvbuff_t *tvb _U_, packet_info
 static int dissect_RICsubscriptionFailure_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_PER, TRUE, pinfo);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_PER, true, pinfo);
   offset = dissect_e2ap_RICsubscriptionFailure(tvb, offset, &asn1_ctx, tree, hf_e2ap_RICsubscriptionFailure_PDU);
   offset += 7; offset >>= 3;
   return offset;
@@ -12137,7 +13581,7 @@ static int dissect_RICsubscriptionFailure_PDU(tvbuff_t *tvb _U_, packet_info *pi
 static int dissect_RICsubscriptionDeleteRequest_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_PER, TRUE, pinfo);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_PER, true, pinfo);
   offset = dissect_e2ap_RICsubscriptionDeleteRequest(tvb, offset, &asn1_ctx, tree, hf_e2ap_RICsubscriptionDeleteRequest_PDU);
   offset += 7; offset >>= 3;
   return offset;
@@ -12145,7 +13589,7 @@ static int dissect_RICsubscriptionDeleteRequest_PDU(tvbuff_t *tvb _U_, packet_in
 static int dissect_RICsubscriptionDeleteResponse_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_PER, TRUE, pinfo);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_PER, true, pinfo);
   offset = dissect_e2ap_RICsubscriptionDeleteResponse(tvb, offset, &asn1_ctx, tree, hf_e2ap_RICsubscriptionDeleteResponse_PDU);
   offset += 7; offset >>= 3;
   return offset;
@@ -12153,7 +13597,7 @@ static int dissect_RICsubscriptionDeleteResponse_PDU(tvbuff_t *tvb _U_, packet_i
 static int dissect_RICsubscriptionDeleteFailure_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_PER, TRUE, pinfo);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_PER, true, pinfo);
   offset = dissect_e2ap_RICsubscriptionDeleteFailure(tvb, offset, &asn1_ctx, tree, hf_e2ap_RICsubscriptionDeleteFailure_PDU);
   offset += 7; offset >>= 3;
   return offset;
@@ -12161,7 +13605,7 @@ static int dissect_RICsubscriptionDeleteFailure_PDU(tvbuff_t *tvb _U_, packet_in
 static int dissect_RICsubscriptionDeleteRequired_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_PER, TRUE, pinfo);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_PER, true, pinfo);
   offset = dissect_e2ap_RICsubscriptionDeleteRequired(tvb, offset, &asn1_ctx, tree, hf_e2ap_RICsubscriptionDeleteRequired_PDU);
   offset += 7; offset >>= 3;
   return offset;
@@ -12169,7 +13613,7 @@ static int dissect_RICsubscriptionDeleteRequired_PDU(tvbuff_t *tvb _U_, packet_i
 static int dissect_RICsubscription_List_withCause_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_PER, TRUE, pinfo);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_PER, true, pinfo);
   offset = dissect_e2ap_RICsubscription_List_withCause(tvb, offset, &asn1_ctx, tree, hf_e2ap_RICsubscription_List_withCause_PDU);
   offset += 7; offset >>= 3;
   return offset;
@@ -12177,15 +13621,303 @@ static int dissect_RICsubscription_List_withCause_PDU(tvbuff_t *tvb _U_, packet_
 static int dissect_RICsubscription_withCause_Item_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_PER, TRUE, pinfo);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_PER, true, pinfo);
   offset = dissect_e2ap_RICsubscription_withCause_Item(tvb, offset, &asn1_ctx, tree, hf_e2ap_RICsubscription_withCause_Item_PDU);
+  offset += 7; offset >>= 3;
+  return offset;
+}
+static int dissect_RICsubscriptionModificationRequest_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
+  int offset = 0;
+  asn1_ctx_t asn1_ctx;
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_PER, true, pinfo);
+  offset = dissect_e2ap_RICsubscriptionModificationRequest(tvb, offset, &asn1_ctx, tree, hf_e2ap_RICsubscriptionModificationRequest_PDU);
+  offset += 7; offset >>= 3;
+  return offset;
+}
+static int dissect_RICactions_ToBeRemovedForModification_List_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
+  int offset = 0;
+  asn1_ctx_t asn1_ctx;
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_PER, true, pinfo);
+  offset = dissect_e2ap_RICactions_ToBeRemovedForModification_List(tvb, offset, &asn1_ctx, tree, hf_e2ap_RICactions_ToBeRemovedForModification_List_PDU);
+  offset += 7; offset >>= 3;
+  return offset;
+}
+static int dissect_RICaction_ToBeRemovedForModification_Item_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
+  int offset = 0;
+  asn1_ctx_t asn1_ctx;
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_PER, true, pinfo);
+  offset = dissect_e2ap_RICaction_ToBeRemovedForModification_Item(tvb, offset, &asn1_ctx, tree, hf_e2ap_RICaction_ToBeRemovedForModification_Item_PDU);
+  offset += 7; offset >>= 3;
+  return offset;
+}
+static int dissect_RICactions_ToBeModifiedForModification_List_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
+  int offset = 0;
+  asn1_ctx_t asn1_ctx;
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_PER, true, pinfo);
+  offset = dissect_e2ap_RICactions_ToBeModifiedForModification_List(tvb, offset, &asn1_ctx, tree, hf_e2ap_RICactions_ToBeModifiedForModification_List_PDU);
+  offset += 7; offset >>= 3;
+  return offset;
+}
+static int dissect_RICaction_ToBeModifiedForModification_Item_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
+  int offset = 0;
+  asn1_ctx_t asn1_ctx;
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_PER, true, pinfo);
+  offset = dissect_e2ap_RICaction_ToBeModifiedForModification_Item(tvb, offset, &asn1_ctx, tree, hf_e2ap_RICaction_ToBeModifiedForModification_Item_PDU);
+  offset += 7; offset >>= 3;
+  return offset;
+}
+static int dissect_RICactions_ToBeAddedForModification_List_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
+  int offset = 0;
+  asn1_ctx_t asn1_ctx;
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_PER, true, pinfo);
+  offset = dissect_e2ap_RICactions_ToBeAddedForModification_List(tvb, offset, &asn1_ctx, tree, hf_e2ap_RICactions_ToBeAddedForModification_List_PDU);
+  offset += 7; offset >>= 3;
+  return offset;
+}
+static int dissect_RICaction_ToBeAddedForModification_Item_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
+  int offset = 0;
+  asn1_ctx_t asn1_ctx;
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_PER, true, pinfo);
+  offset = dissect_e2ap_RICaction_ToBeAddedForModification_Item(tvb, offset, &asn1_ctx, tree, hf_e2ap_RICaction_ToBeAddedForModification_Item_PDU);
+  offset += 7; offset >>= 3;
+  return offset;
+}
+static int dissect_RICsubscriptionModificationResponse_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
+  int offset = 0;
+  asn1_ctx_t asn1_ctx;
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_PER, true, pinfo);
+  offset = dissect_e2ap_RICsubscriptionModificationResponse(tvb, offset, &asn1_ctx, tree, hf_e2ap_RICsubscriptionModificationResponse_PDU);
+  offset += 7; offset >>= 3;
+  return offset;
+}
+static int dissect_RICactions_RemovedForModification_List_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
+  int offset = 0;
+  asn1_ctx_t asn1_ctx;
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_PER, true, pinfo);
+  offset = dissect_e2ap_RICactions_RemovedForModification_List(tvb, offset, &asn1_ctx, tree, hf_e2ap_RICactions_RemovedForModification_List_PDU);
+  offset += 7; offset >>= 3;
+  return offset;
+}
+static int dissect_RICaction_RemovedForModification_Item_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
+  int offset = 0;
+  asn1_ctx_t asn1_ctx;
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_PER, true, pinfo);
+  offset = dissect_e2ap_RICaction_RemovedForModification_Item(tvb, offset, &asn1_ctx, tree, hf_e2ap_RICaction_RemovedForModification_Item_PDU);
+  offset += 7; offset >>= 3;
+  return offset;
+}
+static int dissect_RICactions_FailedToBeRemovedForModification_List_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
+  int offset = 0;
+  asn1_ctx_t asn1_ctx;
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_PER, true, pinfo);
+  offset = dissect_e2ap_RICactions_FailedToBeRemovedForModification_List(tvb, offset, &asn1_ctx, tree, hf_e2ap_RICactions_FailedToBeRemovedForModification_List_PDU);
+  offset += 7; offset >>= 3;
+  return offset;
+}
+static int dissect_RICaction_FailedToBeRemovedForModification_Item_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
+  int offset = 0;
+  asn1_ctx_t asn1_ctx;
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_PER, true, pinfo);
+  offset = dissect_e2ap_RICaction_FailedToBeRemovedForModification_Item(tvb, offset, &asn1_ctx, tree, hf_e2ap_RICaction_FailedToBeRemovedForModification_Item_PDU);
+  offset += 7; offset >>= 3;
+  return offset;
+}
+static int dissect_RICactions_ModifiedForModification_List_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
+  int offset = 0;
+  asn1_ctx_t asn1_ctx;
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_PER, true, pinfo);
+  offset = dissect_e2ap_RICactions_ModifiedForModification_List(tvb, offset, &asn1_ctx, tree, hf_e2ap_RICactions_ModifiedForModification_List_PDU);
+  offset += 7; offset >>= 3;
+  return offset;
+}
+static int dissect_RICaction_ModifiedForModification_Item_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
+  int offset = 0;
+  asn1_ctx_t asn1_ctx;
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_PER, true, pinfo);
+  offset = dissect_e2ap_RICaction_ModifiedForModification_Item(tvb, offset, &asn1_ctx, tree, hf_e2ap_RICaction_ModifiedForModification_Item_PDU);
+  offset += 7; offset >>= 3;
+  return offset;
+}
+static int dissect_RICactions_FailedToBeModifiedForModification_List_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
+  int offset = 0;
+  asn1_ctx_t asn1_ctx;
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_PER, true, pinfo);
+  offset = dissect_e2ap_RICactions_FailedToBeModifiedForModification_List(tvb, offset, &asn1_ctx, tree, hf_e2ap_RICactions_FailedToBeModifiedForModification_List_PDU);
+  offset += 7; offset >>= 3;
+  return offset;
+}
+static int dissect_RICaction_FailedToBeModifiedForModification_Item_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
+  int offset = 0;
+  asn1_ctx_t asn1_ctx;
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_PER, true, pinfo);
+  offset = dissect_e2ap_RICaction_FailedToBeModifiedForModification_Item(tvb, offset, &asn1_ctx, tree, hf_e2ap_RICaction_FailedToBeModifiedForModification_Item_PDU);
+  offset += 7; offset >>= 3;
+  return offset;
+}
+static int dissect_RICactions_AddedForModification_List_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
+  int offset = 0;
+  asn1_ctx_t asn1_ctx;
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_PER, true, pinfo);
+  offset = dissect_e2ap_RICactions_AddedForModification_List(tvb, offset, &asn1_ctx, tree, hf_e2ap_RICactions_AddedForModification_List_PDU);
+  offset += 7; offset >>= 3;
+  return offset;
+}
+static int dissect_RICaction_AddedForModification_Item_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
+  int offset = 0;
+  asn1_ctx_t asn1_ctx;
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_PER, true, pinfo);
+  offset = dissect_e2ap_RICaction_AddedForModification_Item(tvb, offset, &asn1_ctx, tree, hf_e2ap_RICaction_AddedForModification_Item_PDU);
+  offset += 7; offset >>= 3;
+  return offset;
+}
+static int dissect_RICactions_FailedToBeAddedForModification_List_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
+  int offset = 0;
+  asn1_ctx_t asn1_ctx;
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_PER, true, pinfo);
+  offset = dissect_e2ap_RICactions_FailedToBeAddedForModification_List(tvb, offset, &asn1_ctx, tree, hf_e2ap_RICactions_FailedToBeAddedForModification_List_PDU);
+  offset += 7; offset >>= 3;
+  return offset;
+}
+static int dissect_RICaction_FailedToBeAddedForModification_Item_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
+  int offset = 0;
+  asn1_ctx_t asn1_ctx;
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_PER, true, pinfo);
+  offset = dissect_e2ap_RICaction_FailedToBeAddedForModification_Item(tvb, offset, &asn1_ctx, tree, hf_e2ap_RICaction_FailedToBeAddedForModification_Item_PDU);
+  offset += 7; offset >>= 3;
+  return offset;
+}
+static int dissect_RICsubscriptionModificationFailure_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
+  int offset = 0;
+  asn1_ctx_t asn1_ctx;
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_PER, true, pinfo);
+  offset = dissect_e2ap_RICsubscriptionModificationFailure(tvb, offset, &asn1_ctx, tree, hf_e2ap_RICsubscriptionModificationFailure_PDU);
+  offset += 7; offset >>= 3;
+  return offset;
+}
+static int dissect_RICsubscriptionModificationRequired_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
+  int offset = 0;
+  asn1_ctx_t asn1_ctx;
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_PER, true, pinfo);
+  offset = dissect_e2ap_RICsubscriptionModificationRequired(tvb, offset, &asn1_ctx, tree, hf_e2ap_RICsubscriptionModificationRequired_PDU);
+  offset += 7; offset >>= 3;
+  return offset;
+}
+static int dissect_RICactions_RequiredToBeModified_List_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
+  int offset = 0;
+  asn1_ctx_t asn1_ctx;
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_PER, true, pinfo);
+  offset = dissect_e2ap_RICactions_RequiredToBeModified_List(tvb, offset, &asn1_ctx, tree, hf_e2ap_RICactions_RequiredToBeModified_List_PDU);
+  offset += 7; offset >>= 3;
+  return offset;
+}
+static int dissect_RICaction_RequiredToBeModified_Item_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
+  int offset = 0;
+  asn1_ctx_t asn1_ctx;
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_PER, true, pinfo);
+  offset = dissect_e2ap_RICaction_RequiredToBeModified_Item(tvb, offset, &asn1_ctx, tree, hf_e2ap_RICaction_RequiredToBeModified_Item_PDU);
+  offset += 7; offset >>= 3;
+  return offset;
+}
+static int dissect_RICactions_RequiredToBeRemoved_List_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
+  int offset = 0;
+  asn1_ctx_t asn1_ctx;
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_PER, true, pinfo);
+  offset = dissect_e2ap_RICactions_RequiredToBeRemoved_List(tvb, offset, &asn1_ctx, tree, hf_e2ap_RICactions_RequiredToBeRemoved_List_PDU);
+  offset += 7; offset >>= 3;
+  return offset;
+}
+static int dissect_RICaction_RequiredToBeRemoved_Item_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
+  int offset = 0;
+  asn1_ctx_t asn1_ctx;
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_PER, true, pinfo);
+  offset = dissect_e2ap_RICaction_RequiredToBeRemoved_Item(tvb, offset, &asn1_ctx, tree, hf_e2ap_RICaction_RequiredToBeRemoved_Item_PDU);
+  offset += 7; offset >>= 3;
+  return offset;
+}
+static int dissect_RICsubscriptionModificationConfirm_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
+  int offset = 0;
+  asn1_ctx_t asn1_ctx;
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_PER, true, pinfo);
+  offset = dissect_e2ap_RICsubscriptionModificationConfirm(tvb, offset, &asn1_ctx, tree, hf_e2ap_RICsubscriptionModificationConfirm_PDU);
+  offset += 7; offset >>= 3;
+  return offset;
+}
+static int dissect_RICactions_ConfirmedForModification_List_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
+  int offset = 0;
+  asn1_ctx_t asn1_ctx;
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_PER, true, pinfo);
+  offset = dissect_e2ap_RICactions_ConfirmedForModification_List(tvb, offset, &asn1_ctx, tree, hf_e2ap_RICactions_ConfirmedForModification_List_PDU);
+  offset += 7; offset >>= 3;
+  return offset;
+}
+static int dissect_RICaction_ConfirmedForModification_Item_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
+  int offset = 0;
+  asn1_ctx_t asn1_ctx;
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_PER, true, pinfo);
+  offset = dissect_e2ap_RICaction_ConfirmedForModification_Item(tvb, offset, &asn1_ctx, tree, hf_e2ap_RICaction_ConfirmedForModification_Item_PDU);
+  offset += 7; offset >>= 3;
+  return offset;
+}
+static int dissect_RICactions_RefusedToBeModified_List_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
+  int offset = 0;
+  asn1_ctx_t asn1_ctx;
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_PER, true, pinfo);
+  offset = dissect_e2ap_RICactions_RefusedToBeModified_List(tvb, offset, &asn1_ctx, tree, hf_e2ap_RICactions_RefusedToBeModified_List_PDU);
+  offset += 7; offset >>= 3;
+  return offset;
+}
+static int dissect_RICaction_RefusedToBeModified_Item_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
+  int offset = 0;
+  asn1_ctx_t asn1_ctx;
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_PER, true, pinfo);
+  offset = dissect_e2ap_RICaction_RefusedToBeModified_Item(tvb, offset, &asn1_ctx, tree, hf_e2ap_RICaction_RefusedToBeModified_Item_PDU);
+  offset += 7; offset >>= 3;
+  return offset;
+}
+static int dissect_RICactions_ConfirmedForRemoval_List_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
+  int offset = 0;
+  asn1_ctx_t asn1_ctx;
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_PER, true, pinfo);
+  offset = dissect_e2ap_RICactions_ConfirmedForRemoval_List(tvb, offset, &asn1_ctx, tree, hf_e2ap_RICactions_ConfirmedForRemoval_List_PDU);
+  offset += 7; offset >>= 3;
+  return offset;
+}
+static int dissect_RICaction_ConfirmedForRemoval_Item_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
+  int offset = 0;
+  asn1_ctx_t asn1_ctx;
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_PER, true, pinfo);
+  offset = dissect_e2ap_RICaction_ConfirmedForRemoval_Item(tvb, offset, &asn1_ctx, tree, hf_e2ap_RICaction_ConfirmedForRemoval_Item_PDU);
+  offset += 7; offset >>= 3;
+  return offset;
+}
+static int dissect_RICactions_RefusedToBeRemoved_List_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
+  int offset = 0;
+  asn1_ctx_t asn1_ctx;
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_PER, true, pinfo);
+  offset = dissect_e2ap_RICactions_RefusedToBeRemoved_List(tvb, offset, &asn1_ctx, tree, hf_e2ap_RICactions_RefusedToBeRemoved_List_PDU);
+  offset += 7; offset >>= 3;
+  return offset;
+}
+static int dissect_RICaction_RefusedToBeRemoved_Item_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
+  int offset = 0;
+  asn1_ctx_t asn1_ctx;
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_PER, true, pinfo);
+  offset = dissect_e2ap_RICaction_RefusedToBeRemoved_Item(tvb, offset, &asn1_ctx, tree, hf_e2ap_RICaction_RefusedToBeRemoved_Item_PDU);
+  offset += 7; offset >>= 3;
+  return offset;
+}
+static int dissect_RICsubscriptionModificationRefuse_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
+  int offset = 0;
+  asn1_ctx_t asn1_ctx;
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_PER, true, pinfo);
+  offset = dissect_e2ap_RICsubscriptionModificationRefuse(tvb, offset, &asn1_ctx, tree, hf_e2ap_RICsubscriptionModificationRefuse_PDU);
   offset += 7; offset >>= 3;
   return offset;
 }
 static int dissect_RICindication_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_PER, TRUE, pinfo);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_PER, true, pinfo);
   offset = dissect_e2ap_RICindication(tvb, offset, &asn1_ctx, tree, hf_e2ap_RICindication_PDU);
   offset += 7; offset >>= 3;
   return offset;
@@ -12193,7 +13925,7 @@ static int dissect_RICindication_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, 
 static int dissect_RICcontrolRequest_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_PER, TRUE, pinfo);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_PER, true, pinfo);
   offset = dissect_e2ap_RICcontrolRequest(tvb, offset, &asn1_ctx, tree, hf_e2ap_RICcontrolRequest_PDU);
   offset += 7; offset >>= 3;
   return offset;
@@ -12201,7 +13933,7 @@ static int dissect_RICcontrolRequest_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _
 static int dissect_RICcontrolAcknowledge_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_PER, TRUE, pinfo);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_PER, true, pinfo);
   offset = dissect_e2ap_RICcontrolAcknowledge(tvb, offset, &asn1_ctx, tree, hf_e2ap_RICcontrolAcknowledge_PDU);
   offset += 7; offset >>= 3;
   return offset;
@@ -12209,15 +13941,39 @@ static int dissect_RICcontrolAcknowledge_PDU(tvbuff_t *tvb _U_, packet_info *pin
 static int dissect_RICcontrolFailure_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_PER, TRUE, pinfo);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_PER, true, pinfo);
   offset = dissect_e2ap_RICcontrolFailure(tvb, offset, &asn1_ctx, tree, hf_e2ap_RICcontrolFailure_PDU);
+  offset += 7; offset >>= 3;
+  return offset;
+}
+static int dissect_RICQueryRequest_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
+  int offset = 0;
+  asn1_ctx_t asn1_ctx;
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_PER, true, pinfo);
+  offset = dissect_e2ap_RICQueryRequest(tvb, offset, &asn1_ctx, tree, hf_e2ap_RICQueryRequest_PDU);
+  offset += 7; offset >>= 3;
+  return offset;
+}
+static int dissect_RICQueryResponse_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
+  int offset = 0;
+  asn1_ctx_t asn1_ctx;
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_PER, true, pinfo);
+  offset = dissect_e2ap_RICQueryResponse(tvb, offset, &asn1_ctx, tree, hf_e2ap_RICQueryResponse_PDU);
+  offset += 7; offset >>= 3;
+  return offset;
+}
+static int dissect_RICQueryFailure_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
+  int offset = 0;
+  asn1_ctx_t asn1_ctx;
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_PER, true, pinfo);
+  offset = dissect_e2ap_RICQueryFailure(tvb, offset, &asn1_ctx, tree, hf_e2ap_RICQueryFailure_PDU);
   offset += 7; offset >>= 3;
   return offset;
 }
 static int dissect_ErrorIndication_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_PER, TRUE, pinfo);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_PER, true, pinfo);
   offset = dissect_e2ap_ErrorIndication(tvb, offset, &asn1_ctx, tree, hf_e2ap_ErrorIndication_PDU);
   offset += 7; offset >>= 3;
   return offset;
@@ -12225,7 +13981,7 @@ static int dissect_ErrorIndication_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_
 static int dissect_E2setupRequest_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_PER, TRUE, pinfo);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_PER, true, pinfo);
   offset = dissect_e2ap_E2setupRequest(tvb, offset, &asn1_ctx, tree, hf_e2ap_E2setupRequest_PDU);
   offset += 7; offset >>= 3;
   return offset;
@@ -12233,7 +13989,7 @@ static int dissect_E2setupRequest_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_,
 static int dissect_E2setupResponse_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_PER, TRUE, pinfo);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_PER, true, pinfo);
   offset = dissect_e2ap_E2setupResponse(tvb, offset, &asn1_ctx, tree, hf_e2ap_E2setupResponse_PDU);
   offset += 7; offset >>= 3;
   return offset;
@@ -12241,7 +13997,7 @@ static int dissect_E2setupResponse_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_
 static int dissect_E2setupFailure_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_PER, TRUE, pinfo);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_PER, true, pinfo);
   offset = dissect_e2ap_E2setupFailure(tvb, offset, &asn1_ctx, tree, hf_e2ap_E2setupFailure_PDU);
   offset += 7; offset >>= 3;
   return offset;
@@ -12249,7 +14005,7 @@ static int dissect_E2setupFailure_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_,
 static int dissect_E2connectionUpdate_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_PER, TRUE, pinfo);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_PER, true, pinfo);
   offset = dissect_e2ap_E2connectionUpdate(tvb, offset, &asn1_ctx, tree, hf_e2ap_E2connectionUpdate_PDU);
   offset += 7; offset >>= 3;
   return offset;
@@ -12257,7 +14013,7 @@ static int dissect_E2connectionUpdate_PDU(tvbuff_t *tvb _U_, packet_info *pinfo 
 static int dissect_E2connectionUpdate_List_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_PER, TRUE, pinfo);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_PER, true, pinfo);
   offset = dissect_e2ap_E2connectionUpdate_List(tvb, offset, &asn1_ctx, tree, hf_e2ap_E2connectionUpdate_List_PDU);
   offset += 7; offset >>= 3;
   return offset;
@@ -12265,7 +14021,7 @@ static int dissect_E2connectionUpdate_List_PDU(tvbuff_t *tvb _U_, packet_info *p
 static int dissect_E2connectionUpdate_Item_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_PER, TRUE, pinfo);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_PER, true, pinfo);
   offset = dissect_e2ap_E2connectionUpdate_Item(tvb, offset, &asn1_ctx, tree, hf_e2ap_E2connectionUpdate_Item_PDU);
   offset += 7; offset >>= 3;
   return offset;
@@ -12273,7 +14029,7 @@ static int dissect_E2connectionUpdate_Item_PDU(tvbuff_t *tvb _U_, packet_info *p
 static int dissect_E2connectionUpdateRemove_List_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_PER, TRUE, pinfo);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_PER, true, pinfo);
   offset = dissect_e2ap_E2connectionUpdateRemove_List(tvb, offset, &asn1_ctx, tree, hf_e2ap_E2connectionUpdateRemove_List_PDU);
   offset += 7; offset >>= 3;
   return offset;
@@ -12281,7 +14037,7 @@ static int dissect_E2connectionUpdateRemove_List_PDU(tvbuff_t *tvb _U_, packet_i
 static int dissect_E2connectionUpdateRemove_Item_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_PER, TRUE, pinfo);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_PER, true, pinfo);
   offset = dissect_e2ap_E2connectionUpdateRemove_Item(tvb, offset, &asn1_ctx, tree, hf_e2ap_E2connectionUpdateRemove_Item_PDU);
   offset += 7; offset >>= 3;
   return offset;
@@ -12289,7 +14045,7 @@ static int dissect_E2connectionUpdateRemove_Item_PDU(tvbuff_t *tvb _U_, packet_i
 static int dissect_E2connectionUpdateAcknowledge_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_PER, TRUE, pinfo);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_PER, true, pinfo);
   offset = dissect_e2ap_E2connectionUpdateAcknowledge(tvb, offset, &asn1_ctx, tree, hf_e2ap_E2connectionUpdateAcknowledge_PDU);
   offset += 7; offset >>= 3;
   return offset;
@@ -12297,7 +14053,7 @@ static int dissect_E2connectionUpdateAcknowledge_PDU(tvbuff_t *tvb _U_, packet_i
 static int dissect_E2connectionSetupFailed_List_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_PER, TRUE, pinfo);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_PER, true, pinfo);
   offset = dissect_e2ap_E2connectionSetupFailed_List(tvb, offset, &asn1_ctx, tree, hf_e2ap_E2connectionSetupFailed_List_PDU);
   offset += 7; offset >>= 3;
   return offset;
@@ -12305,7 +14061,7 @@ static int dissect_E2connectionSetupFailed_List_PDU(tvbuff_t *tvb _U_, packet_in
 static int dissect_E2connectionSetupFailed_Item_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_PER, TRUE, pinfo);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_PER, true, pinfo);
   offset = dissect_e2ap_E2connectionSetupFailed_Item(tvb, offset, &asn1_ctx, tree, hf_e2ap_E2connectionSetupFailed_Item_PDU);
   offset += 7; offset >>= 3;
   return offset;
@@ -12313,7 +14069,7 @@ static int dissect_E2connectionSetupFailed_Item_PDU(tvbuff_t *tvb _U_, packet_in
 static int dissect_E2connectionUpdateFailure_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_PER, TRUE, pinfo);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_PER, true, pinfo);
   offset = dissect_e2ap_E2connectionUpdateFailure(tvb, offset, &asn1_ctx, tree, hf_e2ap_E2connectionUpdateFailure_PDU);
   offset += 7; offset >>= 3;
   return offset;
@@ -12321,7 +14077,7 @@ static int dissect_E2connectionUpdateFailure_PDU(tvbuff_t *tvb _U_, packet_info 
 static int dissect_E2nodeConfigurationUpdate_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_PER, TRUE, pinfo);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_PER, true, pinfo);
   offset = dissect_e2ap_E2nodeConfigurationUpdate(tvb, offset, &asn1_ctx, tree, hf_e2ap_E2nodeConfigurationUpdate_PDU);
   offset += 7; offset >>= 3;
   return offset;
@@ -12329,7 +14085,7 @@ static int dissect_E2nodeConfigurationUpdate_PDU(tvbuff_t *tvb _U_, packet_info 
 static int dissect_E2nodeComponentConfigAddition_List_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_PER, TRUE, pinfo);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_PER, true, pinfo);
   offset = dissect_e2ap_E2nodeComponentConfigAddition_List(tvb, offset, &asn1_ctx, tree, hf_e2ap_E2nodeComponentConfigAddition_List_PDU);
   offset += 7; offset >>= 3;
   return offset;
@@ -12337,7 +14093,7 @@ static int dissect_E2nodeComponentConfigAddition_List_PDU(tvbuff_t *tvb _U_, pac
 static int dissect_E2nodeComponentConfigAddition_Item_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_PER, TRUE, pinfo);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_PER, true, pinfo);
   offset = dissect_e2ap_E2nodeComponentConfigAddition_Item(tvb, offset, &asn1_ctx, tree, hf_e2ap_E2nodeComponentConfigAddition_Item_PDU);
   offset += 7; offset >>= 3;
   return offset;
@@ -12345,7 +14101,7 @@ static int dissect_E2nodeComponentConfigAddition_Item_PDU(tvbuff_t *tvb _U_, pac
 static int dissect_E2nodeComponentConfigUpdate_List_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_PER, TRUE, pinfo);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_PER, true, pinfo);
   offset = dissect_e2ap_E2nodeComponentConfigUpdate_List(tvb, offset, &asn1_ctx, tree, hf_e2ap_E2nodeComponentConfigUpdate_List_PDU);
   offset += 7; offset >>= 3;
   return offset;
@@ -12353,7 +14109,7 @@ static int dissect_E2nodeComponentConfigUpdate_List_PDU(tvbuff_t *tvb _U_, packe
 static int dissect_E2nodeComponentConfigUpdate_Item_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_PER, TRUE, pinfo);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_PER, true, pinfo);
   offset = dissect_e2ap_E2nodeComponentConfigUpdate_Item(tvb, offset, &asn1_ctx, tree, hf_e2ap_E2nodeComponentConfigUpdate_Item_PDU);
   offset += 7; offset >>= 3;
   return offset;
@@ -12361,7 +14117,7 @@ static int dissect_E2nodeComponentConfigUpdate_Item_PDU(tvbuff_t *tvb _U_, packe
 static int dissect_E2nodeComponentConfigRemoval_List_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_PER, TRUE, pinfo);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_PER, true, pinfo);
   offset = dissect_e2ap_E2nodeComponentConfigRemoval_List(tvb, offset, &asn1_ctx, tree, hf_e2ap_E2nodeComponentConfigRemoval_List_PDU);
   offset += 7; offset >>= 3;
   return offset;
@@ -12369,7 +14125,7 @@ static int dissect_E2nodeComponentConfigRemoval_List_PDU(tvbuff_t *tvb _U_, pack
 static int dissect_E2nodeComponentConfigRemoval_Item_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_PER, TRUE, pinfo);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_PER, true, pinfo);
   offset = dissect_e2ap_E2nodeComponentConfigRemoval_Item(tvb, offset, &asn1_ctx, tree, hf_e2ap_E2nodeComponentConfigRemoval_Item_PDU);
   offset += 7; offset >>= 3;
   return offset;
@@ -12377,7 +14133,7 @@ static int dissect_E2nodeComponentConfigRemoval_Item_PDU(tvbuff_t *tvb _U_, pack
 static int dissect_E2nodeTNLassociationRemoval_List_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_PER, TRUE, pinfo);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_PER, true, pinfo);
   offset = dissect_e2ap_E2nodeTNLassociationRemoval_List(tvb, offset, &asn1_ctx, tree, hf_e2ap_E2nodeTNLassociationRemoval_List_PDU);
   offset += 7; offset >>= 3;
   return offset;
@@ -12385,7 +14141,7 @@ static int dissect_E2nodeTNLassociationRemoval_List_PDU(tvbuff_t *tvb _U_, packe
 static int dissect_E2nodeTNLassociationRemoval_Item_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_PER, TRUE, pinfo);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_PER, true, pinfo);
   offset = dissect_e2ap_E2nodeTNLassociationRemoval_Item(tvb, offset, &asn1_ctx, tree, hf_e2ap_E2nodeTNLassociationRemoval_Item_PDU);
   offset += 7; offset >>= 3;
   return offset;
@@ -12393,7 +14149,7 @@ static int dissect_E2nodeTNLassociationRemoval_Item_PDU(tvbuff_t *tvb _U_, packe
 static int dissect_E2nodeConfigurationUpdateAcknowledge_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_PER, TRUE, pinfo);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_PER, true, pinfo);
   offset = dissect_e2ap_E2nodeConfigurationUpdateAcknowledge(tvb, offset, &asn1_ctx, tree, hf_e2ap_E2nodeConfigurationUpdateAcknowledge_PDU);
   offset += 7; offset >>= 3;
   return offset;
@@ -12401,7 +14157,7 @@ static int dissect_E2nodeConfigurationUpdateAcknowledge_PDU(tvbuff_t *tvb _U_, p
 static int dissect_E2nodeComponentConfigAdditionAck_List_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_PER, TRUE, pinfo);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_PER, true, pinfo);
   offset = dissect_e2ap_E2nodeComponentConfigAdditionAck_List(tvb, offset, &asn1_ctx, tree, hf_e2ap_E2nodeComponentConfigAdditionAck_List_PDU);
   offset += 7; offset >>= 3;
   return offset;
@@ -12409,7 +14165,7 @@ static int dissect_E2nodeComponentConfigAdditionAck_List_PDU(tvbuff_t *tvb _U_, 
 static int dissect_E2nodeComponentConfigAdditionAck_Item_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_PER, TRUE, pinfo);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_PER, true, pinfo);
   offset = dissect_e2ap_E2nodeComponentConfigAdditionAck_Item(tvb, offset, &asn1_ctx, tree, hf_e2ap_E2nodeComponentConfigAdditionAck_Item_PDU);
   offset += 7; offset >>= 3;
   return offset;
@@ -12417,7 +14173,7 @@ static int dissect_E2nodeComponentConfigAdditionAck_Item_PDU(tvbuff_t *tvb _U_, 
 static int dissect_E2nodeComponentConfigUpdateAck_List_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_PER, TRUE, pinfo);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_PER, true, pinfo);
   offset = dissect_e2ap_E2nodeComponentConfigUpdateAck_List(tvb, offset, &asn1_ctx, tree, hf_e2ap_E2nodeComponentConfigUpdateAck_List_PDU);
   offset += 7; offset >>= 3;
   return offset;
@@ -12425,7 +14181,7 @@ static int dissect_E2nodeComponentConfigUpdateAck_List_PDU(tvbuff_t *tvb _U_, pa
 static int dissect_E2nodeComponentConfigUpdateAck_Item_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_PER, TRUE, pinfo);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_PER, true, pinfo);
   offset = dissect_e2ap_E2nodeComponentConfigUpdateAck_Item(tvb, offset, &asn1_ctx, tree, hf_e2ap_E2nodeComponentConfigUpdateAck_Item_PDU);
   offset += 7; offset >>= 3;
   return offset;
@@ -12433,7 +14189,7 @@ static int dissect_E2nodeComponentConfigUpdateAck_Item_PDU(tvbuff_t *tvb _U_, pa
 static int dissect_E2nodeComponentConfigRemovalAck_List_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_PER, TRUE, pinfo);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_PER, true, pinfo);
   offset = dissect_e2ap_E2nodeComponentConfigRemovalAck_List(tvb, offset, &asn1_ctx, tree, hf_e2ap_E2nodeComponentConfigRemovalAck_List_PDU);
   offset += 7; offset >>= 3;
   return offset;
@@ -12441,7 +14197,7 @@ static int dissect_E2nodeComponentConfigRemovalAck_List_PDU(tvbuff_t *tvb _U_, p
 static int dissect_E2nodeComponentConfigRemovalAck_Item_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_PER, TRUE, pinfo);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_PER, true, pinfo);
   offset = dissect_e2ap_E2nodeComponentConfigRemovalAck_Item(tvb, offset, &asn1_ctx, tree, hf_e2ap_E2nodeComponentConfigRemovalAck_Item_PDU);
   offset += 7; offset >>= 3;
   return offset;
@@ -12449,7 +14205,7 @@ static int dissect_E2nodeComponentConfigRemovalAck_Item_PDU(tvbuff_t *tvb _U_, p
 static int dissect_E2nodeConfigurationUpdateFailure_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_PER, TRUE, pinfo);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_PER, true, pinfo);
   offset = dissect_e2ap_E2nodeConfigurationUpdateFailure(tvb, offset, &asn1_ctx, tree, hf_e2ap_E2nodeConfigurationUpdateFailure_PDU);
   offset += 7; offset >>= 3;
   return offset;
@@ -12457,7 +14213,7 @@ static int dissect_E2nodeConfigurationUpdateFailure_PDU(tvbuff_t *tvb _U_, packe
 static int dissect_ResetRequest_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_PER, TRUE, pinfo);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_PER, true, pinfo);
   offset = dissect_e2ap_ResetRequest(tvb, offset, &asn1_ctx, tree, hf_e2ap_ResetRequest_PDU);
   offset += 7; offset >>= 3;
   return offset;
@@ -12465,7 +14221,7 @@ static int dissect_ResetRequest_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, p
 static int dissect_ResetResponse_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_PER, TRUE, pinfo);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_PER, true, pinfo);
   offset = dissect_e2ap_ResetResponse(tvb, offset, &asn1_ctx, tree, hf_e2ap_ResetResponse_PDU);
   offset += 7; offset >>= 3;
   return offset;
@@ -12473,7 +14229,7 @@ static int dissect_ResetResponse_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, 
 static int dissect_RICserviceUpdate_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_PER, TRUE, pinfo);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_PER, true, pinfo);
   offset = dissect_e2ap_RICserviceUpdate(tvb, offset, &asn1_ctx, tree, hf_e2ap_RICserviceUpdate_PDU);
   offset += 7; offset >>= 3;
   return offset;
@@ -12481,7 +14237,7 @@ static int dissect_RICserviceUpdate_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U
 static int dissect_RANfunctions_List_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_PER, TRUE, pinfo);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_PER, true, pinfo);
   offset = dissect_e2ap_RANfunctions_List(tvb, offset, &asn1_ctx, tree, hf_e2ap_RANfunctions_List_PDU);
   offset += 7; offset >>= 3;
   return offset;
@@ -12489,7 +14245,7 @@ static int dissect_RANfunctions_List_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _
 static int dissect_RANfunction_Item_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_PER, TRUE, pinfo);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_PER, true, pinfo);
   offset = dissect_e2ap_RANfunction_Item(tvb, offset, &asn1_ctx, tree, hf_e2ap_RANfunction_Item_PDU);
   offset += 7; offset >>= 3;
   return offset;
@@ -12497,7 +14253,7 @@ static int dissect_RANfunction_Item_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U
 static int dissect_RANfunctionsID_List_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_PER, TRUE, pinfo);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_PER, true, pinfo);
   offset = dissect_e2ap_RANfunctionsID_List(tvb, offset, &asn1_ctx, tree, hf_e2ap_RANfunctionsID_List_PDU);
   offset += 7; offset >>= 3;
   return offset;
@@ -12505,7 +14261,7 @@ static int dissect_RANfunctionsID_List_PDU(tvbuff_t *tvb _U_, packet_info *pinfo
 static int dissect_RANfunctionID_Item_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_PER, TRUE, pinfo);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_PER, true, pinfo);
   offset = dissect_e2ap_RANfunctionID_Item(tvb, offset, &asn1_ctx, tree, hf_e2ap_RANfunctionID_Item_PDU);
   offset += 7; offset >>= 3;
   return offset;
@@ -12513,7 +14269,7 @@ static int dissect_RANfunctionID_Item_PDU(tvbuff_t *tvb _U_, packet_info *pinfo 
 static int dissect_RICserviceUpdateAcknowledge_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_PER, TRUE, pinfo);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_PER, true, pinfo);
   offset = dissect_e2ap_RICserviceUpdateAcknowledge(tvb, offset, &asn1_ctx, tree, hf_e2ap_RICserviceUpdateAcknowledge_PDU);
   offset += 7; offset >>= 3;
   return offset;
@@ -12521,7 +14277,7 @@ static int dissect_RICserviceUpdateAcknowledge_PDU(tvbuff_t *tvb _U_, packet_inf
 static int dissect_RANfunctionsIDcause_List_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_PER, TRUE, pinfo);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_PER, true, pinfo);
   offset = dissect_e2ap_RANfunctionsIDcause_List(tvb, offset, &asn1_ctx, tree, hf_e2ap_RANfunctionsIDcause_List_PDU);
   offset += 7; offset >>= 3;
   return offset;
@@ -12529,7 +14285,7 @@ static int dissect_RANfunctionsIDcause_List_PDU(tvbuff_t *tvb _U_, packet_info *
 static int dissect_RANfunctionIDcause_Item_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_PER, TRUE, pinfo);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_PER, true, pinfo);
   offset = dissect_e2ap_RANfunctionIDcause_Item(tvb, offset, &asn1_ctx, tree, hf_e2ap_RANfunctionIDcause_Item_PDU);
   offset += 7; offset >>= 3;
   return offset;
@@ -12537,7 +14293,7 @@ static int dissect_RANfunctionIDcause_Item_PDU(tvbuff_t *tvb _U_, packet_info *p
 static int dissect_RICserviceUpdateFailure_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_PER, TRUE, pinfo);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_PER, true, pinfo);
   offset = dissect_e2ap_RICserviceUpdateFailure(tvb, offset, &asn1_ctx, tree, hf_e2ap_RICserviceUpdateFailure_PDU);
   offset += 7; offset >>= 3;
   return offset;
@@ -12545,7 +14301,7 @@ static int dissect_RICserviceUpdateFailure_PDU(tvbuff_t *tvb _U_, packet_info *p
 static int dissect_RICserviceQuery_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_PER, TRUE, pinfo);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_PER, true, pinfo);
   offset = dissect_e2ap_RICserviceQuery(tvb, offset, &asn1_ctx, tree, hf_e2ap_RICserviceQuery_PDU);
   offset += 7; offset >>= 3;
   return offset;
@@ -12553,7 +14309,7 @@ static int dissect_RICserviceQuery_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_
 static int dissect_E2RemovalRequest_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_PER, TRUE, pinfo);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_PER, true, pinfo);
   offset = dissect_e2ap_E2RemovalRequest(tvb, offset, &asn1_ctx, tree, hf_e2ap_E2RemovalRequest_PDU);
   offset += 7; offset >>= 3;
   return offset;
@@ -12561,7 +14317,7 @@ static int dissect_E2RemovalRequest_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U
 static int dissect_E2RemovalResponse_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_PER, TRUE, pinfo);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_PER, true, pinfo);
   offset = dissect_e2ap_E2RemovalResponse(tvb, offset, &asn1_ctx, tree, hf_e2ap_E2RemovalResponse_PDU);
   offset += 7; offset >>= 3;
   return offset;
@@ -12569,7 +14325,7 @@ static int dissect_E2RemovalResponse_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _
 static int dissect_E2RemovalFailure_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_PER, TRUE, pinfo);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_PER, true, pinfo);
   offset = dissect_e2ap_E2RemovalFailure(tvb, offset, &asn1_ctx, tree, hf_e2ap_E2RemovalFailure_PDU);
   offset += 7; offset >>= 3;
   return offset;
@@ -12577,7 +14333,7 @@ static int dissect_E2RemovalFailure_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U
 static int dissect_E2AP_PDU_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_PER, TRUE, pinfo);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_PER, true, pinfo);
   offset = dissect_e2ap_E2AP_PDU(tvb, offset, &asn1_ctx, tree, hf_e2ap_E2AP_PDU_PDU);
   offset += 7; offset >>= 3;
   return offset;
@@ -12585,7 +14341,7 @@ static int dissect_E2AP_PDU_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto
 static int dissect_E2SM_RC_EventTrigger_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_PER, TRUE, pinfo);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_PER, true, pinfo);
   offset = dissect_e2ap_E2SM_RC_EventTrigger(tvb, offset, &asn1_ctx, tree, hf_e2ap_E2SM_RC_EventTrigger_PDU);
   offset += 7; offset >>= 3;
   return offset;
@@ -12593,7 +14349,7 @@ static int dissect_E2SM_RC_EventTrigger_PDU(tvbuff_t *tvb _U_, packet_info *pinf
 static int dissect_E2SM_RC_ActionDefinition_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_PER, TRUE, pinfo);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_PER, true, pinfo);
   offset = dissect_e2ap_E2SM_RC_ActionDefinition(tvb, offset, &asn1_ctx, tree, hf_e2ap_E2SM_RC_ActionDefinition_PDU);
   offset += 7; offset >>= 3;
   return offset;
@@ -12601,7 +14357,7 @@ static int dissect_E2SM_RC_ActionDefinition_PDU(tvbuff_t *tvb _U_, packet_info *
 static int dissect_E2SM_RC_IndicationHeader_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_PER, TRUE, pinfo);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_PER, true, pinfo);
   offset = dissect_e2ap_E2SM_RC_IndicationHeader(tvb, offset, &asn1_ctx, tree, hf_e2ap_E2SM_RC_IndicationHeader_PDU);
   offset += 7; offset >>= 3;
   return offset;
@@ -12609,7 +14365,7 @@ static int dissect_E2SM_RC_IndicationHeader_PDU(tvbuff_t *tvb _U_, packet_info *
 static int dissect_E2SM_RC_IndicationMessage_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_PER, TRUE, pinfo);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_PER, true, pinfo);
   offset = dissect_e2ap_E2SM_RC_IndicationMessage(tvb, offset, &asn1_ctx, tree, hf_e2ap_E2SM_RC_IndicationMessage_PDU);
   offset += 7; offset >>= 3;
   return offset;
@@ -12617,7 +14373,7 @@ static int dissect_E2SM_RC_IndicationMessage_PDU(tvbuff_t *tvb _U_, packet_info 
 static int dissect_E2SM_RC_CallProcessID_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_PER, TRUE, pinfo);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_PER, true, pinfo);
   offset = dissect_e2ap_E2SM_RC_CallProcessID(tvb, offset, &asn1_ctx, tree, hf_e2ap_E2SM_RC_CallProcessID_PDU);
   offset += 7; offset >>= 3;
   return offset;
@@ -12625,7 +14381,7 @@ static int dissect_E2SM_RC_CallProcessID_PDU(tvbuff_t *tvb _U_, packet_info *pin
 static int dissect_E2SM_RC_ControlHeader_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_PER, TRUE, pinfo);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_PER, true, pinfo);
   offset = dissect_e2ap_E2SM_RC_ControlHeader(tvb, offset, &asn1_ctx, tree, hf_e2ap_E2SM_RC_ControlHeader_PDU);
   offset += 7; offset >>= 3;
   return offset;
@@ -12633,7 +14389,7 @@ static int dissect_E2SM_RC_ControlHeader_PDU(tvbuff_t *tvb _U_, packet_info *pin
 static int dissect_E2SM_RC_ControlMessage_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_PER, TRUE, pinfo);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_PER, true, pinfo);
   offset = dissect_e2ap_E2SM_RC_ControlMessage(tvb, offset, &asn1_ctx, tree, hf_e2ap_E2SM_RC_ControlMessage_PDU);
   offset += 7; offset >>= 3;
   return offset;
@@ -12641,7 +14397,7 @@ static int dissect_E2SM_RC_ControlMessage_PDU(tvbuff_t *tvb _U_, packet_info *pi
 static int dissect_E2SM_RC_ControlOutcome_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_PER, TRUE, pinfo);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_PER, true, pinfo);
   offset = dissect_e2ap_E2SM_RC_ControlOutcome(tvb, offset, &asn1_ctx, tree, hf_e2ap_E2SM_RC_ControlOutcome_PDU);
   offset += 7; offset >>= 3;
   return offset;
@@ -12649,7 +14405,7 @@ static int dissect_E2SM_RC_ControlOutcome_PDU(tvbuff_t *tvb _U_, packet_info *pi
 static int dissect_E2SM_RC_RANFunctionDefinition_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_PER, TRUE, pinfo);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_PER, true, pinfo);
   offset = dissect_e2ap_E2SM_RC_RANFunctionDefinition(tvb, offset, &asn1_ctx, tree, hf_e2ap_E2SM_RC_RANFunctionDefinition_PDU);
   offset += 7; offset >>= 3;
   return offset;
@@ -12657,7 +14413,7 @@ static int dissect_E2SM_RC_RANFunctionDefinition_PDU(tvbuff_t *tvb _U_, packet_i
 static int dissect_E2SM_KPM_EventTriggerDefinition_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_PER, TRUE, pinfo);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_PER, true, pinfo);
   offset = dissect_e2ap_E2SM_KPM_EventTriggerDefinition(tvb, offset, &asn1_ctx, tree, hf_e2ap_E2SM_KPM_EventTriggerDefinition_PDU);
   offset += 7; offset >>= 3;
   return offset;
@@ -12665,7 +14421,7 @@ static int dissect_E2SM_KPM_EventTriggerDefinition_PDU(tvbuff_t *tvb _U_, packet
 static int dissect_E2SM_KPM_ActionDefinition_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_PER, TRUE, pinfo);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_PER, true, pinfo);
   offset = dissect_e2ap_E2SM_KPM_ActionDefinition(tvb, offset, &asn1_ctx, tree, hf_e2ap_E2SM_KPM_ActionDefinition_PDU);
   offset += 7; offset >>= 3;
   return offset;
@@ -12673,7 +14429,7 @@ static int dissect_E2SM_KPM_ActionDefinition_PDU(tvbuff_t *tvb _U_, packet_info 
 static int dissect_E2SM_KPM_IndicationHeader_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_PER, TRUE, pinfo);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_PER, true, pinfo);
   offset = dissect_e2ap_E2SM_KPM_IndicationHeader(tvb, offset, &asn1_ctx, tree, hf_e2ap_E2SM_KPM_IndicationHeader_PDU);
   offset += 7; offset >>= 3;
   return offset;
@@ -12681,7 +14437,7 @@ static int dissect_E2SM_KPM_IndicationHeader_PDU(tvbuff_t *tvb _U_, packet_info 
 static int dissect_E2SM_KPM_IndicationMessage_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_PER, TRUE, pinfo);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_PER, true, pinfo);
   offset = dissect_e2ap_E2SM_KPM_IndicationMessage(tvb, offset, &asn1_ctx, tree, hf_e2ap_E2SM_KPM_IndicationMessage_PDU);
   offset += 7; offset >>= 3;
   return offset;
@@ -12689,7 +14445,7 @@ static int dissect_E2SM_KPM_IndicationMessage_PDU(tvbuff_t *tvb _U_, packet_info
 static int dissect_E2SM_KPM_RANfunction_Description_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_PER, TRUE, pinfo);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_PER, true, pinfo);
   offset = dissect_e2ap_E2SM_KPM_RANfunction_Description(tvb, offset, &asn1_ctx, tree, hf_e2ap_E2SM_KPM_RANfunction_Description_PDU);
   offset += 7; offset >>= 3;
   return offset;
@@ -12697,7 +14453,7 @@ static int dissect_E2SM_KPM_RANfunction_Description_PDU(tvbuff_t *tvb _U_, packe
 static int dissect_E2SM_NI_EventTriggerDefinition_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_PER, TRUE, pinfo);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_PER, true, pinfo);
   offset = dissect_e2ap_E2SM_NI_EventTriggerDefinition(tvb, offset, &asn1_ctx, tree, hf_e2ap_E2SM_NI_EventTriggerDefinition_PDU);
   offset += 7; offset >>= 3;
   return offset;
@@ -12705,7 +14461,7 @@ static int dissect_E2SM_NI_EventTriggerDefinition_PDU(tvbuff_t *tvb _U_, packet_
 static int dissect_E2SM_NI_ActionDefinition_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_PER, TRUE, pinfo);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_PER, true, pinfo);
   offset = dissect_e2ap_E2SM_NI_ActionDefinition(tvb, offset, &asn1_ctx, tree, hf_e2ap_E2SM_NI_ActionDefinition_PDU);
   offset += 7; offset >>= 3;
   return offset;
@@ -12713,7 +14469,7 @@ static int dissect_E2SM_NI_ActionDefinition_PDU(tvbuff_t *tvb _U_, packet_info *
 static int dissect_E2SM_NI_IndicationHeader_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_PER, TRUE, pinfo);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_PER, true, pinfo);
   offset = dissect_e2ap_E2SM_NI_IndicationHeader(tvb, offset, &asn1_ctx, tree, hf_e2ap_E2SM_NI_IndicationHeader_PDU);
   offset += 7; offset >>= 3;
   return offset;
@@ -12721,7 +14477,7 @@ static int dissect_E2SM_NI_IndicationHeader_PDU(tvbuff_t *tvb _U_, packet_info *
 static int dissect_E2SM_NI_IndicationMessage_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_PER, TRUE, pinfo);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_PER, true, pinfo);
   offset = dissect_e2ap_E2SM_NI_IndicationMessage(tvb, offset, &asn1_ctx, tree, hf_e2ap_E2SM_NI_IndicationMessage_PDU);
   offset += 7; offset >>= 3;
   return offset;
@@ -12729,7 +14485,7 @@ static int dissect_E2SM_NI_IndicationMessage_PDU(tvbuff_t *tvb _U_, packet_info 
 static int dissect_E2SM_NI_CallProcessID_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_PER, TRUE, pinfo);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_PER, true, pinfo);
   offset = dissect_e2ap_E2SM_NI_CallProcessID(tvb, offset, &asn1_ctx, tree, hf_e2ap_E2SM_NI_CallProcessID_PDU);
   offset += 7; offset >>= 3;
   return offset;
@@ -12737,7 +14493,7 @@ static int dissect_E2SM_NI_CallProcessID_PDU(tvbuff_t *tvb _U_, packet_info *pin
 static int dissect_E2SM_NI_ControlHeader_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_PER, TRUE, pinfo);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_PER, true, pinfo);
   offset = dissect_e2ap_E2SM_NI_ControlHeader(tvb, offset, &asn1_ctx, tree, hf_e2ap_E2SM_NI_ControlHeader_PDU);
   offset += 7; offset >>= 3;
   return offset;
@@ -12745,7 +14501,7 @@ static int dissect_E2SM_NI_ControlHeader_PDU(tvbuff_t *tvb _U_, packet_info *pin
 static int dissect_E2SM_NI_ControlMessage_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_PER, TRUE, pinfo);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_PER, true, pinfo);
   offset = dissect_e2ap_E2SM_NI_ControlMessage(tvb, offset, &asn1_ctx, tree, hf_e2ap_E2SM_NI_ControlMessage_PDU);
   offset += 7; offset >>= 3;
   return offset;
@@ -12753,7 +14509,7 @@ static int dissect_E2SM_NI_ControlMessage_PDU(tvbuff_t *tvb _U_, packet_info *pi
 static int dissect_E2SM_NI_ControlOutcome_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_PER, TRUE, pinfo);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_PER, true, pinfo);
   offset = dissect_e2ap_E2SM_NI_ControlOutcome(tvb, offset, &asn1_ctx, tree, hf_e2ap_E2SM_NI_ControlOutcome_PDU);
   offset += 7; offset >>= 3;
   return offset;
@@ -12761,7 +14517,7 @@ static int dissect_E2SM_NI_ControlOutcome_PDU(tvbuff_t *tvb _U_, packet_info *pi
 static int dissect_E2SM_NI_RANfunction_Description_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_PER, TRUE, pinfo);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_PER, true, pinfo);
   offset = dissect_e2ap_E2SM_NI_RANfunction_Description(tvb, offset, &asn1_ctx, tree, hf_e2ap_E2SM_NI_RANfunction_Description_PDU);
   offset += 7; offset >>= 3;
   return offset;
@@ -12770,15 +14526,8 @@ static int dissect_E2SM_NI_RANfunction_Description_PDU(tvbuff_t *tvb _U_, packet
 
 static int dissect_ProtocolIEFieldValue(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree, void *data _U_)
 {
-  e2ap_ctx_t e2ap_ctx;
   struct e2ap_private_data *e2ap_data = e2ap_get_private_data(pinfo);
-
-  e2ap_ctx.message_type        = e2ap_data->message_type;
-  e2ap_ctx.ProcedureCode       = e2ap_data->procedure_code;
-  e2ap_ctx.ProtocolIE_ID       = e2ap_data->protocol_ie_id;
-  e2ap_ctx.ProtocolExtensionID = e2ap_data->protocol_extension_id;
-
-  return (dissector_try_uint_new(e2ap_ies_dissector_table, e2ap_data->protocol_ie_id, tvb, pinfo, tree, FALSE, &e2ap_ctx)) ? tvb_captured_length(tvb) : 0;
+  return (dissector_try_uint_new(e2ap_ies_dissector_table, e2ap_data->protocol_ie_id, tvb, pinfo, tree, false, NULL)) ? tvb_captured_length(tvb) : 0;
 }
 
 
@@ -12804,45 +14553,88 @@ static int dissect_InitiatingMessageValue(tvbuff_t *tvb, packet_info *pinfo, pro
 {
   struct e2ap_private_data *e2ap_data = e2ap_get_private_data(pinfo);
 
-  return (dissector_try_uint_new(e2ap_proc_imsg_dissector_table, e2ap_data->procedure_code, tvb, pinfo, tree, TRUE, data)) ? tvb_captured_length(tvb) : 0;
+  return (dissector_try_uint_new(e2ap_proc_imsg_dissector_table, e2ap_data->procedure_code, tvb, pinfo, tree, true, data)) ? tvb_captured_length(tvb) : 0;
 }
 
 static int dissect_SuccessfulOutcomeValue(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree, void *data)
 {
   struct e2ap_private_data *e2ap_data = e2ap_get_private_data(pinfo);
 
-  return (dissector_try_uint_new(e2ap_proc_sout_dissector_table, e2ap_data->procedure_code, tvb, pinfo, tree, TRUE, data)) ? tvb_captured_length(tvb) : 0;
+  return (dissector_try_uint_new(e2ap_proc_sout_dissector_table, e2ap_data->procedure_code, tvb, pinfo, tree, true, data)) ? tvb_captured_length(tvb) : 0;
 }
 
 static int dissect_UnsuccessfulOutcomeValue(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree, void *data)
 {
   struct e2ap_private_data *e2ap_data = e2ap_get_private_data(pinfo);
 
-  return (dissector_try_uint_new(e2ap_proc_uout_dissector_table, e2ap_data->procedure_code, tvb, pinfo, tree, TRUE, data)) ? tvb_captured_length(tvb) : 0;
+  return (dissector_try_uint_new(e2ap_proc_uout_dissector_table, e2ap_data->procedure_code, tvb, pinfo, tree, true, data)) ? tvb_captured_length(tvb) : 0;
 }
 
 
+static void set_stats_message_type(packet_info *pinfo, int type)
+{
+    struct e2ap_private_data* priv_data = e2ap_get_private_data(pinfo);
+    priv_data->stats_tap->e2ap_mtype = type;
+}
+
+static void
+e2ap_stats_tree_init(stats_tree *st)
+{
+    st_node_packets =      stats_tree_create_node(st, st_str_packets, 0, STAT_DT_INT, true);
+    st_node_packet_types = stats_tree_create_pivot(st, st_str_packet_types, st_node_packets);
+}
+
+static tap_packet_status
+e2ap_stats_tree_packet(stats_tree* st, packet_info* pinfo _U_,
+                       epan_dissect_t* edt _U_ , const void* p, tap_flags_t flags _U_)
+{
+    const struct e2ap_tap_t *pi = (const struct e2ap_tap_t *)p;
+
+    tick_stat_node(st, st_str_packets, 0, false);
+    stats_tree_tick_pivot(st, st_node_packet_types,
+                          val_to_str(pi->e2ap_mtype, mtype_names,
+                                     "Unknown packet type (%d)"));
+    return TAP_PACKET_REDRAW;
+}
+
+
+/* Main dissection function */
 static int
 dissect_e2ap(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree, void* data _U_)
 {
   proto_item *e2ap_item = NULL;
   proto_tree *e2ap_tree = NULL;
 
+  struct e2ap_tap_t *tap_info;
+
   /* make entry in the Protocol column on summary display */
   col_set_str(pinfo->cinfo, COL_PROTOCOL, "E2AP");
   col_clear(pinfo->cinfo, COL_INFO);
+
+  tap_info = wmem_new(pinfo->pool, struct e2ap_tap_t);
+  tap_info->e2ap_mtype = 0; /* unknown/invalid */
+
+  /* Add stats tap to private struct */
+  struct e2ap_private_data *priv_data = e2ap_get_private_data(pinfo);
+  priv_data->stats_tap = tap_info;
+
+  /* Store top-level tree */
+  top_tree = e2ap_tree;
 
   /* create the e2ap protocol tree */
   e2ap_item = proto_tree_add_item(tree, proto_e2ap, tvb, 0, -1, ENC_NA);
   e2ap_tree = proto_item_add_subtree(e2ap_item, ett_e2ap);
 
-  return dissect_E2AP_PDU_PDU(tvb, pinfo, e2ap_tree, NULL);
+  dissect_E2AP_PDU_PDU(tvb, pinfo, e2ap_tree, NULL);
+
+  tap_queue_packet(e2ap_tap, pinfo, tap_info);
+  return tvb_captured_length(tvb);
 }
 
 
 static void e2ap_init_protocol(void)
 {
-  s_gnb_ran_functions.num_gnbs = 0;
+  s_gnb_ran_functions_table.num_gnbs = 0;
 }
 
 
@@ -12912,6 +14704,42 @@ proto_reg_handoff_e2ap(void)
   dissector_add_uint("e2ap.ies", id_E2nodeTNLassociationRemoval_Item, create_dissector_handle(dissect_E2nodeTNLassociationRemoval_Item_PDU, proto_e2ap));
   dissector_add_uint("e2ap.ies", id_RICsubscriptionToBeRemoved, create_dissector_handle(dissect_RICsubscription_List_withCause_PDU, proto_e2ap));
   dissector_add_uint("e2ap.ies", id_RICsubscription_withCause_Item, create_dissector_handle(dissect_RICsubscription_withCause_Item_PDU, proto_e2ap));
+  dissector_add_uint("e2ap.ies", id_RICsubscriptionStartTime, create_dissector_handle(dissect_RICsubscriptionTime_PDU, proto_e2ap));
+  dissector_add_uint("e2ap.ies", id_RICsubscriptionEndTime, create_dissector_handle(dissect_RICsubscriptionTime_PDU, proto_e2ap));
+  dissector_add_uint("e2ap.ies", id_RICeventTriggerDefinitionToBeModified, create_dissector_handle(dissect_RICeventTriggerDefinition_PDU, proto_e2ap));
+  dissector_add_uint("e2ap.ies", id_RICactionsToBeRemovedForModification_List, create_dissector_handle(dissect_RICactions_ToBeRemovedForModification_List_PDU, proto_e2ap));
+  dissector_add_uint("e2ap.ies", id_RICaction_ToBeRemovedForModification_Item, create_dissector_handle(dissect_RICaction_ToBeRemovedForModification_Item_PDU, proto_e2ap));
+  dissector_add_uint("e2ap.ies", id_RICactionsToBeModifiedForModification_List, create_dissector_handle(dissect_RICactions_ToBeModifiedForModification_List_PDU, proto_e2ap));
+  dissector_add_uint("e2ap.ies", id_RICaction_ToBeModifiedForModification_Item, create_dissector_handle(dissect_RICaction_ToBeModifiedForModification_Item_PDU, proto_e2ap));
+  dissector_add_uint("e2ap.ies", id_RICactionsToBeAddedForModification_List, create_dissector_handle(dissect_RICactions_ToBeAddedForModification_List_PDU, proto_e2ap));
+  dissector_add_uint("e2ap.ies", id_RICaction_ToBeAddedForModification_Item, create_dissector_handle(dissect_RICaction_ToBeAddedForModification_Item_PDU, proto_e2ap));
+  dissector_add_uint("e2ap.ies", id_RICactionsRemovedForModification_List, create_dissector_handle(dissect_RICactions_RemovedForModification_List_PDU, proto_e2ap));
+  dissector_add_uint("e2ap.ies", id_RICaction_RemovedForModification_Item, create_dissector_handle(dissect_RICaction_RemovedForModification_Item_PDU, proto_e2ap));
+  dissector_add_uint("e2ap.ies", id_RICactionsFailedToBeRemovedForModification_List, create_dissector_handle(dissect_RICactions_FailedToBeRemovedForModification_List_PDU, proto_e2ap));
+  dissector_add_uint("e2ap.ies", id_RICaction_FailedToBeRemovedForModification_Item, create_dissector_handle(dissect_RICaction_FailedToBeRemovedForModification_Item_PDU, proto_e2ap));
+  dissector_add_uint("e2ap.ies", id_RICactionsModifiedForModification_List, create_dissector_handle(dissect_RICactions_ModifiedForModification_List_PDU, proto_e2ap));
+  dissector_add_uint("e2ap.ies", id_RICaction_ModifiedForModification_Item, create_dissector_handle(dissect_RICaction_ModifiedForModification_Item_PDU, proto_e2ap));
+  dissector_add_uint("e2ap.ies", id_RICactionsFailedToBeModifiedForModification_List, create_dissector_handle(dissect_RICactions_FailedToBeModifiedForModification_List_PDU, proto_e2ap));
+  dissector_add_uint("e2ap.ies", id_RICaction_FailedToBeModifiedForModification_Item, create_dissector_handle(dissect_RICaction_FailedToBeModifiedForModification_Item_PDU, proto_e2ap));
+  dissector_add_uint("e2ap.ies", id_RICactionsAddedForModification_List, create_dissector_handle(dissect_RICactions_AddedForModification_List_PDU, proto_e2ap));
+  dissector_add_uint("e2ap.ies", id_RICaction_AddedForModification_Item, create_dissector_handle(dissect_RICaction_AddedForModification_Item_PDU, proto_e2ap));
+  dissector_add_uint("e2ap.ies", id_RICactionsFailedToBeAddedForModification_List, create_dissector_handle(dissect_RICactions_FailedToBeAddedForModification_List_PDU, proto_e2ap));
+  dissector_add_uint("e2ap.ies", id_RICaction_FailedToBeAddedForModification_Item, create_dissector_handle(dissect_RICaction_FailedToBeAddedForModification_Item_PDU, proto_e2ap));
+  dissector_add_uint("e2ap.ies", id_RICactionsRequiredToBeModified_List, create_dissector_handle(dissect_RICactions_RequiredToBeModified_List_PDU, proto_e2ap));
+  dissector_add_uint("e2ap.ies", id_RICaction_RequiredToBeModified_Item, create_dissector_handle(dissect_RICaction_RequiredToBeModified_Item_PDU, proto_e2ap));
+  dissector_add_uint("e2ap.ies", id_RICactionsRequiredToBeRemoved_List, create_dissector_handle(dissect_RICactions_RequiredToBeRemoved_List_PDU, proto_e2ap));
+  dissector_add_uint("e2ap.ies", id_RICaction_RequiredToBeRemoved_Item, create_dissector_handle(dissect_RICaction_RequiredToBeRemoved_Item_PDU, proto_e2ap));
+  dissector_add_uint("e2ap.ies", id_RICactionsConfirmedForModification_List, create_dissector_handle(dissect_RICactions_ConfirmedForModification_List_PDU, proto_e2ap));
+  dissector_add_uint("e2ap.ies", id_RICaction_ConfirmedForModification_Item, create_dissector_handle(dissect_RICaction_ConfirmedForModification_Item_PDU, proto_e2ap));
+  dissector_add_uint("e2ap.ies", id_RICactionsRefusedToBeModified_List, create_dissector_handle(dissect_RICactions_RefusedToBeModified_List_PDU, proto_e2ap));
+  dissector_add_uint("e2ap.ies", id_RICaction_RefusedToBeModified_Item, create_dissector_handle(dissect_RICaction_RefusedToBeModified_Item_PDU, proto_e2ap));
+  dissector_add_uint("e2ap.ies", id_RICactionsConfirmedForRemoval_List, create_dissector_handle(dissect_RICactions_ConfirmedForRemoval_List_PDU, proto_e2ap));
+  dissector_add_uint("e2ap.ies", id_RICaction_ConfirmedForRemoval_Item, create_dissector_handle(dissect_RICaction_ConfirmedForRemoval_Item_PDU, proto_e2ap));
+  dissector_add_uint("e2ap.ies", id_RICactionsRefusedToBeRemoved_List, create_dissector_handle(dissect_RICactions_RefusedToBeRemoved_List_PDU, proto_e2ap));
+  dissector_add_uint("e2ap.ies", id_RICaction_RefusedToBeRemoved_Item, create_dissector_handle(dissect_RICaction_RefusedToBeRemoved_Item_PDU, proto_e2ap));
+  dissector_add_uint("e2ap.ies", id_RICqueryHeader, create_dissector_handle(dissect_RICqueryHeader_PDU, proto_e2ap));
+  dissector_add_uint("e2ap.ies", id_RICqueryDefinition, create_dissector_handle(dissect_RICqueryDefinition_PDU, proto_e2ap));
+  dissector_add_uint("e2ap.ies", id_RICqueryOutcome, create_dissector_handle(dissect_RICqueryOutcome_PDU, proto_e2ap));
   dissector_add_uint("e2ap.proc.imsg", id_E2connectionUpdate, create_dissector_handle(dissect_E2connectionUpdate_PDU, proto_e2ap));
   dissector_add_uint("e2ap.proc.sout", id_E2connectionUpdate, create_dissector_handle(dissect_E2connectionUpdateAcknowledge_PDU, proto_e2ap));
   dissector_add_uint("e2ap.proc.uout", id_E2connectionUpdate, create_dissector_handle(dissect_E2connectionUpdateFailure_PDU, proto_e2ap));
@@ -12942,6 +14770,226 @@ proto_reg_handoff_e2ap(void)
   dissector_add_uint("e2ap.proc.uout", id_E2removal, create_dissector_handle(dissect_E2RemovalFailure_PDU, proto_e2ap));
   dissector_add_uint("e2ap.proc.imsg", id_E2removal, create_dissector_handle(dissect_E2RemovalRequest_PDU, proto_e2ap));
   dissector_add_uint("e2ap.proc.sout", id_E2removal, create_dissector_handle(dissect_E2RemovalResponse_PDU, proto_e2ap));
+  dissector_add_uint("e2ap.proc.uout", id_RICsubscriptionModification, create_dissector_handle(dissect_RICsubscriptionModificationFailure_PDU, proto_e2ap));
+  dissector_add_uint("e2ap.proc.imsg", id_RICsubscriptionModification, create_dissector_handle(dissect_RICsubscriptionModificationRequest_PDU, proto_e2ap));
+  dissector_add_uint("e2ap.proc.sout", id_RICsubscriptionModification, create_dissector_handle(dissect_RICsubscriptionModificationResponse_PDU, proto_e2ap));
+  dissector_add_uint("e2ap.proc.uout", id_RICsubscriptionModificationRequired, create_dissector_handle(dissect_RICsubscriptionModificationRefuse_PDU, proto_e2ap));
+  dissector_add_uint("e2ap.proc.imsg", id_RICsubscriptionModificationRequired, create_dissector_handle(dissect_RICsubscriptionModificationRequired_PDU, proto_e2ap));
+  dissector_add_uint("e2ap.proc.sout", id_RICsubscriptionModificationRequired, create_dissector_handle(dissect_RICsubscriptionModificationConfirm_PDU, proto_e2ap));
+  dissector_add_uint("e2ap.proc.uout", id_RICquery, create_dissector_handle(dissect_RICQueryFailure_PDU, proto_e2ap));
+  dissector_add_uint("e2ap.proc.imsg", id_RICquery, create_dissector_handle(dissect_RICQueryRequest_PDU, proto_e2ap));
+  dissector_add_uint("e2ap.proc.sout", id_RICquery, create_dissector_handle(dissect_RICQueryResponse_PDU, proto_e2ap));
+
+
+  /********************************/
+  /* Known OIDs for RAN providers */
+  /* N.B. These appear in the RAN Function ASN.1 definitions (except for CCC, which is based on JSON).
+   * There is a registry of known OIDs though in the E2SM specification
+   */
+
+  /* KPM */
+  oid_add_from_string("KPM v1",         "1.3.6.1.4.1.53148.1.1.2.2");
+  oid_add_from_string("KPM v2",         "1.3.6.1.4.1.53148.1.2.2.2");
+  oid_add_from_string("KPM v3",         "1.2.6.1.4.1.53148.1.3.2.2");
+
+  /* RC */
+  // TODO: appears to be the same???  Asking for clarification from ORAN..
+  oid_add_from_string("RC  v1",         "1.3.6.1.4.1.53148.1.1.2.3");
+  //oid_add_from_string("RC  v3",         "1.3.6.1.4.1.53148.1.1.2.3");
+  //oid_add_from_string("RC  v4",         "1.3.6.1.4.1.53148.1.1.2.3");
+
+  /* NI */
+  oid_add_from_string("NI  v1",         "1.3.6.1.4.1.53148.1.1.2.1");
+
+  /* CCC */
+  oid_add_from_string("CCC v1",         "1.3.6.1.4.1.53148.1.1.2.4");
+  oid_add_from_string("CCC v2",         "1.3.6.1.4.1.53148.1.2.2.4");
+  oid_add_from_string("CCC v3",         "1.3.6.1.4.1.53148.1.3.2.4");
+  oid_add_from_string("CCC v4",         "1.3.6.1.4.1.53148.1.4.2.4");
+  oid_add_from_string("CCC v5",         "1.3.6.1.4.1.53148.1.5.2.4");
+
+
+  /********************************/
+  /* Register 'built-in' dissectors */
+
+  static ran_function_dissector_t kpm_v3 =
+  { "ORAN-E2SM-KPM", "1.2.6.1.4.1.53148.1.3.2.2", 3, 0,
+    {  dissect_E2SM_KPM_RANfunction_Description_PDU,
+
+       NULL,
+       NULL,
+       NULL,
+       NULL,
+       NULL,
+       NULL,
+
+       dissect_E2SM_KPM_ActionDefinition_PDU,
+       dissect_E2SM_KPM_IndicationMessage_PDU,
+       dissect_E2SM_KPM_IndicationHeader_PDU,
+       NULL, /* no dissect_E2SM_KPM_CallProcessID_PDU */
+       dissect_E2SM_KPM_EventTriggerDefinition_PDU
+     }
+  };
+
+  static ran_function_dissector_t rc_v1 =
+  { "ORAN-E2SM-RC",  "1.3.6.1.4.1.53148.1.1.2.3", 1, 3,
+    {  dissect_E2SM_RC_RANFunctionDefinition_PDU,
+
+       dissect_E2SM_RC_ControlHeader_PDU,
+       dissect_E2SM_RC_ControlMessage_PDU,
+       dissect_E2SM_RC_ControlOutcome_PDU,
+       /* new for v3 */
+       NULL,
+       NULL,
+       NULL,
+
+       dissect_E2SM_RC_ActionDefinition_PDU,
+       dissect_E2SM_RC_IndicationMessage_PDU,
+       dissect_E2SM_RC_IndicationHeader_PDU,
+       dissect_E2SM_RC_CallProcessID_PDU,
+       dissect_E2SM_RC_EventTrigger_PDU
+    }
+  };
+
+  static ran_function_dissector_t ni_v1 =
+  { "ORAN-E2SM-NI",  "1.3.6.1.4.1.53148.1.1.2.1", 1, 0,
+    {  dissect_E2SM_NI_RANfunction_Description_PDU,
+
+       dissect_E2SM_NI_ControlHeader_PDU,
+       dissect_E2SM_NI_ControlMessage_PDU,
+       dissect_E2SM_NI_ControlOutcome_PDU,
+       NULL,
+       NULL,
+       NULL,
+
+       dissect_E2SM_NI_ActionDefinition_PDU,
+       dissect_E2SM_NI_IndicationMessage_PDU,
+       dissect_E2SM_NI_IndicationHeader_PDU,
+       dissect_E2SM_NI_CallProcessID_PDU,
+       dissect_E2SM_NI_EventTriggerDefinition_PDU
+    }
+  };
+
+  static ran_function_dissector_t ccc_v1 =
+  { "{", /*"ORAN-E2SM-CCC",*/  "1.3.6.1.4.1.53148.1.1.2.4", 1, 0,
+    /* See table 5.1 */
+    {  dissect_E2SM_NI_JSON_PDU,
+
+       dissect_E2SM_NI_JSON_PDU,
+       dissect_E2SM_NI_JSON_PDU,
+       dissect_E2SM_NI_JSON_PDU,
+       NULL,
+       NULL,
+       NULL,
+
+       dissect_E2SM_NI_JSON_PDU,
+       dissect_E2SM_NI_JSON_PDU,
+       dissect_E2SM_NI_JSON_PDU,
+       dissect_E2SM_NI_JSON_PDU,
+       dissect_E2SM_NI_JSON_PDU
+    }
+  };
+
+  static ran_function_dissector_t ccc_v2 =
+  { "{", /*"ORAN-E2SM-CCC",*/  "1.3.6.1.4.1.53148.1.2.2.4", 2, 0,
+    /* See table 5.1 */
+    {  dissect_E2SM_NI_JSON_PDU,
+
+       dissect_E2SM_NI_JSON_PDU,
+       dissect_E2SM_NI_JSON_PDU,
+       dissect_E2SM_NI_JSON_PDU,
+       NULL,
+       NULL,
+       NULL,
+
+       dissect_E2SM_NI_JSON_PDU,
+       dissect_E2SM_NI_JSON_PDU,
+       dissect_E2SM_NI_JSON_PDU,
+       dissect_E2SM_NI_JSON_PDU,
+       dissect_E2SM_NI_JSON_PDU
+    }
+  };
+
+  static ran_function_dissector_t ccc_v3 =
+  { "{", /*"ORAN-E2SM-CCC",*/  "1.3.6.1.4.1.53148.1.3.2.4", 3, 0,
+    /* See table 5.1 */
+    {  dissect_E2SM_NI_JSON_PDU,
+
+       dissect_E2SM_NI_JSON_PDU,
+       dissect_E2SM_NI_JSON_PDU,
+       dissect_E2SM_NI_JSON_PDU,
+       NULL,
+       NULL,
+       NULL,
+
+       dissect_E2SM_NI_JSON_PDU,
+       dissect_E2SM_NI_JSON_PDU,
+       dissect_E2SM_NI_JSON_PDU,
+       dissect_E2SM_NI_JSON_PDU,
+       dissect_E2SM_NI_JSON_PDU
+    }
+  };
+
+  static ran_function_dissector_t ccc_v4 =
+  { "{", /*"ORAN-E2SM-CCC",*/  "1.3.6.1.4.1.53148.1.4.2.4", 4, 0,
+    /* See table 5.1 */
+    {  dissect_E2SM_NI_JSON_PDU,
+
+       dissect_E2SM_NI_JSON_PDU,
+       dissect_E2SM_NI_JSON_PDU,
+       dissect_E2SM_NI_JSON_PDU,
+       NULL,
+       NULL,
+       NULL,
+
+       dissect_E2SM_NI_JSON_PDU,
+       dissect_E2SM_NI_JSON_PDU,
+       dissect_E2SM_NI_JSON_PDU,
+       dissect_E2SM_NI_JSON_PDU,
+       dissect_E2SM_NI_JSON_PDU
+    }
+  };
+
+  static ran_function_dissector_t ccc_v5 =
+  { "{", /*"ORAN-E2SM-CCC",*/  "1.3.6.1.4.1.53148.1.5.2.4", 5, 0,
+    /* See table 5.1 */
+    {  dissect_E2SM_NI_JSON_PDU,
+
+       dissect_E2SM_NI_JSON_PDU,
+       dissect_E2SM_NI_JSON_PDU,
+       dissect_E2SM_NI_JSON_PDU,
+       NULL,
+       NULL,
+       NULL,
+
+       dissect_E2SM_NI_JSON_PDU,
+       dissect_E2SM_NI_JSON_PDU,
+       dissect_E2SM_NI_JSON_PDU,
+       dissect_E2SM_NI_JSON_PDU,
+       dissect_E2SM_NI_JSON_PDU
+    }
+  };
+
+
+  /* Register available dissectors.
+   * Registering one version of each RAN Function here - others will need to be
+   * registered in sepparate dissectors (e.g. kpm_v2) */
+  register_e2ap_ran_function_dissector(KPM_RANFUNCTIONS, &kpm_v3);
+  register_e2ap_ran_function_dissector(RC_RANFUNCTIONS,  &rc_v1);
+  register_e2ap_ran_function_dissector(NI_RANFUNCTIONS,  &ni_v1);
+
+  register_e2ap_ran_function_dissector(CCC_RANFUNCTIONS,  &ccc_v1);
+  register_e2ap_ran_function_dissector(CCC_RANFUNCTIONS,  &ccc_v2);
+  register_e2ap_ran_function_dissector(CCC_RANFUNCTIONS,  &ccc_v3);
+  register_e2ap_ran_function_dissector(CCC_RANFUNCTIONS,  &ccc_v4);
+  register_e2ap_ran_function_dissector(CCC_RANFUNCTIONS,  &ccc_v5);
+
+
+  /* Cache JSON dissector */
+  json_handle = find_dissector("json");
+
+  stats_tree_register("e2ap", "e2ap", "E2AP", 0,
+                      e2ap_stats_tree_packet, e2ap_stats_tree_init, NULL);
 
 }
 
@@ -12997,6 +15045,10 @@ void proto_register_e2ap(void) {
       { "RICcontrolOutcome", "e2ap.RICcontrolOutcome",
         FT_BYTES, BASE_NONE, NULL, 0,
         NULL, HFILL }},
+    { &hf_e2ap_RICeventTriggerDefinition_PDU,
+      { "RICeventTriggerDefinition", "e2ap.RICeventTriggerDefinition",
+        FT_BYTES, BASE_NONE, NULL, 0,
+        NULL, HFILL }},
     { &hf_e2ap_RICindicationHeader_PDU,
       { "RICindicationHeader", "e2ap.RICindicationHeader",
         FT_BYTES, BASE_NONE, NULL, 0,
@@ -13016,6 +15068,22 @@ void proto_register_e2ap(void) {
     { &hf_e2ap_RICrequestID_PDU,
       { "RICrequestID", "e2ap.RICrequestID_element",
         FT_NONE, BASE_NONE, NULL, 0,
+        NULL, HFILL }},
+    { &hf_e2ap_RICsubscriptionTime_PDU,
+      { "RICsubscriptionTime", "e2ap.RICsubscriptionTime",
+        FT_BYTES, BASE_NONE, NULL, 0,
+        NULL, HFILL }},
+    { &hf_e2ap_RICqueryHeader_PDU,
+      { "RICqueryHeader", "e2ap.RICqueryHeader",
+        FT_BYTES, BASE_NONE, NULL, 0,
+        NULL, HFILL }},
+    { &hf_e2ap_RICqueryDefinition_PDU,
+      { "RICqueryDefinition", "e2ap.RICqueryDefinition",
+        FT_BYTES, BASE_NONE, NULL, 0,
+        NULL, HFILL }},
+    { &hf_e2ap_RICqueryOutcome_PDU,
+      { "RICqueryOutcome", "e2ap.RICqueryOutcome",
+        FT_BYTES, BASE_NONE, NULL, 0,
         NULL, HFILL }},
     { &hf_e2ap_TimeToWait_PDU,
       { "TimeToWait", "e2ap.TimeToWait",
@@ -13089,6 +15157,150 @@ void proto_register_e2ap(void) {
       { "RICsubscription-withCause-Item", "e2ap.RICsubscription_withCause_Item_element",
         FT_NONE, BASE_NONE, NULL, 0,
         NULL, HFILL }},
+    { &hf_e2ap_RICsubscriptionModificationRequest_PDU,
+      { "RICsubscriptionModificationRequest", "e2ap.RICsubscriptionModificationRequest_element",
+        FT_NONE, BASE_NONE, NULL, 0,
+        NULL, HFILL }},
+    { &hf_e2ap_RICactions_ToBeRemovedForModification_List_PDU,
+      { "RICactions-ToBeRemovedForModification-List", "e2ap.RICactions_ToBeRemovedForModification_List",
+        FT_UINT32, BASE_DEC, NULL, 0,
+        NULL, HFILL }},
+    { &hf_e2ap_RICaction_ToBeRemovedForModification_Item_PDU,
+      { "RICaction-ToBeRemovedForModification-Item", "e2ap.RICaction_ToBeRemovedForModification_Item_element",
+        FT_NONE, BASE_NONE, NULL, 0,
+        NULL, HFILL }},
+    { &hf_e2ap_RICactions_ToBeModifiedForModification_List_PDU,
+      { "RICactions-ToBeModifiedForModification-List", "e2ap.RICactions_ToBeModifiedForModification_List",
+        FT_UINT32, BASE_DEC, NULL, 0,
+        NULL, HFILL }},
+    { &hf_e2ap_RICaction_ToBeModifiedForModification_Item_PDU,
+      { "RICaction-ToBeModifiedForModification-Item", "e2ap.RICaction_ToBeModifiedForModification_Item_element",
+        FT_NONE, BASE_NONE, NULL, 0,
+        NULL, HFILL }},
+    { &hf_e2ap_RICactions_ToBeAddedForModification_List_PDU,
+      { "RICactions-ToBeAddedForModification-List", "e2ap.RICactions_ToBeAddedForModification_List",
+        FT_UINT32, BASE_DEC, NULL, 0,
+        NULL, HFILL }},
+    { &hf_e2ap_RICaction_ToBeAddedForModification_Item_PDU,
+      { "RICaction-ToBeAddedForModification-Item", "e2ap.RICaction_ToBeAddedForModification_Item_element",
+        FT_NONE, BASE_NONE, NULL, 0,
+        NULL, HFILL }},
+    { &hf_e2ap_RICsubscriptionModificationResponse_PDU,
+      { "RICsubscriptionModificationResponse", "e2ap.RICsubscriptionModificationResponse_element",
+        FT_NONE, BASE_NONE, NULL, 0,
+        NULL, HFILL }},
+    { &hf_e2ap_RICactions_RemovedForModification_List_PDU,
+      { "RICactions-RemovedForModification-List", "e2ap.RICactions_RemovedForModification_List",
+        FT_UINT32, BASE_DEC, NULL, 0,
+        NULL, HFILL }},
+    { &hf_e2ap_RICaction_RemovedForModification_Item_PDU,
+      { "RICaction-RemovedForModification-Item", "e2ap.RICaction_RemovedForModification_Item_element",
+        FT_NONE, BASE_NONE, NULL, 0,
+        NULL, HFILL }},
+    { &hf_e2ap_RICactions_FailedToBeRemovedForModification_List_PDU,
+      { "RICactions-FailedToBeRemovedForModification-List", "e2ap.RICactions_FailedToBeRemovedForModification_List",
+        FT_UINT32, BASE_DEC, NULL, 0,
+        NULL, HFILL }},
+    { &hf_e2ap_RICaction_FailedToBeRemovedForModification_Item_PDU,
+      { "RICaction-FailedToBeRemovedForModification-Item", "e2ap.RICaction_FailedToBeRemovedForModification_Item_element",
+        FT_NONE, BASE_NONE, NULL, 0,
+        NULL, HFILL }},
+    { &hf_e2ap_RICactions_ModifiedForModification_List_PDU,
+      { "RICactions-ModifiedForModification-List", "e2ap.RICactions_ModifiedForModification_List",
+        FT_UINT32, BASE_DEC, NULL, 0,
+        NULL, HFILL }},
+    { &hf_e2ap_RICaction_ModifiedForModification_Item_PDU,
+      { "RICaction-ModifiedForModification-Item", "e2ap.RICaction_ModifiedForModification_Item_element",
+        FT_NONE, BASE_NONE, NULL, 0,
+        NULL, HFILL }},
+    { &hf_e2ap_RICactions_FailedToBeModifiedForModification_List_PDU,
+      { "RICactions-FailedToBeModifiedForModification-List", "e2ap.RICactions_FailedToBeModifiedForModification_List",
+        FT_UINT32, BASE_DEC, NULL, 0,
+        NULL, HFILL }},
+    { &hf_e2ap_RICaction_FailedToBeModifiedForModification_Item_PDU,
+      { "RICaction-FailedToBeModifiedForModification-Item", "e2ap.RICaction_FailedToBeModifiedForModification_Item_element",
+        FT_NONE, BASE_NONE, NULL, 0,
+        NULL, HFILL }},
+    { &hf_e2ap_RICactions_AddedForModification_List_PDU,
+      { "RICactions-AddedForModification-List", "e2ap.RICactions_AddedForModification_List",
+        FT_UINT32, BASE_DEC, NULL, 0,
+        NULL, HFILL }},
+    { &hf_e2ap_RICaction_AddedForModification_Item_PDU,
+      { "RICaction-AddedForModification-Item", "e2ap.RICaction_AddedForModification_Item_element",
+        FT_NONE, BASE_NONE, NULL, 0,
+        NULL, HFILL }},
+    { &hf_e2ap_RICactions_FailedToBeAddedForModification_List_PDU,
+      { "RICactions-FailedToBeAddedForModification-List", "e2ap.RICactions_FailedToBeAddedForModification_List",
+        FT_UINT32, BASE_DEC, NULL, 0,
+        NULL, HFILL }},
+    { &hf_e2ap_RICaction_FailedToBeAddedForModification_Item_PDU,
+      { "RICaction-FailedToBeAddedForModification-Item", "e2ap.RICaction_FailedToBeAddedForModification_Item_element",
+        FT_NONE, BASE_NONE, NULL, 0,
+        NULL, HFILL }},
+    { &hf_e2ap_RICsubscriptionModificationFailure_PDU,
+      { "RICsubscriptionModificationFailure", "e2ap.RICsubscriptionModificationFailure_element",
+        FT_NONE, BASE_NONE, NULL, 0,
+        NULL, HFILL }},
+    { &hf_e2ap_RICsubscriptionModificationRequired_PDU,
+      { "RICsubscriptionModificationRequired", "e2ap.RICsubscriptionModificationRequired_element",
+        FT_NONE, BASE_NONE, NULL, 0,
+        NULL, HFILL }},
+    { &hf_e2ap_RICactions_RequiredToBeModified_List_PDU,
+      { "RICactions-RequiredToBeModified-List", "e2ap.RICactions_RequiredToBeModified_List",
+        FT_UINT32, BASE_DEC, NULL, 0,
+        NULL, HFILL }},
+    { &hf_e2ap_RICaction_RequiredToBeModified_Item_PDU,
+      { "RICaction-RequiredToBeModified-Item", "e2ap.RICaction_RequiredToBeModified_Item_element",
+        FT_NONE, BASE_NONE, NULL, 0,
+        NULL, HFILL }},
+    { &hf_e2ap_RICactions_RequiredToBeRemoved_List_PDU,
+      { "RICactions-RequiredToBeRemoved-List", "e2ap.RICactions_RequiredToBeRemoved_List",
+        FT_UINT32, BASE_DEC, NULL, 0,
+        NULL, HFILL }},
+    { &hf_e2ap_RICaction_RequiredToBeRemoved_Item_PDU,
+      { "RICaction-RequiredToBeRemoved-Item", "e2ap.RICaction_RequiredToBeRemoved_Item_element",
+        FT_NONE, BASE_NONE, NULL, 0,
+        NULL, HFILL }},
+    { &hf_e2ap_RICsubscriptionModificationConfirm_PDU,
+      { "RICsubscriptionModificationConfirm", "e2ap.RICsubscriptionModificationConfirm_element",
+        FT_NONE, BASE_NONE, NULL, 0,
+        NULL, HFILL }},
+    { &hf_e2ap_RICactions_ConfirmedForModification_List_PDU,
+      { "RICactions-ConfirmedForModification-List", "e2ap.RICactions_ConfirmedForModification_List",
+        FT_UINT32, BASE_DEC, NULL, 0,
+        NULL, HFILL }},
+    { &hf_e2ap_RICaction_ConfirmedForModification_Item_PDU,
+      { "RICaction-ConfirmedForModification-Item", "e2ap.RICaction_ConfirmedForModification_Item_element",
+        FT_NONE, BASE_NONE, NULL, 0,
+        NULL, HFILL }},
+    { &hf_e2ap_RICactions_RefusedToBeModified_List_PDU,
+      { "RICactions-RefusedToBeModified-List", "e2ap.RICactions_RefusedToBeModified_List",
+        FT_UINT32, BASE_DEC, NULL, 0,
+        NULL, HFILL }},
+    { &hf_e2ap_RICaction_RefusedToBeModified_Item_PDU,
+      { "RICaction-RefusedToBeModified-Item", "e2ap.RICaction_RefusedToBeModified_Item_element",
+        FT_NONE, BASE_NONE, NULL, 0,
+        NULL, HFILL }},
+    { &hf_e2ap_RICactions_ConfirmedForRemoval_List_PDU,
+      { "RICactions-ConfirmedForRemoval-List", "e2ap.RICactions_ConfirmedForRemoval_List",
+        FT_UINT32, BASE_DEC, NULL, 0,
+        NULL, HFILL }},
+    { &hf_e2ap_RICaction_ConfirmedForRemoval_Item_PDU,
+      { "RICaction-ConfirmedForRemoval-Item", "e2ap.RICaction_ConfirmedForRemoval_Item_element",
+        FT_NONE, BASE_NONE, NULL, 0,
+        NULL, HFILL }},
+    { &hf_e2ap_RICactions_RefusedToBeRemoved_List_PDU,
+      { "RICactions-RefusedToBeRemoved-List", "e2ap.RICactions_RefusedToBeRemoved_List",
+        FT_UINT32, BASE_DEC, NULL, 0,
+        NULL, HFILL }},
+    { &hf_e2ap_RICaction_RefusedToBeRemoved_Item_PDU,
+      { "RICaction-RefusedToBeRemoved-Item", "e2ap.RICaction_RefusedToBeRemoved_Item_element",
+        FT_NONE, BASE_NONE, NULL, 0,
+        NULL, HFILL }},
+    { &hf_e2ap_RICsubscriptionModificationRefuse_PDU,
+      { "RICsubscriptionModificationRefuse", "e2ap.RICsubscriptionModificationRefuse_element",
+        FT_NONE, BASE_NONE, NULL, 0,
+        NULL, HFILL }},
     { &hf_e2ap_RICindication_PDU,
       { "RICindication", "e2ap.RICindication_element",
         FT_NONE, BASE_NONE, NULL, 0,
@@ -13103,6 +15315,18 @@ void proto_register_e2ap(void) {
         NULL, HFILL }},
     { &hf_e2ap_RICcontrolFailure_PDU,
       { "RICcontrolFailure", "e2ap.RICcontrolFailure_element",
+        FT_NONE, BASE_NONE, NULL, 0,
+        NULL, HFILL }},
+    { &hf_e2ap_RICQueryRequest_PDU,
+      { "RICQueryRequest", "e2ap.RICQueryRequest_element",
+        FT_NONE, BASE_NONE, NULL, 0,
+        NULL, HFILL }},
+    { &hf_e2ap_RICQueryResponse_PDU,
+      { "RICQueryResponse", "e2ap.RICQueryResponse_element",
+        FT_NONE, BASE_NONE, NULL, 0,
+        NULL, HFILL }},
+    { &hf_e2ap_RICQueryFailure_PDU,
+      { "RICQueryFailure", "e2ap.RICQueryFailure_element",
         FT_NONE, BASE_NONE, NULL, 0,
         NULL, HFILL }},
     { &hf_e2ap_ErrorIndication_PDU,
@@ -13501,10 +15725,10 @@ void proto_register_e2ap(void) {
       { "e2nodeComponentInterfaceTypeX2", "e2ap.e2nodeComponentInterfaceTypeX2_element",
         FT_NONE, BASE_NONE, NULL, 0,
         NULL, HFILL }},
-    { &hf_e2ap_gNB_CU_CP_ID,
-      { "gNB-CU-CP-ID", "e2ap.gNB_CU_CP_ID",
+    { &hf_e2ap_gNB_CU_UP_ID,
+      { "gNB-CU-UP-ID", "e2ap.gNB_CU_UP_ID",
         FT_UINT64, BASE_DEC, NULL, 0,
-        "GNB_CU_UP_ID", HFILL }},
+        NULL, HFILL }},
     { &hf_e2ap_gNB_DU_ID,
       { "gNB-DU-ID", "e2ap.gNB_DU_ID",
         FT_UINT64, BASE_DEC, NULL, 0,
@@ -13593,10 +15817,6 @@ void proto_register_e2ap(void) {
       { "global-gNB-ID", "e2ap.global_gNB_ID_element",
         FT_NONE, BASE_NONE, NULL, 0,
         "GlobalgNB_ID", HFILL }},
-    { &hf_e2ap_gNB_CU_UP_ID,
-      { "gNB-CU-UP-ID", "e2ap.gNB_CU_UP_ID",
-        FT_UINT64, BASE_DEC, NULL, 0,
-        NULL, HFILL }},
     { &hf_e2ap_global_ng_eNB_ID,
       { "global-ng-eNB-ID", "e2ap.global_ng_eNB_ID_element",
         FT_NONE, BASE_NONE, NULL, 0,
@@ -13701,6 +15921,10 @@ void proto_register_e2ap(void) {
       { "ricSubsequentAction", "e2ap.ricSubsequentAction_element",
         FT_NONE, BASE_NONE, NULL, 0,
         NULL, HFILL }},
+    { &hf_e2ap_ricActionExecutionOrder,
+      { "ricActionExecutionOrder", "e2ap.ricActionExecutionOrder",
+        FT_UINT32, BASE_DEC, NULL, 0,
+        NULL, HFILL }},
     { &hf_e2ap_RICaction_Admitted_List_item,
       { "ProtocolIE-SingleContainer", "e2ap.ProtocolIE_SingleContainer_element",
         FT_NONE, BASE_NONE, NULL, 0,
@@ -13724,6 +15948,66 @@ void proto_register_e2ap(void) {
     { &hf_e2ap_ranFunctionID,
       { "ranFunctionID", "e2ap.ranFunctionID",
         FT_UINT32, BASE_DEC, NULL, 0,
+        NULL, HFILL }},
+    { &hf_e2ap_RICactions_ToBeRemovedForModification_List_item,
+      { "ProtocolIE-SingleContainer", "e2ap.ProtocolIE_SingleContainer_element",
+        FT_NONE, BASE_NONE, NULL, 0,
+        NULL, HFILL }},
+    { &hf_e2ap_RICactions_ToBeModifiedForModification_List_item,
+      { "ProtocolIE-SingleContainer", "e2ap.ProtocolIE_SingleContainer_element",
+        FT_NONE, BASE_NONE, NULL, 0,
+        NULL, HFILL }},
+    { &hf_e2ap_RICactions_ToBeAddedForModification_List_item,
+      { "ProtocolIE-SingleContainer", "e2ap.ProtocolIE_SingleContainer_element",
+        FT_NONE, BASE_NONE, NULL, 0,
+        NULL, HFILL }},
+    { &hf_e2ap_RICactions_RemovedForModification_List_item,
+      { "ProtocolIE-SingleContainer", "e2ap.ProtocolIE_SingleContainer_element",
+        FT_NONE, BASE_NONE, NULL, 0,
+        NULL, HFILL }},
+    { &hf_e2ap_RICactions_FailedToBeRemovedForModification_List_item,
+      { "ProtocolIE-SingleContainer", "e2ap.ProtocolIE_SingleContainer_element",
+        FT_NONE, BASE_NONE, NULL, 0,
+        NULL, HFILL }},
+    { &hf_e2ap_RICactions_ModifiedForModification_List_item,
+      { "ProtocolIE-SingleContainer", "e2ap.ProtocolIE_SingleContainer_element",
+        FT_NONE, BASE_NONE, NULL, 0,
+        NULL, HFILL }},
+    { &hf_e2ap_RICactions_FailedToBeModifiedForModification_List_item,
+      { "ProtocolIE-SingleContainer", "e2ap.ProtocolIE_SingleContainer_element",
+        FT_NONE, BASE_NONE, NULL, 0,
+        NULL, HFILL }},
+    { &hf_e2ap_RICactions_AddedForModification_List_item,
+      { "ProtocolIE-SingleContainer", "e2ap.ProtocolIE_SingleContainer_element",
+        FT_NONE, BASE_NONE, NULL, 0,
+        NULL, HFILL }},
+    { &hf_e2ap_RICactions_FailedToBeAddedForModification_List_item,
+      { "ProtocolIE-SingleContainer", "e2ap.ProtocolIE_SingleContainer_element",
+        FT_NONE, BASE_NONE, NULL, 0,
+        NULL, HFILL }},
+    { &hf_e2ap_RICactions_RequiredToBeModified_List_item,
+      { "ProtocolIE-SingleContainer", "e2ap.ProtocolIE_SingleContainer_element",
+        FT_NONE, BASE_NONE, NULL, 0,
+        NULL, HFILL }},
+    { &hf_e2ap_RICactions_RequiredToBeRemoved_List_item,
+      { "ProtocolIE-SingleContainer", "e2ap.ProtocolIE_SingleContainer_element",
+        FT_NONE, BASE_NONE, NULL, 0,
+        NULL, HFILL }},
+    { &hf_e2ap_RICactions_ConfirmedForModification_List_item,
+      { "ProtocolIE-SingleContainer", "e2ap.ProtocolIE_SingleContainer_element",
+        FT_NONE, BASE_NONE, NULL, 0,
+        NULL, HFILL }},
+    { &hf_e2ap_RICactions_RefusedToBeModified_List_item,
+      { "ProtocolIE-SingleContainer", "e2ap.ProtocolIE_SingleContainer_element",
+        FT_NONE, BASE_NONE, NULL, 0,
+        NULL, HFILL }},
+    { &hf_e2ap_RICactions_ConfirmedForRemoval_List_item,
+      { "ProtocolIE-SingleContainer", "e2ap.ProtocolIE_SingleContainer_element",
+        FT_NONE, BASE_NONE, NULL, 0,
+        NULL, HFILL }},
+    { &hf_e2ap_RICactions_RefusedToBeRemoved_List_item,
+      { "ProtocolIE-SingleContainer", "e2ap.ProtocolIE_SingleContainer_element",
+        FT_NONE, BASE_NONE, NULL, 0,
         NULL, HFILL }},
     { &hf_e2ap_E2connectionUpdate_List_item,
       { "ProtocolIE-SingleContainer", "e2ap.ProtocolIE_SingleContainer_element",
@@ -14101,6 +16385,10 @@ void proto_register_e2ap(void) {
       { "longMacroNgENB-ID", "e2ap.longMacroNgENB_ID",
         FT_BYTES, BASE_NONE, NULL, 0,
         "BIT_STRING_SIZE_21", HFILL }},
+    { &hf_e2ap_nRCellIdentity,
+      { "nRCellIdentity", "e2ap.nRCellIdentity",
+        FT_BYTES, BASE_NONE, NULL, 0,
+        NULL, HFILL }},
     { &hf_e2ap_sST,
       { "sST", "e2ap.sST",
         FT_BYTES, BASE_NONE, NULL, 0,
@@ -14148,10 +16436,6 @@ void proto_register_e2ap(void) {
     { &hf_e2ap_SupportedSULBandList_item,
       { "SupportedSULFreqBandItem", "e2ap.SupportedSULFreqBandItem_element",
         FT_NONE, BASE_NONE, NULL, 0,
-        NULL, HFILL }},
-    { &hf_e2ap_nRCellIdentity,
-      { "nRCellIdentity", "e2ap.nRCellIdentity",
-        FT_BYTES, BASE_NONE, NULL, 0,
         NULL, HFILL }},
     { &hf_e2ap_NeighborCell_List_item,
       { "NeighborCell-Item", "e2ap.NeighborCell_Item",
@@ -15320,7 +17604,7 @@ void proto_register_e2ap(void) {
     { &hf_e2ap_plmnID,
       { "plmnID", "e2ap.plmnID",
         FT_BYTES, BASE_NONE, NULL, 0,
-        "PLMN_Identity", HFILL }},
+        "PLMNIdentity", HFILL }},
     { &hf_e2ap_sliceID,
       { "sliceID", "e2ap.sliceID_element",
         FT_NONE, BASE_NONE, NULL, 0,
@@ -15397,6 +17681,18 @@ void proto_register_e2ap(void) {
       { "avg", "e2ap.avg",
         FT_UINT32, BASE_DEC, VALS(e2ap_T_avg_vals), 0,
         NULL, HFILL }},
+    { &hf_e2ap_ssbIndex,
+      { "ssbIndex", "e2ap.ssbIndex",
+        FT_UINT32, BASE_DEC, NULL, 0,
+        "INTEGER_1_65535_", HFILL }},
+    { &hf_e2ap_nonGoB_BFmode_Index,
+      { "nonGoB-BFmode-Index", "e2ap.nonGoB_BFmode_Index",
+        FT_UINT32, BASE_DEC, NULL, 0,
+        "INTEGER_1_65535_", HFILL }},
+    { &hf_e2ap_mIMO_mode_Index,
+      { "mIMO-mode-Index", "e2ap.mIMO_mode_Index",
+        FT_UINT32, BASE_DEC, NULL, 0,
+        "INTEGER_1_2_", HFILL }},
     { &hf_e2ap_testType,
       { "testType", "e2ap.testType",
         FT_UINT32, BASE_DEC, VALS(e2ap_TestCond_Type_vals), 0,
@@ -15465,14 +17761,50 @@ void proto_register_e2ap(void) {
       { "valuePrtS", "e2ap.valuePrtS",
         FT_STRING, BASE_NONE, NULL, 0,
         "PrintableString", HFILL }},
-    { &hf_e2ap_MeasurementInfoList_item,
-      { "MeasurementInfoItem", "e2ap.MeasurementInfoItem_element",
+    { &hf_e2ap_binRangeListX,
+      { "binRangeListX", "e2ap.binRangeListX",
+        FT_UINT32, BASE_DEC, NULL, 0,
+        "BinRangeList", HFILL }},
+    { &hf_e2ap_binRangeListY,
+      { "binRangeListY", "e2ap.binRangeListY",
+        FT_UINT32, BASE_DEC, NULL, 0,
+        "BinRangeList", HFILL }},
+    { &hf_e2ap_binRangeListZ,
+      { "binRangeListZ", "e2ap.binRangeListZ",
+        FT_UINT32, BASE_DEC, NULL, 0,
+        "BinRangeList", HFILL }},
+    { &hf_e2ap_BinRangeList_item,
+      { "BinRangeItem", "e2ap.BinRangeItem_element",
+        FT_NONE, BASE_NONE, NULL, 0,
+        NULL, HFILL }},
+    { &hf_e2ap_binIndex,
+      { "binIndex", "e2ap.binIndex",
+        FT_UINT32, BASE_DEC, NULL, 0,
+        NULL, HFILL }},
+    { &hf_e2ap_startValue,
+      { "startValue", "e2ap.startValue",
+        FT_UINT32, BASE_DEC, VALS(e2ap_BinRangeValue_vals), 0,
+        "BinRangeValue", HFILL }},
+    { &hf_e2ap_endValue,
+      { "endValue", "e2ap.endValue",
+        FT_UINT32, BASE_DEC, VALS(e2ap_BinRangeValue_vals), 0,
+        "BinRangeValue", HFILL }},
+    { &hf_e2ap_DistMeasurementBinRangeList_item,
+      { "DistMeasurementBinRangeItem", "e2ap.DistMeasurementBinRangeItem_element",
         FT_NONE, BASE_NONE, NULL, 0,
         NULL, HFILL }},
     { &hf_e2ap_measType,
       { "measType", "e2ap.measType",
         FT_UINT32, BASE_DEC, VALS(e2ap_MeasurementType_vals), 0,
         "MeasurementType", HFILL }},
+    { &hf_e2ap_binRangeDef,
+      { "binRangeDef", "e2ap.binRangeDef_element",
+        FT_NONE, BASE_NONE, NULL, 0,
+        "BinRangeDefinition", HFILL }},
+    { &hf_e2ap_MeasurementInfoList_item,
+      { "MeasurementInfoItem", "e2ap.MeasurementInfoItem_element",
+        FT_NONE, BASE_NONE, NULL, 0,
+        NULL, HFILL }},
     { &hf_e2ap_labelInfoList,
       { "labelInfoList", "e2ap.labelInfoList",
         FT_UINT32, BASE_DEC, NULL, 0,
@@ -15533,16 +17865,44 @@ void proto_register_e2ap(void) {
       { "matchingUEidList", "e2ap.matchingUEidList",
         FT_UINT32, BASE_DEC, NULL, 0,
         NULL, HFILL }},
-    { &hf_e2ap_MatchingCondList_item,
-      { "MatchingCondItem", "e2ap.MatchingCondItem",
-        FT_UINT32, BASE_DEC, VALS(e2ap_MatchingCondItem_vals), 0,
+    { &hf_e2ap_matchingUEidPerGP,
+      { "matchingUEidPerGP", "e2ap.matchingUEidPerGP",
+        FT_UINT32, BASE_DEC, NULL, 0,
         NULL, HFILL }},
+    { &hf_e2ap_MatchingCondList_item,
+      { "MatchingCondItem", "e2ap.MatchingCondItem_element",
+        FT_NONE, BASE_NONE, NULL, 0,
+        NULL, HFILL }},
+    { &hf_e2ap_matchingCondChoice,
+      { "matchingCondChoice", "e2ap.matchingCondChoice",
+        FT_UINT32, BASE_DEC, VALS(e2ap_MatchingCondItem_Choice_vals), 0,
+        "MatchingCondItem_Choice", HFILL }},
     { &hf_e2ap_testCondInfo,
       { "testCondInfo", "e2ap.testCondInfo_element",
         FT_NONE, BASE_NONE, NULL, 0,
         NULL, HFILL }},
     { &hf_e2ap_MatchingUEidList_item,
       { "MatchingUEidItem", "e2ap.MatchingUEidItem_element",
+        FT_NONE, BASE_NONE, NULL, 0,
+        NULL, HFILL }},
+    { &hf_e2ap_MatchingUEidPerGP_item,
+      { "MatchingUEidPerGP-Item", "e2ap.MatchingUEidPerGP_Item_element",
+        FT_NONE, BASE_NONE, NULL, 0,
+        NULL, HFILL }},
+    { &hf_e2ap_matchedPerGP,
+      { "matchedPerGP", "e2ap.matchedPerGP",
+        FT_UINT32, BASE_DEC, VALS(e2ap_T_matchedPerGP_vals), 0,
+        NULL, HFILL }},
+    { &hf_e2ap_noUEmatched,
+      { "noUEmatched", "e2ap.noUEmatched",
+        FT_UINT32, BASE_DEC, VALS(e2ap_T_noUEmatched_vals), 0,
+        NULL, HFILL }},
+    { &hf_e2ap_oneOrMoreUEmatched,
+      { "oneOrMoreUEmatched", "e2ap.oneOrMoreUEmatched",
+        FT_UINT32, BASE_DEC, NULL, 0,
+        "MatchingUEidList_PerGP", HFILL }},
+    { &hf_e2ap_MatchingUEidList_PerGP_item,
+      { "MatchingUEidItem-PerGP", "e2ap.MatchingUEidItem_PerGP_element",
         FT_NONE, BASE_NONE, NULL, 0,
         NULL, HFILL }},
     { &hf_e2ap_MatchingUeCondPerSubList_item,
@@ -15605,6 +17965,10 @@ void proto_register_e2ap(void) {
       { "granulPeriod", "e2ap.granulPeriod",
         FT_UINT32, BASE_DEC, NULL, 0,
         "GranularityPeriod", HFILL }},
+    { &hf_e2ap_distMeasBinRangeInfo,
+      { "distMeasBinRangeInfo", "e2ap.distMeasBinRangeInfo",
+        FT_UINT32, BASE_DEC, NULL, 0,
+        "DistMeasurementBinRangeList", HFILL }},
     { &hf_e2ap_subscriptInfo,
       { "subscriptInfo", "e2ap.subscriptInfo_element",
         FT_NONE, BASE_NONE, NULL, 0,
@@ -15636,7 +18000,7 @@ void proto_register_e2ap(void) {
     { &hf_e2ap_colletStartTime,
       { "colletStartTime", "e2ap.colletStartTime",
         FT_BYTES, BASE_NONE, NULL, 0,
-        "TimeStamp", HFILL }},
+        NULL, HFILL }},
     { &hf_e2ap_fileFormatversion,
       { "fileFormatversion", "e2ap.fileFormatversion",
         FT_STRING, BASE_NONE, NULL, 0,
@@ -16032,11 +18396,25 @@ void proto_register_e2ap(void) {
       { &hf_e2ap_ran_function_setup_frame,
           { "RANfunction setup frame", "e2ap.setup-frame",
             FT_FRAMENUM, BASE_NONE, NULL, 0x0,
-            NULL, HFILL }}
+            NULL, HFILL }},
+
+      { &hf_e2ap_dissector_version,
+          { "Version (dissector)", "e2ap.version.dissector",
+            FT_STRING, BASE_NONE, NULL, 0x0,
+            NULL, HFILL }},
+      { &hf_e2ap_frame_version,
+          { "Version (frame)", "e2ap.version.frame",
+            FT_STRING, BASE_NONE, NULL, 0x0,
+            NULL, HFILL }},
+
+      { &hf_e2ap_timestamp_string,
+          { "Timestamp string", "e2ap.timestamp-string",
+            FT_STRING, BASE_NONE, NULL, 0x0,
+            NULL, HFILL }},
   };
 
   /* List of subtrees */
-  static gint *ett[] = {
+  static int *ett[] = {
     &ett_e2ap,
     &ett_e2ap_ProtocolIE_Container,
     &ett_e2ap_ProtocolIE_Field,
@@ -16088,10 +18466,49 @@ void proto_register_e2ap(void) {
     &ett_e2ap_RICsubscriptionDeleteRequired,
     &ett_e2ap_RICsubscription_List_withCause,
     &ett_e2ap_RICsubscription_withCause_Item,
+    &ett_e2ap_RICsubscriptionModificationRequest,
+    &ett_e2ap_RICactions_ToBeRemovedForModification_List,
+    &ett_e2ap_RICaction_ToBeRemovedForModification_Item,
+    &ett_e2ap_RICactions_ToBeModifiedForModification_List,
+    &ett_e2ap_RICaction_ToBeModifiedForModification_Item,
+    &ett_e2ap_RICactions_ToBeAddedForModification_List,
+    &ett_e2ap_RICaction_ToBeAddedForModification_Item,
+    &ett_e2ap_RICsubscriptionModificationResponse,
+    &ett_e2ap_RICactions_RemovedForModification_List,
+    &ett_e2ap_RICaction_RemovedForModification_Item,
+    &ett_e2ap_RICactions_FailedToBeRemovedForModification_List,
+    &ett_e2ap_RICaction_FailedToBeRemovedForModification_Item,
+    &ett_e2ap_RICactions_ModifiedForModification_List,
+    &ett_e2ap_RICaction_ModifiedForModification_Item,
+    &ett_e2ap_RICactions_FailedToBeModifiedForModification_List,
+    &ett_e2ap_RICaction_FailedToBeModifiedForModification_Item,
+    &ett_e2ap_RICactions_AddedForModification_List,
+    &ett_e2ap_RICaction_AddedForModification_Item,
+    &ett_e2ap_RICactions_FailedToBeAddedForModification_List,
+    &ett_e2ap_RICaction_FailedToBeAddedForModification_Item,
+    &ett_e2ap_RICsubscriptionModificationFailure,
+    &ett_e2ap_RICsubscriptionModificationRequired,
+    &ett_e2ap_RICactions_RequiredToBeModified_List,
+    &ett_e2ap_RICaction_RequiredToBeModified_Item,
+    &ett_e2ap_RICactions_RequiredToBeRemoved_List,
+    &ett_e2ap_RICaction_RequiredToBeRemoved_Item,
+    &ett_e2ap_RICsubscriptionModificationConfirm,
+    &ett_e2ap_RICactions_ConfirmedForModification_List,
+    &ett_e2ap_RICaction_ConfirmedForModification_Item,
+    &ett_e2ap_RICactions_RefusedToBeModified_List,
+    &ett_e2ap_RICaction_RefusedToBeModified_Item,
+    &ett_e2ap_RICactions_ConfirmedForRemoval_List,
+    &ett_e2ap_RICaction_ConfirmedForRemoval_Item,
+    &ett_e2ap_RICactions_RefusedToBeRemoved_List,
+    &ett_e2ap_RICaction_RefusedToBeRemoved_Item,
+    &ett_e2ap_RICsubscriptionModificationRefuse,
     &ett_e2ap_RICindication,
     &ett_e2ap_RICcontrolRequest,
     &ett_e2ap_RICcontrolAcknowledge,
     &ett_e2ap_RICcontrolFailure,
+    &ett_e2ap_RICQueryRequest,
+    &ett_e2ap_RICQueryResponse,
+    &ett_e2ap_RICQueryFailure,
     &ett_e2ap_ErrorIndication,
     &ett_e2ap_E2setupRequest,
     &ett_e2ap_E2setupResponse,
@@ -16176,6 +18593,7 @@ void proto_register_e2ap(void) {
     &ett_e2ap_GNB_ID,
     &ett_e2ap_GUAMI,
     &ett_e2ap_NgENB_ID,
+    &ett_e2ap_NR_CGI,
     &ett_e2ap_S_NSSAI,
     &ett_e2ap_GlobalNGRANNodeID,
     &ett_e2ap_NR_ARFCN,
@@ -16184,7 +18602,6 @@ void proto_register_e2ap(void) {
     &ett_e2ap_NRFrequencyInfo,
     &ett_e2ap_SupportedSULBandList,
     &ett_e2ap_SupportedSULFreqBandItem,
-    &ett_e2ap_NR_CGI,
     &ett_e2ap_NeighborCell_List,
     &ett_e2ap_NeighborCell_Item,
     &ett_e2ap_NeighborCell_Item_Choice_NR,
@@ -16388,11 +18805,17 @@ void proto_register_e2ap(void) {
     &ett_e2ap_SEQUENCE_SIZE_1_maxnoofAssociatedRANParameters_OF_PolicyCondition_RANParameter_Item,
     &ett_e2ap_PolicyAction_RANParameter_Item,
     &ett_e2ap_PolicyCondition_RANParameter_Item,
+    &ett_e2ap_BinRangeValue,
     &ett_e2ap_MeasurementType,
     &ett_e2ap_MeasurementLabel,
     &ett_e2ap_TestCondInfo,
     &ett_e2ap_TestCond_Type,
     &ett_e2ap_TestCond_Value,
+    &ett_e2ap_BinRangeDefinition,
+    &ett_e2ap_BinRangeList,
+    &ett_e2ap_BinRangeItem,
+    &ett_e2ap_DistMeasurementBinRangeList,
+    &ett_e2ap_DistMeasurementBinRangeItem,
     &ett_e2ap_MeasurementInfoList,
     &ett_e2ap_MeasurementInfoItem,
     &ett_e2ap_LabelInfoList,
@@ -16409,8 +18832,14 @@ void proto_register_e2ap(void) {
     &ett_e2ap_MeasurementCondUEidItem,
     &ett_e2ap_MatchingCondList,
     &ett_e2ap_MatchingCondItem,
+    &ett_e2ap_MatchingCondItem_Choice,
     &ett_e2ap_MatchingUEidList,
     &ett_e2ap_MatchingUEidItem,
+    &ett_e2ap_MatchingUEidPerGP,
+    &ett_e2ap_MatchingUEidPerGP_Item,
+    &ett_e2ap_T_matchedPerGP,
+    &ett_e2ap_MatchingUEidList_PerGP,
+    &ett_e2ap_MatchingUEidItem_PerGP,
     &ett_e2ap_MatchingUeCondPerSubList,
     &ett_e2ap_MatchingUeCondPerSubItem,
     &ett_e2ap_MatchingUEidPerSubList,
@@ -16497,6 +18926,9 @@ void proto_register_e2ap(void) {
   static ei_register_info ei[] = {
      { &ei_e2ap_ran_function_names_no_match, { "e2ap.ran-function-names-no-match", PI_PROTOCOL, PI_WARN, "RAN Function name doesn't match known service models", EXPFILL }},
      { &ei_e2ap_ran_function_id_not_mapped,   { "e2ap.ran-function-id-not-known", PI_PROTOCOL, PI_WARN, "Service Model not known for RANFunctionID", EXPFILL }},
+     { &ei_e2ap_ran_function_dissector_mismatch,   { "e2ap.ran-function-dissector-version-mismatch", PI_PROTOCOL, PI_WARN, "Available dissector does not match signalled", EXPFILL }},
+     { &ei_e2ap_ran_function_max_dissectors_registered,   { "e2ap.ran-function-max-dissectors-registered", PI_PROTOCOL, PI_WARN, "Available dissector does not match signalled", EXPFILL }},
+
   };
 
   expert_module_t* expert_e2ap;
@@ -16526,6 +18958,8 @@ void proto_register_e2ap(void) {
   e2ap_n2_ie_type_dissector_table = register_dissector_table("e2ap.n2_ie_type", "E2AP N2 IE Type", proto_e2ap, FT_STRING, STRING_CASE_SENSITIVE);
 
   register_init_routine(&e2ap_init_protocol);
+
+  e2ap_tap = register_tap("e2ap");
 }
 
 /*

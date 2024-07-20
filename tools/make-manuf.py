@@ -36,7 +36,7 @@ def exit_msg(msg=None, status=1):
 def open_url(url):
     '''Open a URL.
     Returns a tuple containing the body and response dict. The body is a
-    str in Python 3 and bytes in Python 2 in order to be compatibile with
+    str in Python 3 and bytes in Python 2 in order to be compatible with
     csv.reader.
     '''
 
@@ -113,8 +113,15 @@ skip_start = [
     'wuhan',
     'hangzhou',
     'guangxi',
+    'guangdong',
+    'chengdu',
 ]
 
+# Special cases handled directly
+special_case = {
+    "Advanced Micro Devices": "AMD",
+    "杭州德澜科技有限公司": "DelanTech" # 杭州德澜科技有限公司（HangZhou Delan Technology Co.,Ltd）
+}
 
 def shorten(manuf):
     '''Convert a long manufacturer name to abbreviated and short names'''
@@ -124,9 +131,18 @@ def shorten(manuf):
     # Convert all caps to title case
     if manuf.isupper():
         manuf = manuf.title()
+    # Remove the contents of parenthesis as ancillary data
+    manuf = re.sub(r"\(.*\)", '', manuf)
+    # Remove the contents of fullwidth parenthesis (mostly in Asian names)
+    manuf = re.sub(r"（.*）", '', manuf)
+    # Remove "a" before removing punctuation ("Aruba, a Hewlett [...]" etc.)
+    manuf = manuf.replace(" a ", " ")
     # Remove any punctuation
     # XXX Use string.punctuation? Note that it includes '-' and '*'.
     manuf = re.sub(r"[\"',./:()+-]", ' ', manuf)
+    # XXX For some reason including the double angle brackets in the above
+    # regex makes it bomb
+    manuf = re.sub(r"[«»“”]", ' ', manuf)
     # & isn't needed when Standalone
     manuf = manuf.replace(" & ", " ")
     # Remove business types and other general terms ("the", "inc", "plc", etc.)
@@ -135,6 +151,15 @@ def shorten(manuf):
     if not all(s == ' ' for s in plain_manuf):
         manuf = plain_manuf
 
+    manuf = manuf.strip()
+
+    # Check for special case
+    if manuf in special_case.keys():
+        manuf = special_case[manuf]
+
+    # XXX: Some of the entries have Chinese city or other location
+    # names written with spaces between each character, like
+    # Bei jing, Wu Han, Shen Zhen, etc. We should remove that too.
     split = manuf.split()
     if len(split) > 1 and split[0].lower() in skip_start:
         manuf = ' '.join(split[1:])
@@ -180,21 +205,32 @@ def shorten(manuf):
 
     return [manuf, mixed_manuf]
 
-def prefix_to_oui(prefix):
-    pfx_len = len(prefix) * 8 / 2
+MA_L = 'MA_L'
+MA_M = 'MA_M'
+MA_S = 'MA_S'
+
+def prefix_to_oui(prefix, prefix_map):
+    pfx_len = int(len(prefix) * 8 / 2)
+    prefix24 = prefix[:6]
+    oui24 = ':'.join(hi + lo for hi, lo in zip(prefix24[0::2], prefix24[1::2]))
 
     if pfx_len == 24:
         # 24-bit OUI assignment, no mask
-        return ':'.join(hi + lo for hi, lo in zip(prefix[0::2], prefix[1::2]))
+        return oui24, MA_L
 
     # Other lengths which require a mask.
     oui = prefix.ljust(12, '0')
     oui = ':'.join(hi + lo for hi, lo in zip(oui[0::2], oui[1::2]))
-    return '{}/{:d}'.format(oui, int(pfx_len))
+    if pfx_len == 28:
+        kind = MA_M
+    elif pfx_len == 36:
+        kind = MA_S
+    prefix_map[oui24] = kind
+
+    return '{}/{:d}'.format(oui, int(pfx_len)), kind
 
 def main():
-    this_dir = os.path.dirname(__file__)
-    manuf_path = os.path.join(this_dir, '..', 'manuf')
+    manuf_path = os.path.join('epan', 'manuf-data.c')
 
     ieee_d = {
         'OUI':   { 'url': ["https://standards-oui.ieee.org/oui/", "oui.csv"], 'min_entries': 1000 },
@@ -203,13 +239,20 @@ def main():
         'OUI28': { 'url': ["https://standards-oui.ieee.org/oui28/", "mam.csv"], 'min_entries': 1000 },
         'OUI36': { 'url': ["https://standards-oui.ieee.org/oui36/", "oui36.csv"], 'min_entries': 1000 },
     }
-    oui_d = {}
+    oui_d = {
+        MA_L: { '00:00:00' : ['00:00:00', 'Officially Xerox, but 0:0:0:0:0:0 is more common'] },
+        MA_M: {},
+        MA_S: {},
+    }
 
-    min_total = 35000; # 35830 as of 2018-09-05
+    min_total = 35000 # 35830 as of 2018-09-05
     total_added = 0
 
     # Add IEEE entries from each of their databases
     ieee_db_l = ['OUI', 'OUI28', 'OUI36', 'CID', 'IAB']
+
+    # map a 24-bit prefix to MA-M/MA-S or none (MA-L by default)
+    prefix_map = {}
 
     for db in ieee_db_l:
         db_url = ieee_d[db]['url']
@@ -225,16 +268,23 @@ def main():
         for ieee_row in ieee_csv:
             #Registry,Assignment,Organization Name,Organization Address
             #IAB,0050C2DD6,Transas Marine Limited,Datavagen 37 Askim Vastra Gotaland SE 436 32
-            oui = prefix_to_oui(ieee_row[1].upper())
+            oui, kind = prefix_to_oui(ieee_row[1].upper(), prefix_map)
             manuf = ieee_row[2].strip()
             # The Organization Name field occasionally contains HTML entities. Undo them.
             manuf = html.unescape(manuf)
-            if oui in oui_d:
+            # "Watts A\S"
+            manuf = manuf.replace('\\', '/')
+            if manuf == 'IEEE Registration Authority':
+                # These are held for subdivision into MA-M/MA-S
+                continue
+            #if manuf == 'Private':
+            #    continue
+            if oui in oui_d[kind]:
                 action = 'Skipping'
-                print('{} - {} IEEE "{}" in favor of "{}"'.format(oui, action, manuf, oui_d[oui]))
+                print('{} - {} IEEE "{}" in favor of "{}"'.format(oui, action, manuf, oui_d[kind][oui]))
                 ieee_d[db]['skipped'] += 1
             else:
-                oui_d[oui] = shorten(manuf)
+                oui_d[kind][oui] = shorten(manuf)
                 ieee_d[db]['added'] += 1
             ieee_d[db]['total'] += 1
 
@@ -245,70 +295,93 @@ def main():
     if total_added < min_total:
         exit_msg("Too few total entries ({})".format(total_added))
 
-    # Write the output file.
-
     try:
         manuf_fd = io.open(manuf_path, 'w', encoding='UTF-8')
     except Exception:
         exit_msg("Couldn't open manuf file for reading ({}) ".format(manuf_path))
 
-    manuf_fd.write("# This file was generated by running ./tools/make-manuf.py.\n")
-    manuf_fd.write(
-'''#
-# /etc/manuf - Ethernet vendor codes, and well-known MAC addresses
-#
-# Laurent Deniel <laurent.deniel [AT] free.fr>
-#
-# Wireshark - Network traffic analyzer
-# By Gerald Combs <gerald [AT] wireshark.org>
-# Copyright 1998 Gerald Combs
-#
-# SPDX-License-Identifier: GPL-2.0-or-later
-#
-# The data below has been assembled from the following sources:
-#
-# The IEEE public OUI listings available from:
-# <http://standards-oui.ieee.org/oui/oui.csv>
-# <http://standards-oui.ieee.org/cid/cid.csv>
-# <http://standards-oui.ieee.org/iab/iab.csv>
-# <http://standards-oui.ieee.org/oui28/mam.csv>
-# <http://standards-oui.ieee.org/oui36/oui36.csv>
-#
-# This file is in the same format as ethers(4) except that vendor names
-# are truncated to eight characters when used with Wireshark, and
-# that well-known MAC addresses need not have a full 6 octets and may
-# have a netmask following them specifying how many bits of the address
-# are relevant (the other bits are wildcards).  Also, either ":", "-",
-# or "." can be used to separate the octets.
-#
-# You can get the latest version of this file from
-# https://gitlab.com/wireshark/wireshark/-/raw/master/manuf
+    manuf_fd.write('''/*
+ * This file was generated by running ./tools/make-manuf.py.
+ *
+ * SPDX-License-Identifier: GPL-2.0-or-later
+ *
+ * The data below has been assembled from the following sources:
+ *
+ * The IEEE public OUI listings available from:
+ * <http://standards-oui.ieee.org/oui/oui.csv>
+ * <http://standards-oui.ieee.org/cid/cid.csv>
+ * <http://standards-oui.ieee.org/iab/iab.csv>
+ * <http://standards-oui.ieee.org/oui28/mam.csv>
+ * <http://standards-oui.ieee.org/oui36/oui36.csv>
+ *
+ */
 
 ''')
 
-    for db in ieee_db_l:
-        manuf_fd.write(
-            '''\
+    # Write the prefix map
+    manuf_fd.write("static const manuf_registry_t ieee_registry_table[] = {\n")
+    keys = list(prefix_map.keys())
+    keys.sort()
+    for oui in keys:
+        manuf_fd.write("    {{ {{ 0x{}, 0x{}, 0x{} }}, {} }},\n".format(oui[0:2], oui[3:5], oui[6:8], prefix_map[oui]))
+    manuf_fd.write("};\n\n")
 
-'''.format( **ieee_d[db]))
-
-    oui_l = list(oui_d.keys())
-    oui_l.sort()
-    for oui in oui_l:
-        manuf = oui_d[oui]
-        line = oui
-        sep_len = (24 - len(line)) // 8
-        if sep_len <= 0:
-            sep_len = 1
-        line += '\t' * sep_len + manuf[0]
-        if manuf[1]:
-            if len(manuf[0]) < 8:
-                sep_len = 2
-            else:
-                sep_len = 1
-            line += '\t' * sep_len + manuf[1]
-        line += '\n'
+    # write the MA-L table
+    manuf_fd.write("static const manuf_oui24_t global_manuf_oui24_table[] = {\n")
+    keys = list(oui_d[MA_L].keys())
+    keys.sort()
+    for oui in keys:
+        short = oui_d[MA_L][oui][0]
+        if oui_d[MA_L][oui][1]:
+            long = oui_d[MA_L][oui][1]
+        else:
+            long = short
+        line = "    {{ {{ 0x{}, 0x{}, 0x{} }}, \"{}\", ".format(oui[0:2], oui[3:5], oui[6:8], short)
+        sep = 44 - len(line)
+        if sep <= 0:
+            sep = 0
+        line += sep * ' '
+        line += "\"{}\" }},\n".format(long.replace('"', '\\"'))
         manuf_fd.write(line)
+    manuf_fd.write("};\n\n")
+
+    # write the MA-M table
+    manuf_fd.write("static const manuf_oui28_t global_manuf_oui28_table[] = {\n")
+    keys = list(oui_d[MA_M].keys())
+    keys.sort()
+    for oui in keys:
+        short = oui_d[MA_M][oui][0]
+        if oui_d[MA_M][oui][1]:
+            long = oui_d[MA_M][oui][1]
+        else:
+            long = short
+        line = "    {{ {{ 0x{}, 0x{}, 0x{}, 0x{} }}, \"{}\", ".format(oui[0:2], oui[3:5], oui[6:8], oui[9:11], short)
+        sep = 50 - len(line)
+        if sep <= 0:
+            sep = 0
+        line += sep * ' '
+        line += "\"{}\" }},\n".format(long.replace('"', '\\"'))
+        manuf_fd.write(line)
+    manuf_fd.write("};\n\n")
+
+    #write the MA-S table
+    manuf_fd.write("static const manuf_oui36_t global_manuf_oui36_table[] = {\n")
+    keys = list(oui_d[MA_S].keys())
+    keys.sort()
+    for oui in keys:
+        short = oui_d[MA_S][oui][0]
+        if oui_d[MA_S][oui][1]:
+            long = oui_d[MA_S][oui][1]
+        else:
+            long = short
+        line = "    {{ {{ 0x{}, 0x{}, 0x{}, 0x{}, 0x{} }}, \"{}\", ".format(oui[0:2], oui[3:5], oui[6:8], oui[9:11], oui[12:14], short)
+        sep = 56 - len(line)
+        if sep <= 0:
+            sep = 0
+        line += sep * ' '
+        line += "\"{}\" }},\n".format(long.replace('"', '\\"'))
+        manuf_fd.write(line)
+    manuf_fd.write("};\n")
 
     manuf_fd.close()
 

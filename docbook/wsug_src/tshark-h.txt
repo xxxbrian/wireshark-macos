@@ -1,4 +1,4 @@
-TShark (Wireshark) 4.1.0 (v4.1.0rc0-1991-g04aed725ef4c)
+TShark (Wireshark) 4.3.0 (v4.3.0rc1-389-gd7eefd41a2b0)
 Dump and analyze network traffic.
 See https://www.wireshark.org for more information.
 
@@ -39,6 +39,8 @@ Capture output:
                             packets:NUM - switch to next file after NUM packets
                            interval:NUM - switch to next file when the time is
                                           an exact multiple of NUM secs
+                         printname:FILE - print filename to FILE when written
+                                          (can use 'stdout' or 'stderr')
 Input file:
   -r <infile>, --read-file <infile>
                            set the filename to read from (or '-' for stdin)
@@ -54,7 +56,7 @@ Processing:
                            syntax
   -n                       disable all name resolutions (def: "mNd" enabled, or
                            as set in preferences)
-  -N <name resolve flags>  enable specific name resolution(s): "mnNtdv"
+  -N <name resolve flags>  enable specific name resolution(s): "mtndsNvg"
   -d <layer_type>==<selector>,<decode_as_protocol> ...
                            "Decode As", see the man page for details
                            Example: tcp.port==8888,http
@@ -64,6 +66,11 @@ Processing:
                            enable dissection of proto_name
   --disable-protocol <proto_name>
                            disable dissection of proto_name
+  --only-protocols <protocols>
+                           Only enable dissection of these protocols, comma
+                           separated. Disable everything else
+  --disable-all-protocols
+                           Disable dissection of all protocols
   --enable-heuristic <short_name>
                            enable dissection of heuristic protocol
   --disable-heuristic <short_name>
@@ -74,7 +81,7 @@ Output:
   --capture-comment <comment>
                            add a capture file comment, if supported
   -C <config profile>      start with specified configuration profile
-  -F <output file type>    set the output file type, default is pcapng
+  -F <output file type>    set the output file type; default is pcapng.
                            an empty "-F" option will list the file types
   -V                       add output of packet tree        (Packet Details)
   -O <protocols>           Only show packet details of these protocols, comma
@@ -97,7 +104,7 @@ Output:
   -J <protocolfilter>      top level protocol filter if -T ek|pdml|json selected
                            (e.g. "http tcp", filter which expands all child nodes)
   -e <field>               field to print if -Tfields selected (e.g. tcp.port,
-                           _ws.col.Info)
+                           _ws.col.info)
                            this option can be repeated to print multiple fields
   -E<fieldsoption>=<value> set options for output when -Tfields selected:
      bom=y|n               print a UTF-8 BOM
@@ -111,6 +118,7 @@ Output:
                            output format of time stamps (def: r: rel. to first)
   -u s|hms                 output format of seconds (def: s: seconds)
   -l                       flush standard output after each packet
+                           (implies --update-interval 0)
   -q                       be more quiet on stdout (e.g. when using statistics)
   -Q                       only log true errors to stderr (quieter than -q)
   -g                       enable group read access on the output file(s)

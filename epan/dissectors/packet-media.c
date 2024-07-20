@@ -24,9 +24,9 @@
 
 void proto_register_media(void);
 
-static int proto_media = -1;
-static gint hf_media_type = -1;
-static gint ett_media = -1;
+static int proto_media;
+static int hf_media_type;
+static int ett_media;
 static heur_dissector_list_t heur_subdissector_list;
 
 static int
@@ -80,7 +80,7 @@ proto_register_media(void)
           FT_BYTES, BASE_NONE, NULL, 0,
           NULL, HFILL }},
     };
-    static gint *ett[] = {
+    static int *ett[] = {
         &ett_media
     };
 
@@ -90,7 +90,7 @@ proto_register_media(void)
         "media"         /* abbrev */
         );
     register_dissector("media", dissect_media, proto_media);
-    heur_subdissector_list = register_heur_dissector_list("media", proto_media);
+    heur_subdissector_list = register_heur_dissector_list_with_description("media", "Media type", proto_media);
     proto_register_field_array(proto_media, hf, array_length(hf));
     proto_register_subtree_array(ett, array_length(ett));
 

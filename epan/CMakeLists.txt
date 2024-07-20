@@ -39,7 +39,6 @@ add_custom_command(
 )
 
 set(LIBWIRESHARK_PUBLIC_HEADERS
-	addr_and_mask.h
 	addr_resolv.h
 	address.h
 	address_types.h
@@ -100,15 +99,15 @@ set(LIBWIRESHARK_PUBLIC_HEADERS
 	iax2_codec_type.h
 	in_cksum.h
 	introspection.h
+	iana-ip.h
 	ip_opts.h
 	ipproto.h
-	ipv4.h
-	ipv6.h
 	lapd_sapi.h
 	llcsaps.h
 	maxmind_db.h
 	media_params.h
 	next_tvb.h
+	nghttp2_hd_huffman.h
 	nlpid.h
 	oids.h
 	osi-utils.h
@@ -171,7 +170,6 @@ set(LIBWIRESHARK_HEADER_FILES
 )
 
 set(LIBWIRESHARK_NONGENERATED_FILES
-	addr_and_mask.c
 	addr_resolv.c
 	address_types.c
 	afn.c
@@ -211,12 +209,15 @@ set(LIBWIRESHARK_NONGENERATED_FILES
 	golay.c
 	guid-utils.c
 	iana_charsets.c
+	iana-ip.c
 	in_cksum.c
 	introspection.c
 	ipproto.c
+	manuf.c
 	maxmind_db.c
 	media_params.c
 	next_tvb.c
+	nghttp2_hd_huffman_data.c
 	oids.c
 	osi-utils.c
 	packet.c
@@ -253,7 +254,9 @@ set(LIBWIRESHARK_NONGENERATED_FILES
 	tvbuff.c
 	tvbuff_base64.c
 	tvbuff_brotli.c
+	tvbuff_snappy.c
 	tvbuff_composite.c
+	tvbuff_hpackhuff.c
 	tvbuff_real.c
 	tvbuff_subset.c
 	tvbuff_zlib.c
@@ -342,11 +345,13 @@ target_link_libraries(epan
 		${LZ4_LIBRARIES}
 		${M_LIBRARIES}
 		${NGHTTP2_LIBRARIES}
+		${NGHTTP3_LIBRARIES}
 		${SMI_LIBRARIES}
 		${SNAPPY_LIBRARIES}
 		${WIN_PSAPI_LIBRARY}
 		${WIN_WS2_32_LIBRARY}
 		${ZLIB_LIBRARIES}
+		${ZLIBNG_LIBRARIES}
 		${ZSTD_LIBRARIES}
 		$<$<BOOL:${LUA_FOUND}>:lrexlib>
 )
@@ -373,8 +378,11 @@ target_include_directories(epan
 		${LUA_INCLUDE_DIRS}
 		${LZ4_INCLUDE_DIRS}
 		${NGHTTP2_INCLUDE_DIRS}
+		${NGHTTP3_INCLUDE_DIRS}
 		${SMI_INCLUDE_DIRS}
+		${SNAPPY_INCLUDE_DIRS}
 		${ZLIB_INCLUDE_DIRS}
+		${ZLIBNG_INCLUDE_DIRS}
 		${ZSTD_INCLUDE_DIRS}
 	PRIVATE
 		${CMAKE_CURRENT_BINARY_DIR}

@@ -14,10 +14,8 @@
 #include "wiretap/wtap.h"
 #include "wiretap/pcap-encap.h"
 
-#include <epan/prefs.h>
-
 #include "ui/text_import_scanner.h"
-#include "ui/last_open_dir.h"
+#include "ui/util.h"
 #include "ui/alert_box.h"
 #include "ui/help_url.h"
 #include "ui/capture_globals.h"
@@ -127,7 +125,7 @@ ImportTextDialog::ImportTextDialog(QWidget *parent) :
         {"Plain bin", ENCODING_PLAIN_BIN},
         {"Base 64", ENCODING_BASE64}
     };
-    for (i = 0; i < (int) (sizeof(encodings) / sizeof(encodings[0])); ++i) {
+    for (i = 0; i < (int)array_length(encodings); ++i) {
         ti_ui_->dataEncodingComboBox->addItem(encodings[i].name, QVariant(encodings[i].id));
     }
 
@@ -185,7 +183,7 @@ ImportTextDialog::~ImportTextDialog()
 
 void ImportTextDialog::loadSettingsFile()
 {
-    QFileInfo fileInfo(gchar_free_to_qstring(get_profile_dir(get_profile_name(), FALSE)), QString(SETTINGS_FILE));
+    QFileInfo fileInfo(gchar_free_to_qstring(get_profile_dir(get_profile_name(), false)), QString(SETTINGS_FILE));
     QFile loadFile(fileInfo.filePath());
 
     if (!fileInfo.exists() || !fileInfo.isFile()) {
@@ -202,7 +200,7 @@ void ImportTextDialog::loadSettingsFile()
 
 void ImportTextDialog::saveSettingsFile()
 {
-    QFileInfo fileInfo(gchar_free_to_qstring(get_profile_dir(get_profile_name(), FALSE)), QString(SETTINGS_FILE));
+    QFileInfo fileInfo(gchar_free_to_qstring(get_profile_dir(get_profile_name(), false)), QString(SETTINGS_FILE));
     QFile saveFile(fileInfo.filePath());
 
     if (fileInfo.exists() && !fileInfo.isFile()) {
@@ -407,7 +405,7 @@ int ImportTextDialog::exec() {
     char* tmp;
     GError* gerror = NULL;
     int err;
-    gchar *err_info;
+    char *err_info;
     wtap_dump_params params;
     int file_type_subtype;
     QString interface_name;
@@ -427,9 +425,11 @@ int ImportTextDialog::exec() {
     import_info_.import_text_filename = qstring_strdup(ti_ui_->textFileLineEdit->text());
     import_info_.timestamp_format = qstring_strdup(ti_ui_->timestampFormatLineEdit->text());
     if (strlen(import_info_.timestamp_format) == 0) {
-        g_free((gpointer) import_info_.timestamp_format);
+        g_free((void *) import_info_.timestamp_format);
         import_info_.timestamp_format = NULL;
     }
+
+    mainApp->setLastOpenDirFromFilename(QString(import_info_.import_text_filename));
 
     switch (import_info_.mode) {
       default: /* should never happen */
@@ -438,7 +438,7 @@ int ImportTextDialog::exec() {
       case TEXT_IMPORT_HEXDUMP:
         import_info_.hexdump.import_text_FILE = ws_fopen(import_info_.import_text_filename, "rb");
         if (!import_info_.hexdump.import_text_FILE) {
-            open_failure_alert_box(import_info_.import_text_filename, errno, FALSE);
+            open_failure_alert_box(import_info_.import_text_filename, errno, false);
             setResult(QDialog::Rejected);
             goto cleanup_mode;
         }
@@ -452,7 +452,7 @@ int ImportTextDialog::exec() {
       case TEXT_IMPORT_REGEX:
         import_info_.regex.import_text_GMappedFile = g_mapped_file_new(import_info_.import_text_filename, true, &gerror);
         if (gerror) {
-            open_failure_alert_box(import_info_.import_text_filename, gerror->code, FALSE);
+            open_failure_alert_box(import_info_.import_text_filename, gerror->code, false);
             g_error_free(gerror);
             setResult(QDialog::Rejected);
             goto cleanup_mode;
@@ -536,13 +536,10 @@ int ImportTextDialog::exec() {
     }
   cleanup_wtap:
     /* g_free checks for null */
-    wtap_block_array_free(params.shb_hdrs);
-    if (params.idb_inf != NULL) {
-        wtap_block_array_free(params.idb_inf->interface_data);
-    }
-    g_free(params.idb_inf);
+    wtap_free_idb_info(params.idb_inf);
+    wtap_dump_params_cleanup(&params);
     g_free(tmp);
-    g_free((gpointer) import_info_.payload);
+    g_free((void *) import_info_.payload);
     switch (import_info_.mode) {
       case TEXT_IMPORT_HEXDUMP:
         fclose(import_info_.hexdump.import_text_FILE);
@@ -550,13 +547,13 @@ int ImportTextDialog::exec() {
       case TEXT_IMPORT_REGEX:
         g_mapped_file_unref(import_info_.regex.import_text_GMappedFile);
         g_regex_unref((GRegex*) import_info_.regex.format);
-        g_free((gpointer) import_info_.regex.in_indication);
-        g_free((gpointer) import_info_.regex.out_indication);
+        g_free((void *) import_info_.regex.in_indication);
+        g_free((void *) import_info_.regex.out_indication);
         break;
     }
   cleanup_mode:
-    g_free((gpointer) import_info_.import_text_filename);
-    g_free((gpointer) import_info_.timestamp_format);
+    g_free((void *) import_info_.import_text_filename);
+    g_free((void *) import_info_.timestamp_format);
     return result();
 }
 
@@ -609,26 +606,7 @@ void ImportTextDialog::on_textFileBrowseButton_clicked()
     if (ti_ui_->textFileLineEdit->text().length() > 0) {
         open_dir = ti_ui_->textFileLineEdit->text();
     } else {
-        switch (prefs.gui_fileopen_style) {
-
-        case FO_STYLE_LAST_OPENED:
-            /* The user has specified that we should start out in the last directory
-               we looked in.  If we've already opened a file, use its containing
-               directory, if we could determine it, as the directory, otherwise
-               use the "last opened" directory saved in the preferences file if
-               there was one. */
-            /* This is now the default behaviour in file_selection_new() */
-            open_dir = get_last_open_dir();
-            break;
-
-        case FO_STYLE_SPECIFIED:
-            /* The user has specified that we should always start out in a
-               specified directory; if they've specified that directory,
-               start out by showing the files in that dir. */
-            if (prefs.gui_fileopen_dir[0] != '\0')
-                open_dir = prefs.gui_fileopen_dir;
-            break;
-        }
+        open_dir = get_open_dialog_initial_dir();
     }
 
     QString file_name = WiresharkFileDialog::getOpenFileName(this, mainApp->windowTitleString(tr("Import Text File")), open_dir);
@@ -745,7 +723,7 @@ void ImportTextDialog::on_asciiIdentificationCheckBox_toggled(bool checked)
 
 void ImportTextDialog::on_regexTextEdit_textChanged()
 {
-    gchar* regex_gchar_p = qstring_strdup(ti_ui_->regexTextEdit->toPlainText());;
+    char* regex_gchar_p = qstring_strdup(ti_ui_->regexTextEdit->toPlainText());
     GError* gerror = NULL;
     /* TODO: Use GLib's c++ interface or enable C++ int to enum casting
      * because the flags are declared as enum, so we can't pass 0 like
@@ -956,7 +934,7 @@ void ImportTextDialog::on_ipVersionComboBox_currentIndexChanged(int index)
     on_destinationAddressLineEdit_textChanged(ti_ui_->destinationAddressLineEdit->text());
 }
 
-void ImportTextDialog::check_line_edit(SyntaxLineEdit *le, bool &ok_enabled, const QString &num_str, int base, guint max_val, bool is_short, guint *val_ptr) {
+void ImportTextDialog::check_line_edit(SyntaxLineEdit *le, bool &ok_enabled, const QString &num_str, int base, unsigned max_val, bool is_short, unsigned *val_ptr) {
     bool conv_ok;
     SyntaxLineEdit::SyntaxState syntax_state = SyntaxLineEdit::Empty;
 
@@ -970,7 +948,7 @@ void ImportTextDialog::check_line_edit(SyntaxLineEdit *le, bool &ok_enabled, con
         if (is_short) {
             *val_ptr = num_str.toUShort(&conv_ok, base);
         } else {
-            *val_ptr = (guint)num_str.toULong(&conv_ok, base);
+            *val_ptr = (unsigned)num_str.toULong(&conv_ok, base);
         }
         if (conv_ok && *val_ptr <= max_val) {
             syntax_state = SyntaxLineEdit::Valid;

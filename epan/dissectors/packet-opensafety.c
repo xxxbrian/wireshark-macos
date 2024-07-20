@@ -43,7 +43,7 @@
 
 /* General definitions */
 
-/* Used to clasify incoming traffic and presort the heuristic */
+/* Used to classify incoming traffic and presort the heuristic */
 #define OPENSAFETY_ANY_TRANSPORT 0x00
 #define OPENSAFETY_CYCLIC_DATA   0x01
 #define OPENSAFETY_ACYCLIC_DATA  0x02
@@ -90,153 +90,153 @@
 #define OSS_FRAME_ID_T(f, offset)          (tvb_get_guint8(f, OSS_FRAME_POS_ID + offset) & 0xFC)
 #define OSS_FRAME_LENGTH_T(f, offset)      (tvb_get_guint8(f, OSS_FRAME_POS_LEN + offset))
 
-static int proto_opensafety = -1;
+static int proto_opensafety;
 
-static gint ett_opensafety = -1;
-static gint ett_opensafety_checksum = -1;
-static gint ett_opensafety_snmt = -1;
-static gint ett_opensafety_ssdo = -1;
-static gint ett_opensafety_spdo = -1;
-static gint ett_opensafety_spdo_flags = -1;
-static gint ett_opensafety_ssdo_sacmd = -1;
-static gint ett_opensafety_ssdo_payload = -1;
-static gint ett_opensafety_ssdo_sodentry = -1;
-static gint ett_opensafety_ssdo_extpar = -1;
-static gint ett_opensafety_sod_mapping = -1;
-static gint ett_opensafety_node = -1;
+static gint ett_opensafety;
+static gint ett_opensafety_checksum;
+static gint ett_opensafety_snmt;
+static gint ett_opensafety_ssdo;
+static gint ett_opensafety_spdo;
+static gint ett_opensafety_spdo_flags;
+static gint ett_opensafety_ssdo_sacmd;
+static gint ett_opensafety_ssdo_payload;
+static gint ett_opensafety_ssdo_sodentry;
+static gint ett_opensafety_ssdo_extpar;
+static gint ett_opensafety_sod_mapping;
+static gint ett_opensafety_node;
 
-static expert_field ei_payload_length_not_positive = EI_INIT;
-static expert_field ei_payload_unknown_format = EI_INIT;
-static expert_field ei_crc_slimssdo_instead_of_spdo = EI_INIT;
-static expert_field ei_crc_frame_1_invalid = EI_INIT;
-static expert_field ei_crc_frame_1_valid_frame2_invalid = EI_INIT;
-static expert_field ei_crc_frame_2_invalid = EI_INIT;
-static expert_field ei_crc_frame_2_unknown_scm_udid = EI_INIT;
-static expert_field ei_crc_frame_2_scm_udid_encoded = EI_INIT;
-static expert_field ei_message_unknown_type = EI_INIT;
-static expert_field ei_message_reassembly_size_differs_from_header = EI_INIT;
-static expert_field ei_message_spdo_address_invalid = EI_INIT;
-static expert_field ei_message_id_field_mismatch = EI_INIT;
-static expert_field ei_scmudid_autodetected = EI_INIT;
-static expert_field ei_scmudid_invalid_preference = EI_INIT;
-static expert_field ei_scmudid_unknown = EI_INIT;
-static expert_field ei_40bit_default_domain = EI_INIT;
+static expert_field ei_payload_length_not_positive;
+static expert_field ei_payload_unknown_format;
+static expert_field ei_crc_slimssdo_instead_of_spdo;
+static expert_field ei_crc_frame_1_invalid;
+static expert_field ei_crc_frame_1_valid_frame2_invalid;
+static expert_field ei_crc_frame_2_invalid;
+static expert_field ei_crc_frame_2_unknown_scm_udid;
+static expert_field ei_crc_frame_2_scm_udid_encoded;
+static expert_field ei_message_unknown_type;
+static expert_field ei_message_reassembly_size_differs_from_header;
+static expert_field ei_message_spdo_address_invalid;
+static expert_field ei_message_id_field_mismatch;
+static expert_field ei_scmudid_autodetected;
+static expert_field ei_scmudid_invalid_preference;
+static expert_field ei_scmudid_unknown;
+static expert_field ei_40bit_default_domain;
 
-static int hf_oss_msg = -1;
-static int hf_oss_msg_direction = -1;
-static int hf_oss_msg_category = -1;
-static int hf_oss_msg_node = -1;
-static int hf_oss_msg_network = -1;
-static int hf_oss_msg_sender = -1;
-static int hf_oss_msg_receiver = -1;
-static int hf_oss_length= -1;
-static int hf_oss_crc = -1;
-static int hf_oss_byte_offset = -1;
+static int hf_oss_msg;
+static int hf_oss_msg_direction;
+static int hf_oss_msg_category;
+static int hf_oss_msg_node;
+static int hf_oss_msg_network;
+static int hf_oss_msg_sender;
+static int hf_oss_msg_receiver;
+static int hf_oss_length;
+static int hf_oss_crc;
+static int hf_oss_byte_offset;
 
-static int hf_oss_crc_valid = -1;
-static int hf_oss_crc2_valid = -1;
-static int hf_oss_crc_type  = -1;
+static int hf_oss_crc_valid;
+static int hf_oss_crc2_valid;
+static int hf_oss_crc_type;
 
-static int hf_oss_snmt_slave = -1;
-static int hf_oss_snmt_master = -1;
-static int hf_oss_snmt_udid = -1;
-static int hf_oss_snmt_scm = -1;
-static int hf_oss_snmt_tool = -1;
-static int hf_oss_snmt_service_id = -1;
-static int hf_oss_snmt_error_group = -1;
-static int hf_oss_snmt_error_code = -1;
-static int hf_oss_snmt_param_type = -1;
-static int hf_oss_snmt_ext_addsaddr = -1;
-static int hf_oss_snmt_ext_addtxspdo = -1;
-static int hf_oss_snmt_ext_initct = -1;
+static int hf_oss_snmt_slave;
+static int hf_oss_snmt_master;
+static int hf_oss_snmt_udid;
+static int hf_oss_snmt_scm;
+static int hf_oss_snmt_tool;
+static int hf_oss_snmt_service_id;
+static int hf_oss_snmt_error_group;
+static int hf_oss_snmt_error_code;
+static int hf_oss_snmt_param_type;
+static int hf_oss_snmt_ext_addsaddr;
+static int hf_oss_snmt_ext_addtxspdo;
+static int hf_oss_snmt_ext_initct;
 
-static int hf_oss_ssdo_server = -1;
-static int hf_oss_ssdo_client = -1;
-static int hf_oss_ssdo_sano = -1;
-static int hf_oss_ssdo_sacmd = -1;
-static int hf_oss_ssdo_sod_index = -1;
-static int hf_oss_ssdo_sod_subindex = -1;
-static int hf_oss_ssdo_payload = -1;
-static int hf_oss_ssdo_payload_size = -1;
-static int hf_oss_ssdo_sodentry_size = -1;
-static int hf_oss_ssdo_sodentry_data = -1;
-static int hf_oss_ssdo_abort_code = -1;
-static int hf_oss_ssdo_preload_queue = -1;
-static int hf_oss_ssdo_preload_error = -1;
+static int hf_oss_ssdo_server;
+static int hf_oss_ssdo_client;
+static int hf_oss_ssdo_sano;
+static int hf_oss_ssdo_sacmd;
+static int hf_oss_ssdo_sod_index;
+static int hf_oss_ssdo_sod_subindex;
+static int hf_oss_ssdo_payload;
+static int hf_oss_ssdo_payload_size;
+static int hf_oss_ssdo_sodentry_size;
+static int hf_oss_ssdo_sodentry_data;
+static int hf_oss_ssdo_abort_code;
+static int hf_oss_ssdo_preload_queue;
+static int hf_oss_ssdo_preload_error;
 
-static int hf_oss_sod_par_timestamp = -1;
-static int hf_oss_sod_par_checksum = -1;
-static int hf_oss_ssdo_sodmapping = -1;
-static int hf_oss_ssdo_sodmapping_bits = -1;
+static int hf_oss_sod_par_timestamp;
+static int hf_oss_sod_par_checksum;
+static int hf_oss_ssdo_sodmapping;
+static int hf_oss_ssdo_sodmapping_bits;
 
-static int hf_oss_ssdo_sacmd_access_type = -1;
-static int hf_oss_ssdo_sacmd_preload = -1;
-static int hf_oss_ssdo_sacmd_abort_transfer = -1;
-static int hf_oss_ssdo_sacmd_segmentation = -1;
-static int hf_oss_ssdo_sacmd_toggle = -1;
-static int hf_oss_ssdo_sacmd_initiate = -1;
-static int hf_oss_ssdo_sacmd_end_segment = -1;
+static int hf_oss_ssdo_sacmd_access_type;
+static int hf_oss_ssdo_sacmd_preload;
+static int hf_oss_ssdo_sacmd_abort_transfer;
+static int hf_oss_ssdo_sacmd_segmentation;
+static int hf_oss_ssdo_sacmd_toggle;
+static int hf_oss_ssdo_sacmd_initiate;
+static int hf_oss_ssdo_sacmd_end_segment;
 #if 0
-static int hf_oss_ssdo_sacmd_reserved = -1;
+static int hf_oss_ssdo_sacmd_reserved;
 #endif
 
-static int hf_oss_ssdo_extpar_parset = -1;
-static int hf_oss_ssdo_extpar_version = -1;
-static int hf_oss_ssdo_extpar_saddr = -1;
-static int hf_oss_ssdo_extpar_length = -1;
-static int hf_oss_ssdo_extpar_crc = -1;
-static int hf_oss_ssdo_extpar_tstamp = -1;
-static int hf_oss_ssdo_extpar_data = -1;
-static int hf_oss_ssdo_extpar = -1;
+static int hf_oss_ssdo_extpar_parset;
+static int hf_oss_ssdo_extpar_version;
+static int hf_oss_ssdo_extpar_saddr;
+static int hf_oss_ssdo_extpar_length;
+static int hf_oss_ssdo_extpar_crc;
+static int hf_oss_ssdo_extpar_tstamp;
+static int hf_oss_ssdo_extpar_data;
+static int hf_oss_ssdo_extpar;
 
-static int hf_oss_scm_udid = -1;
-static int hf_oss_scm_udid_auto = -1;
-static int hf_oss_scm_udid_valid = -1;
+static int hf_oss_scm_udid;
+static int hf_oss_scm_udid_auto;
+static int hf_oss_scm_udid_valid;
 
-static int hf_oss_spdo_direction = -1;
-static int hf_oss_spdo_connection_valid = -1;
-static int hf_oss_spdo_ct = -1;
-static int hf_oss_spdo_ct_40bit = -1;
-static int hf_oss_spdo_time_request = -1;
-static int hf_oss_spdo_time_request_to = -1;
-static int hf_oss_spdo_time_request_from = -1;
-static int hf_oss_spdo_feature_flags = -1;
-static int hf_oss_spdo_feature_flag_40bit_available = -1;
-static int hf_oss_spdo_feature_flag_40bit_used = -1;
+static int hf_oss_spdo_direction;
+static int hf_oss_spdo_connection_valid;
+static int hf_oss_spdo_ct;
+static int hf_oss_spdo_ct_40bit;
+static int hf_oss_spdo_time_request;
+static int hf_oss_spdo_time_request_to;
+static int hf_oss_spdo_time_request_from;
+static int hf_oss_spdo_feature_flags;
+static int hf_oss_spdo_feature_flag_40bit_available;
+static int hf_oss_spdo_feature_flag_40bit_used;
 
-static int hf_oss_fragments = -1;
-static int hf_oss_fragment = -1;
-static int hf_oss_fragment_overlap = -1;
-static int hf_oss_fragment_overlap_conflicts = -1;
-static int hf_oss_fragment_multiple_tails = -1;
-static int hf_oss_fragment_too_long_fragment = -1;
-static int hf_oss_fragment_error = -1;
-static int hf_oss_fragment_count = -1;
-static int hf_oss_reassembled_in = -1;
-static int hf_oss_reassembled_length = -1;
-static int hf_oss_reassembled_data = -1;
+static int hf_oss_fragments;
+static int hf_oss_fragment;
+static int hf_oss_fragment_overlap;
+static int hf_oss_fragment_overlap_conflicts;
+static int hf_oss_fragment_multiple_tails;
+static int hf_oss_fragment_too_long_fragment;
+static int hf_oss_fragment_error;
+static int hf_oss_fragment_count;
+static int hf_oss_reassembled_in;
+static int hf_oss_reassembled_length;
+static int hf_oss_reassembled_data;
 
-static gint ett_opensafety_ssdo_fragment = -1;
-static gint ett_opensafety_ssdo_fragments = -1;
+static gint ett_opensafety_ssdo_fragment;
+static gint ett_opensafety_ssdo_fragments;
 
 /* Definitions for the openSAFETY ov. UDP transport protocol */
-static dissector_handle_t opensafety_udptransport_handle = NULL;
+static dissector_handle_t opensafety_udptransport_handle;
 
-static int proto_oss_udp_transport = -1;
+static int proto_oss_udp_transport;
 
-static int hf_oss_udp_transport_version = -1;
-static int hf_oss_udp_transport_flags_type = -1;
-static int hf_oss_udp_transport_counter = -1;
-static int hf_oss_udp_transport_sender = -1;
-static int hf_oss_udp_transport_datapoint = -1;
-static int hf_oss_udp_transport_length= -1;
+static int hf_oss_udp_transport_version;
+static int hf_oss_udp_transport_flags_type;
+static int hf_oss_udp_transport_counter;
+static int hf_oss_udp_transport_sender;
+static int hf_oss_udp_transport_datapoint;
+static int hf_oss_udp_transport_length;
 
-static gint ett_oss_udp_transport = -1;
+static gint ett_oss_udp_transport;
 
 static const true_false_string tfs_udp_transport_cyclic_acyclic = { "Cyclic", "ACyclic" };
 static guint global_network_oss_udp_port = OPENSAFETY_UDP_PORT;
 
-static int opensafety_tap = -1;
+static int opensafety_tap;
 
 static const fragment_items oss_frag_items = {
     /* Fragment subtrees */
@@ -263,37 +263,37 @@ static const fragment_items oss_frag_items = {
 
 static const char *global_scm_udid = "00:00:00:00:00:00";
 
-static dissector_handle_t data_dissector = NULL;
-static dissector_handle_t opensafety_udpdata_handle = NULL;
-static dissector_handle_t opensafety_mbtcp_handle = NULL;
-static dissector_handle_t opensafety_pnio_handle = NULL;
+static dissector_handle_t data_dissector;
+static dissector_handle_t opensafety_udpdata_handle;
+static dissector_handle_t opensafety_mbtcp_handle;
+static dissector_handle_t opensafety_pnio_handle;
 
-static gboolean global_display_intergap_data   = FALSE;
-static gboolean global_scm_udid_autoset        = TRUE;
-static gboolean global_udp_frame2_first        = FALSE;
-static gboolean global_siii_udp_frame2_first   = FALSE;
-static gboolean global_mbtcp_big_endian        = FALSE;
+static bool global_display_intergap_data;
+static bool global_scm_udid_autoset            = true;
+static bool global_udp_frame2_first;
+static bool global_siii_udp_frame2_first;
+static bool global_mbtcp_big_endian;
 static guint global_network_udp_port           = OPENSAFETY_UDP_PORT;
 static guint global_network_udp_port_sercosiii = OPENSAFETY_UDP_PORT_SIII;
-static gboolean global_classify_transport      = TRUE;
+static bool global_classify_transport          = true;
 
-static gboolean global_enable_udp    = TRUE;
-static gboolean global_enable_mbtcp  = TRUE;
+static bool global_enable_udp    = true;
+static bool global_enable_mbtcp  = true;
 
-static gboolean global_opensafety_debug_verbose = FALSE;
+static bool global_opensafety_debug_verbose;
 
 static const char * global_filter_nodes = "";
-static gboolean global_show_only_node_in_filter = TRUE;
-static wmem_list_t * global_filter_list = NULL;
+static bool global_show_only_node_in_filter = true;
+static wmem_list_t * global_filter_list;
 
 static gboolean heuristic_siii_dissection_enabled = TRUE;
 
 static heur_dissector_list_t heur_opensafety_spdo_subdissector_list;
 
-static gboolean bDissector_Called_Once_Before = FALSE;
+static gboolean bDissector_Called_Once_Before;
 /* Using local_scm_udid as read variable for global_scm_udid, to
  * enable automatic detection of scm udid */
-static char *local_scm_udid = NULL;
+static char *local_scm_udid;
 
 static reassembly_table os_reassembly_table;
 
@@ -570,7 +570,7 @@ static gboolean findSafetyFrame ( packet_info *pinfo, tvbuff_t *message_tvb, gui
                  *  bit is set */
                 if ( ( b_ID != 0xFF ) && ( b_ID & 0x80 ) )
                 {
-                    /* The rem_length value might be poluted, due to the else statement of
+                    /* The rem_length value might be polluted, due to the else statement of
                      * above if-decision (frame at end position detection). Therefore we
                      * calculate it here again, to have a sane value */
                     rem_length = tvb_reported_length_remaining(message_tvb, ctr);
@@ -1237,7 +1237,7 @@ dissect_opensafety_ssdo_message(tvbuff_t *message_tvb, packet_info *pinfo, proto
                 val_to_str_ext_const(((guint32) (ssdoIndex << 16)), &opensafety_sod_idx_names_ext, "Unknown") );
         col_append_fstr(pinfo->cinfo, COL_INFO, " [%s", val_to_str_ext_const(((guint32) (ssdoIndex << 16)), &opensafety_sod_idx_names_ext, "Unknown"));
 
-        /* Some SOD downloads (0x101A for instance) don't have sub-indeces */
+        /* Some SOD downloads (0x101A for instance) don't have sub-indices */
         if ( ssdoSubIndex != 0x0 )
         {
             proto_tree_add_uint_format_value(ssdo_tree, hf_oss_ssdo_sod_subindex, message_tvb, db0Offset + 3, 1,
@@ -1812,8 +1812,8 @@ check_scmudid_validity(opensafety_packet_info *packet, tvbuff_t *message_tvb)
         packet->scm_udid_valid = TRUE;
 
         /* Now confirm, that the xor operation was successful. The ID fields of both frames have to be the same */
-        b_ID = tvb_get_guint8(message_tvb, packet->frame.subframe2 + 1) ^ (guint8)(scmUDID->data[OSS_FRAME_POS_ID]);;
-        if ( ( OSS_FRAME_ID_T(message_tvb, packet->frame.subframe1) ^ b_ID ) != 0 )
+        b_ID = tvb_get_guint8(message_tvb, packet->frame.subframe2 + 1) ^ (guint8)(scmUDID->data[OSS_FRAME_POS_ID]);
+        if ( ( OSS_FRAME_ID_T(message_tvb, packet->frame.subframe1) ^ (b_ID & 0xFC)) != 0 )
             packet->scm_udid_valid = FALSE;
 
         /* The IDs do not match, but the SCM UDID could still be ok. This happens, if this packet
@@ -2120,7 +2120,7 @@ opensafety_package_dissector(const gchar *protocolName, const gchar *sub_diss_ha
             break;
 
         /* Resetting packet, to ensure, that findSafetyFrame starts with a fresh frame.
-         * As only packet_scope is used, this will not polute memory too much and get's
+         * As only packet_scope is used, this will not pollute memory too much and get's
          * cleared with the next packet anyway  */
         packet = wmem_new0(pinfo->pool, opensafety_packet_info);
 
@@ -2400,10 +2400,10 @@ opensafety_package_dissector(const gchar *protocolName, const gchar *sub_diss_ha
     return ( handled ? TRUE : FALSE );
 }
 
-static gboolean
+static bool
 dissect_opensafety_epl(tvbuff_t *message_tvb, packet_info *pinfo, proto_tree *tree, void *data )
 {
-    gboolean        result     = FALSE;
+    bool             result     = false;
     proto_tree      *epl_tree = NULL;
     guint8  epl_msgtype = 0;
 
@@ -2428,7 +2428,7 @@ dissect_opensafety_epl(tvbuff_t *message_tvb, packet_info *pinfo, proto_tree *tr
         /* We check if we have a asynchronous message, or a synchronous message. In case of
          * asynchronous messages, SPDO packages are not valid. */
 
-        result = opensafety_package_dissector("openSAFETY/Powerlink", "",
+        result = (bool)opensafety_package_dissector("openSAFETY/Powerlink", "",
                 FALSE, FALSE, 0, message_tvb, pinfo, epl_tree, epl_msgtype );
 
         bDissector_Called_Once_Before = FALSE;
@@ -2473,6 +2473,12 @@ dissect_opensafety_siii(tvbuff_t *message_tvb, packet_info *pinfo, proto_tree *t
     return result;
 }
 
+static bool
+dissect_opensafety_siii_heur(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree, void *data)
+{
+    return (bool)dissect_opensafety_siii(tvb, pinfo, tree, data);
+}
+
 static gboolean
 dissect_opensafety_pn_io(tvbuff_t *message_tvb, packet_info *pinfo, proto_tree *tree, void *data _U_ )
 {
@@ -2491,6 +2497,13 @@ dissect_opensafety_pn_io(tvbuff_t *message_tvb, packet_info *pinfo, proto_tree *
 
     return result;
 }
+
+static bool
+dissect_opensafety_pn_io_heur(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree, void *data)
+{
+    return (bool)dissect_opensafety_pn_io(tvb, pinfo, tree, data);
+}
+
 
 static gboolean
 dissect_opensafety_mbtcp(tvbuff_t *message_tvb, packet_info *pinfo, proto_tree *tree, void *data _U_ )
@@ -2785,17 +2798,17 @@ proto_register_opensafety(void)
           FT_FRAMENUM, BASE_NONE, NULL, 0x00, NULL, HFILL } },
         {&hf_oss_fragment_overlap,
          {"Message fragment overlap", "opensafety.ssdo.fragment.overlap",
-          FT_BOOLEAN, 0, NULL, 0x00, NULL, HFILL } },
+          FT_BOOLEAN, BASE_NONE, NULL, 0x00, NULL, HFILL } },
         {&hf_oss_fragment_overlap_conflicts,
          {"Message fragment overlapping with conflicting data",
           "opensafety.ssdo.fragment.overlap.conflicts",
-          FT_BOOLEAN, 0, NULL, 0x00, NULL, HFILL } },
+          FT_BOOLEAN, BASE_NONE, NULL, 0x00, NULL, HFILL } },
         {&hf_oss_fragment_multiple_tails,
          {"Message has multiple tail fragments", "opensafety.ssdo.fragment.multiple_tails",
-          FT_BOOLEAN, 0, NULL, 0x00, NULL, HFILL } },
+          FT_BOOLEAN, BASE_NONE, NULL, 0x00, NULL, HFILL } },
         {&hf_oss_fragment_too_long_fragment,
          {"Message fragment too long", "opensafety.ssdo.fragment.too_long_fragment",
-          FT_BOOLEAN, 0, NULL, 0x00, NULL, HFILL } },
+          FT_BOOLEAN, BASE_NONE, NULL, 0x00, NULL, HFILL } },
         {&hf_oss_fragment_error,
          {"Message defragmentation error", "opensafety.ssdo.fragment.error",
           FT_FRAMENUM, BASE_NONE, NULL, 0x00, NULL, HFILL } },
@@ -2996,7 +3009,7 @@ proto_register_opensafety(void)
     oss_udp_module = prefs_register_protocol(proto_oss_udp_transport, apply_prefs);
 
     /* Register data dissector */
-    heur_opensafety_spdo_subdissector_list = register_heur_dissector_list("opensafety.spdo", proto_opensafety);
+    heur_opensafety_spdo_subdissector_list = register_heur_dissector_list_with_description("opensafety.spdo", "openSAFETY data", proto_opensafety);
 
     /* Required function calls to register the header fields and subtrees used */
     proto_register_field_array(proto_opensafety, hf, array_length(hf));
@@ -3097,7 +3110,7 @@ proto_reg_handoff_opensafety(void)
 
     /* EPL & SercosIII dissector registration */
     heur_dissector_add("epl_data",  dissect_opensafety_epl, "openSAFETY over EPL", "opensafety_epl_data", proto_opensafety, HEURISTIC_ENABLE);
-    heur_dissector_add("sercosiii", dissect_opensafety_siii, "openSAFETY over SercosIII", "opensafety_sercosiii", proto_opensafety, HEURISTIC_ENABLE);
+    heur_dissector_add("sercosiii", dissect_opensafety_siii_heur, "openSAFETY over SercosIII", "opensafety_sercosiii", proto_opensafety, HEURISTIC_ENABLE);
 
     /* Modbus TCP dissector registration */
     dissector_add_string("modbus.data", "data", opensafety_mbtcp_handle);
@@ -3108,7 +3121,7 @@ proto_reg_handoff_opensafety(void)
      */
     if ( find_dissector("pn_io") != NULL )
     {
-        heur_dissector_add("pn_io", dissect_opensafety_pn_io, "openSAFETY over Profinet", "opensafety_pn_io", proto_opensafety, HEURISTIC_DISABLE);
+        heur_dissector_add("pn_io", dissect_opensafety_pn_io_heur, "openSAFETY over Profinet", "opensafety_pn_io", proto_opensafety, HEURISTIC_DISABLE);
     }
     else
     {

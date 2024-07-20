@@ -19,14 +19,14 @@
 void proto_register_dcerpc_messenger(void);
 void proto_reg_handoff_dcerpc_messenger(void);
 
-static int proto_dcerpc_messenger = -1;
-static int hf_messenger_opnum = -1;
-static int hf_messenger_rc = -1;
-static int hf_messenger_server = -1;
-static int hf_messenger_client = -1;
-static int hf_messenger_message = -1;
+static int proto_dcerpc_messenger;
+static int hf_messenger_opnum;
+static int hf_messenger_rc;
+static int hf_messenger_server;
+static int hf_messenger_client;
+static int hf_messenger_message;
 
-static gint ett_dcerpc_messenger = -1;
+static gint ett_dcerpc_messenger;
 
 
 /* Windows messenger service listens on two endpoints:
@@ -77,7 +77,7 @@ messenger_dissect_send_message_reply(tvbuff_t *tvb, int offset, packet_info *pin
 
 
 
-static dcerpc_sub_dissector dcerpc_messenger_dissectors[] = {
+static const dcerpc_sub_dissector dcerpc_messenger_dissectors[] = {
 	{0, "NetrSendMessage",
 		messenger_dissect_send_message_rqst,
 		messenger_dissect_send_message_reply },
@@ -114,8 +114,7 @@ proto_register_dcerpc_messenger(void)
 		&ett_dcerpc_messenger
 	};
 
-	proto_dcerpc_messenger = proto_register_protocol(
-		"Microsoft Messenger Service", "Messenger", "messenger");
+	proto_dcerpc_messenger = proto_register_protocol("Microsoft Messenger Service", "Messenger", "messenger");
 
 	proto_register_field_array (proto_dcerpc_messenger, hf, array_length (hf));
 	proto_register_subtree_array(ett, array_length(ett));

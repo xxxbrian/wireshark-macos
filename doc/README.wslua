@@ -255,10 +255,10 @@ type that make-taps.py has in its Python "types" and "comments" dictionaries.
 
 Note on Lua versions:
 
-Wireshark supports both Lua 5.1 and 5.2, which are defined as LUA_VERSION_NUM
-values 501 and 502 respectively.  When exposing things into Lua, make sure to
+Wireshark supports both Lua 5.3 and 5.4, which are defined as LUA_VERSION_NUM
+values 503 and 504 respectively.  When exposing things into Lua, make sure to
 use ifdef wrappers for things which changed between the versions of Lua.  See
-this for details: http://www.lua.org/manual/5.2/manual.html#8.3
+this for details: http://www.lua.org/manual/5.3/manual.html#8.3
 
 ==============================================================================
 
@@ -365,7 +365,7 @@ Example:
     WSLUA_CONSTRUCTOR Dissector_get (lua_State *L) {
         /* Obtains a dissector reference by name */
     #define WSLUA_ARG_Dissector_get_NAME 1 /* The name of the dissector */
-        const gchar* name = luaL_checkstring(L,WSLUA_ARG_Dissector_get_NAME);
+        const char* name = luaL_checkstring(L,WSLUA_ARG_Dissector_get_NAME);
         Dissector d;
 
         if (!name)
@@ -410,13 +410,13 @@ Example:
     WSLUA_METAMETHOD NSTime__eq(lua_State* L) { /* Compares two NSTimes */
         NSTime time1 = checkNSTime(L,1);
         NSTime time2 = checkNSTime(L,2);
-        gboolean result = FALSE;
+        bool result = false;
 
         if (!time1 || !time2)
           WSLUA_ERROR(FieldInfo__eq,"Data source must be the same for both fields");
 
         if (nstime_cmp(time1, time2) == 0)
-            result = TRUE;
+            result = true;
 
         lua_pushboolean(L,result);
 

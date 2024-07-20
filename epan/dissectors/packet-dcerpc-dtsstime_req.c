@@ -20,18 +20,18 @@
 void proto_register_dtsstime_req (void);
 void proto_reg_handoff_dtsstime_req (void);
 
-static int proto_dtsstime_req = -1;
-static int hf_dtsstime_req_opnum = -1;
+static int proto_dtsstime_req;
+static int hf_dtsstime_req_opnum;
 
 
-static gint ett_dtsstime_req = -1;
+static gint ett_dtsstime_req;
 
 
 static e_guid_t uuid_dtsstime_req = { 0x019ee420, 0x682d, 0x11c9, { 0xa6, 0x07, 0x08, 0x00, 0x2b, 0x0d, 0xea, 0x7a } };
 static guint16  ver_dtsstime_req = 1;
 
 
-static dcerpc_sub_dissector dtsstime_req_dissectors[] = {
+static const dcerpc_sub_dissector dtsstime_req_dissectors[] = {
 	{ 0, "ClerkRequestTime",  NULL, NULL},
 	{ 1, "ServerRequestTime", NULL, NULL},
 	{ 0, NULL, NULL, NULL }

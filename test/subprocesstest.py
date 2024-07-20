@@ -32,6 +32,10 @@ class ExitCodes(enum.IntEnum):
     IFACE_HAS_NO_TIMESTAMP_TYPES = 7
     INIT_FAILED = 8
     OPEN_ERROR = 9
+    PCAP_NOT_SUPPORTED = 10
+    DUMPCAP_NOT_SUPPORTED = 11
+    NO_INTERFACES = 12
+    PCAP_ERROR = 13
 
 def run(*args, capture_output=False, stdout=None, stderr=None, encoding='utf-8', **kwargs):
     ''' Wrapper for subprocess.run() that captures and decodes output.'''
@@ -59,7 +63,7 @@ def cat_dhcp_command(mode):
     if sys.executable:
         sd_cmd = '"{}" '.format(sys.executable)
     this_dir = os.path.dirname(__file__)
-    sd_cmd += os.path.join(this_dir, 'util_dump_dhcp_pcap.py ' + mode)
+    sd_cmd += '"{}" {}'.format(os.path.join(this_dir, 'util_dump_dhcp_pcap.py'), mode)
     return sd_cmd
 
 def cat_cap_file_command(cap_files):
@@ -75,8 +79,11 @@ def cat_cap_file_command(cap_files):
         return 'copy {} CON'.format(quoted_paths)
     return 'cat {}'.format(quoted_paths)
 
-def count_output(text, search_pat):
+def count_output(text, search_pat=None):
     '''Returns the number of output lines (search_pat=None), otherwise returns a match count.'''
+
+    if not text:
+        return 0
 
     if not search_pat:
         return len(text.splitlines())

@@ -1,4 +1,4 @@
-Editcap (Wireshark) 4.1.0 (v4.1.0rc0-1347-g840a0d302513)
+Editcap (Wireshark) 4.3.0 (v4.3.0rc1-463-gfc3042177fc8)
 Edit and/or translate the format of capture files.
 See https://www.wireshark.org for more information.
 
@@ -92,6 +92,8 @@ Output File(s):
                          list the encapsulation types.
   --inject-secrets <type>,<file>  Insert decryption secrets from <file>. List
                          supported secret types with "--inject-secrets help".
+  --extract-secrets      Extract decryption secrets into the output file instead.
+                         Incompatible with other options besides -V.
   --discard-all-secrets  Discard all decryption secrets from the input file
                          when writing the output file.  Does not discard
                          secrets added by "--inject-secrets" in the same
@@ -103,6 +105,10 @@ Output File(s):
                          when writing the output file.  Does not discard
                          comments added by "--capture-comment" in the same
                          command line.
+  --discard-packet-comments
+                         Discard all packet comments from the input file
+                         when writing the output file.  Does not discard
+                         comments added by "-a" in the same command line.
 
 Miscellaneous:
   -h, --help             display this help and exit.

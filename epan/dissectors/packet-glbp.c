@@ -36,59 +36,59 @@ static dissector_handle_t glbp_handle;
 
 #define GLBP_UDP_PORT 3222
 
-static int proto_glbp = -1;
+static int proto_glbp;
 /* glbp header? */
-static gint hf_glbp_version = -1;
-static gint hf_glbp_unknown1 = -1;
-static gint hf_glbp_group = -1;
-static gint hf_glbp_unknown2 = -1;
-static gint hf_glbp_ownerid = -1;
-static gint hf_glbp_tlv = -1;
-static gint hf_glbp_type = -1;
-static gint hf_glbp_length = -1;
+static int hf_glbp_version;
+static int hf_glbp_unknown1;
+static int hf_glbp_group;
+static int hf_glbp_unknown2;
+static int hf_glbp_ownerid;
+static int hf_glbp_tlv;
+static int hf_glbp_type;
+static int hf_glbp_length;
 /* glbp type = 1 - hello */
-static gint hf_glbp_hello_unknown10 = -1;
-static gint hf_glbp_hello_vgstate = -1;
-static gint hf_glbp_hello_unknown11 = -1;
-static gint hf_glbp_hello_priority = -1;
-static gint hf_glbp_hello_unknown12 = -1;
-static gint hf_glbp_hello_helloint = -1;
-static gint hf_glbp_hello_holdint = -1;
-static gint hf_glbp_hello_redirect = -1;
-static gint hf_glbp_hello_timeout = -1;
-static gint hf_glbp_hello_unknown13 = -1;
-static gint hf_glbp_hello_addrtype = -1;
-static gint hf_glbp_hello_addrlen = -1;
-static gint hf_glbp_hello_virtualipv4 = -1;
-static gint hf_glbp_hello_virtualipv6 = -1;
-static gint hf_glbp_hello_virtualunk = -1;
+static int hf_glbp_hello_unknown10;
+static int hf_glbp_hello_vgstate;
+static int hf_glbp_hello_unknown11;
+static int hf_glbp_hello_priority;
+static int hf_glbp_hello_unknown12;
+static int hf_glbp_hello_helloint;
+static int hf_glbp_hello_holdint;
+static int hf_glbp_hello_redirect;
+static int hf_glbp_hello_timeout;
+static int hf_glbp_hello_unknown13;
+static int hf_glbp_hello_addrtype;
+static int hf_glbp_hello_addrlen;
+static int hf_glbp_hello_virtualipv4;
+static int hf_glbp_hello_virtualipv6;
+static int hf_glbp_hello_virtualunk;
 /* glbp type = 2 - Request/Response??? */
-static gint hf_glbp_reqresp_forwarder = -1;
-static gint hf_glbp_reqresp_vfstate = -1;
-static gint hf_glbp_reqresp_unknown21 = -1;
-static gint hf_glbp_reqresp_priority = -1;
-static gint hf_glbp_reqresp_weight = -1;
-static gint hf_glbp_reqresp_unknown22 = -1;
-static gint hf_glbp_reqresp_virtualmac = -1;
+static int hf_glbp_reqresp_forwarder;
+static int hf_glbp_reqresp_vfstate;
+static int hf_glbp_reqresp_unknown21;
+static int hf_glbp_reqresp_priority;
+static int hf_glbp_reqresp_weight;
+static int hf_glbp_reqresp_unknown22;
+static int hf_glbp_reqresp_virtualmac;
 /* glbp type = 3 - Auth */
-static gint hf_glbp_auth_authtype = -1;
-static gint hf_glbp_auth_authlength = -1;
-static gint hf_glbp_auth_plainpass = -1;
-static gint hf_glbp_auth_md5hash = -1;
-static gint hf_glbp_auth_md5chainindex = -1;
-static gint hf_glbp_auth_md5chainhash = -1;
-static gint hf_glbp_auth_authunknown = -1;
+static int hf_glbp_auth_authtype;
+static int hf_glbp_auth_authlength;
+static int hf_glbp_auth_plainpass;
+static int hf_glbp_auth_md5hash;
+static int hf_glbp_auth_md5chainindex;
+static int hf_glbp_auth_md5chainhash;
+static int hf_glbp_auth_authunknown;
 /* unknown type */
-static gint hf_glbp_unknown_data = -1;
+static int hf_glbp_unknown_data;
 
-static gint ett_glbp = -1;
-static gint ett_glbp_tlv = -1;
+static int ett_glbp;
+static int ett_glbp_tlv;
 
 /* filterable expert infos */
-static expert_field ei_glbp_ipv4_wrong_length = EI_INIT;
-static expert_field ei_glbp_ipv6_wrong_length = EI_INIT;
-static expert_field ei_glbp_tlv_length_too_small = EI_INIT;
-static expert_field ei_glbp_tlv_invalid_bytes_used = EI_INIT;
+static expert_field ei_glbp_ipv4_wrong_length;
+static expert_field ei_glbp_ipv6_wrong_length;
+static expert_field ei_glbp_tlv_length_too_small;
+static expert_field ei_glbp_tlv_invalid_bytes_used;
 
 static const value_string glbp_type_vals[] = {
   { 1,  "Hello" },
@@ -162,8 +162,8 @@ static int
 dissect_glbp_hello(tvbuff_t *tvb, int offset,
         packet_info *pinfo, proto_tree *tlv_tree)
 {
-  guint8 addrtype;
-  guint8 addrlen;
+  uint8_t addrtype;
+  uint8_t addrlen;
 
   proto_tree_add_item(tlv_tree, hf_glbp_hello_unknown10, tvb, offset, 1, ENC_NA);
   offset ++;
@@ -247,8 +247,8 @@ static int
 dissect_glbp_auth(tvbuff_t *tvb, int offset,
         packet_info *pinfo _U_, proto_tree *tlv_tree)
 {
-  guint8 authtype;
-  guint8 authlength;
+  uint8_t authtype;
+  uint8_t authlength;
 
   proto_tree_add_item(tlv_tree, hf_glbp_auth_authtype,   tvb, offset, 1, ENC_BIG_ENDIAN);
   authtype = tvb_get_guint8(tvb, offset);
@@ -280,7 +280,7 @@ dissect_glbp_auth(tvbuff_t *tvb, int offset,
 }
 
 static int
-dissect_glbp_unknown(tvbuff_t *tvb, int offset, guint32 length,
+dissect_glbp_unknown(tvbuff_t *tvb, int offset, uint32_t length,
         packet_info *pinfo _U_, proto_tree *tlv_tree)
 {
   proto_tree_add_item(tlv_tree, hf_glbp_unknown_data, tvb, offset, length, ENC_NA);
@@ -295,11 +295,11 @@ dissect_glbp(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree)
   proto_tree *glbp_tree;
   proto_tree *tlv_tree;
   proto_item *ti;
-  guint8      type;
+  uint8_t     type;
   int         offset    = 0;
   int         lastoffset;
-  guint8      length;
-  guint16     group;
+  uint8_t     length;
+  uint16_t    group;
 
   group = tvb_get_ntohs(tvb, 2);
 
@@ -369,12 +369,12 @@ dissect_glbp(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree)
   return offset;
 }
 
-static gboolean
+static bool
 test_glbp(tvbuff_t *tvb, packet_info *pinfo)
 {
-  guint32 unknown1;
+  uint32_t unknown1;
   if ( tvb_captured_length(tvb) < 2)
-    return FALSE;
+    return false;
   unknown1 = tvb_get_guint8(tvb, 1);
   if (tvb_get_guint8(tvb, 0) != 1 /* version? */
       || unknown1 > 4
@@ -385,9 +385,9 @@ test_glbp(tvbuff_t *tvb, packet_info *pinfo)
       || unknown1 == 0 && pinfo->dl_src != ether:c2-00-7c-b8-00-00
 #endif
     ) {
-    return FALSE;
+    return false;
   }
-  return TRUE;
+  return true;
 }
 
 static int
@@ -562,7 +562,7 @@ proto_register_glbp(void)
         0x0, NULL, HFILL }},
 
   };
-  static gint *ett[] = {
+  static int *ett[] = {
     &ett_glbp,
     &ett_glbp_tlv,
   };

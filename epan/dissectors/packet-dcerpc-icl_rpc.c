@@ -20,18 +20,18 @@
 void proto_register_icl_rpc (void);
 void proto_reg_handoff_icl_rpc (void);
 
-static int proto_icl_rpc = -1;
-static int hf_icl_rpc_opnum = -1;
+static int proto_icl_rpc;
+static int hf_icl_rpc_opnum;
 
 
-static gint ett_icl_rpc = -1;
+static gint ett_icl_rpc;
 
 static e_guid_t uuid_icl_rpc = { 0x003fd39c, 0x7feb, 0x1bbc, { 0xbe, 0xbe, 0x02, 0x60, 0x8c, 0x2e, 0xf4, 0xd2 } };
 static guint16  ver_icl_rpc = 1;
 
 
 
-static dcerpc_sub_dissector icl_rpc_dissectors[] = {
+static const dcerpc_sub_dissector icl_rpc_dissectors[] = {
 	{ 0, "DFSTRACE_GetSetInfo", NULL, NULL },
 	{ 1, "DFSTRACE_SetSetInfo", NULL, NULL },
 	{ 2, "DFSTRACE_GetLogInfo", NULL, NULL },

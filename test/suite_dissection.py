@@ -133,6 +133,7 @@ class TestDissectGprpc:
         stdout = subprocess.check_output((cmd_tshark,
                 '-r', capture_file('grpc_person_search_json_with_image.pcapng.gz'),
                 '-d', 'tcp.port==50052,http2',
+                '-2',
                 '-Y', 'grpc.message_length == 208 && json.value.string == "87561234"',
             ), encoding='utf-8', env=test_env)
         assert grep_output(stdout, 'GRPC/JSON')
@@ -148,6 +149,7 @@ class TestDissectGprpc:
                 '-o', 'uat:protobuf_search_paths: "{}","{}"'.format(well_know_types_dir, 'FALSE'),
                 '-o', 'uat:protobuf_search_paths: "{}","{}"'.format(user_defined_types_dir, 'TRUE'),
                 '-d', 'tcp.port==50051,http2',
+                '-2',
                 '-Y', 'protobuf.message.name == "tutorial.PersonSearchRequest"'
                       ' || (grpc.message_length == 66 && protobuf.field.value.string == "Jason"'
                       '     && protobuf.field.value.int64 == 1602601886)',
@@ -165,21 +167,21 @@ class TestDissectGprpc:
                 '-d', 'tcp.port==44363,http2',
                 '-2', # make http2.body.reassembled.in available
                 '-Y', # Case1: In frame28, one http DATA contains 4 completed grpc messages (json data seq=1,2,3,4).
-                      '(frame.number == 28 && grpc && json.value.number == "1" && json.value.number == "2"'
-                      ' && json.value.number == "3" && json.value.number == "4" && http2.body.reassembled.in == 45) ||'
+                      '(frame.number == 28 && grpc && json.value.number == 1 && json.value.number == 2'
+                      ' && json.value.number == 3 && json.value.number == 4 && http2.body.reassembled.in == 45) ||'
                       # Case2: In frame28, last grpc message (the 5th) only has 4 bytes, which need one more byte
                       # to be a message head. a completed message is reassembled in frame45. (json data seq=5)
-                      '(frame.number == 45 && grpc && http2.body.fragment == 28 && json.value.number == "5"'
+                      '(frame.number == 45 && grpc && http2.body.fragment == 28 && json.value.number == 5'
                       ' && http2.body.reassembled.in == 61) ||'
                       # Case3: In frame45, one http DATA frame contains two partial fragment, one is part of grpc
                       # message of previous http DATA (frame28), another is first part of grpc message of next http
                       # DATA (which will be reassembled in next http DATA frame61). (json data seq=6)
-                      '(frame.number == 61 && grpc && http2.body.fragment == 45 && json.value.number == "6") ||'
+                      '(frame.number == 61 && grpc && http2.body.fragment == 45 && json.value.number == 6) ||'
                       # Case4: A big grpc message across frame100, frame113, frame126 and finally reassembled in frame139.
                       '(frame.number == 100 && grpc && http2.body.reassembled.in == 139) ||'
                       '(frame.number == 113 && !grpc && http2.body.reassembled.in == 139) ||'
                       '(frame.number == 126 && !grpc && http2.body.reassembled.in == 139) ||'
-                      '(frame.number == 139 && grpc && json.value.number == "9") ||'
+                      '(frame.number == 139 && grpc && json.value.number == 9) ||'
                       # Case5: An large grpc message of 200004 bytes.
                       '(frame.number == 164 && grpc && grpc.message_length == 200004)',
             ), encoding='utf-8', env=test_env)
@@ -195,13 +197,14 @@ class TestDissectGprpc:
                 '-r', capture_file('grpc_person_search_protobuf_with_image-missing_headers.pcapng.gz'),
                 '-o', 'uat:protobuf_search_paths: "{}","{}"'.format(well_know_types_dir, 'FALSE'),
                 '-o', 'uat:protobuf_search_paths: "{}","{}"'.format(user_defined_types_dir, 'TRUE'),
-                '-o', 'uat:http2_fake_headers: "{}","{}","{}","{}","{}","{}"'.format(
-                            '50051','3','IN',':path','/tutorial.PersonSearchService/Search','TRUE'),
-                '-o', 'uat:http2_fake_headers: "{}","{}","{}","{}","{}","{}"'.format(
-                            '50051','0','IN','content-type','application/grpc','TRUE'),
-                '-o', 'uat:http2_fake_headers: "{}","{}","{}","{}","{}","{}"'.format(
-                            '50051','0','OUT','content-type','application/grpc','TRUE'),
+                '-o', 'uat:http2_fake_headers: "{}","{}","{}","{}","{}","{}","{}"'.format(
+                            '50051','3','IN',':path','/tutorial.PersonSearchService/Search','FALSE', 'TRUE'),
+                '-o', 'uat:http2_fake_headers: "{}","{}","{}","{}","{}","{}","{}"'.format(
+                            '50051','0','IN','content-type','application/grpc','FALSE','TRUE'),
+                '-o', 'uat:http2_fake_headers: "{}","{}","{}","{}","{}","{}","{}"'.format(
+                            '50051','0','OUT','content-type','application/grpc','FALSE','TRUE'),
                 '-d', 'tcp.port==50051,http2',
+                '-2',
                 '-Y', 'protobuf.field.value.string == "Jason" || protobuf.field.value.string == "Lily"',
             ), encoding='utf-8', env=test_env)
         assert count_output(stdout, 'DATA') == 2
@@ -219,6 +222,7 @@ class TestDissectGrpcWeb:
                 '-o', 'protobuf.preload_protos: TRUE',
                 '-o', 'protobuf.pbf_as_hf: TRUE',
                 '-d', 'tcp.port==57226,http',
+                '-2',
                 '-Y', '(tcp.stream eq 0) && (pbf.greet.HelloRequest.name == "88888888"'
                         '|| pbf.greet.HelloRequest.name == "99999999"'
                         '|| pbf.greet.HelloReply.message == "Hello 99999999")',
@@ -239,6 +243,7 @@ class TestDissectGrpcWeb:
                 '-o', 'protobuf.preload_protos: TRUE',
                 '-o', 'protobuf.pbf_as_hf: TRUE',
                 '-d', 'tcp.port==57228,http2',
+                '-2',
                 '-Y', '(tcp.stream eq 1) && (pbf.greet.HelloRequest.name == "88888888"'
                         '|| pbf.greet.HelloRequest.name == "99999999"'
                         '|| pbf.greet.HelloReply.message == "Hello 99999999")',
@@ -259,6 +264,7 @@ class TestDissectGrpcWeb:
                 '-o', 'protobuf.preload_protos: TRUE',
                 '-o', 'protobuf.pbf_as_hf: TRUE',
                 '-d', 'tcp.port==57228,http2',
+                '-2',
                 '-Y', '(tcp.stream eq 2) && ((pbf.greet.HelloRequest.name && grpc.message_length == 80004)'
                        '|| (pbf.greet.HelloReply.message && (grpc.message_length == 23 || grpc.message_length == 80012)))',
             ), encoding='utf-8', env=test_env)
@@ -276,6 +282,7 @@ class TestDissectGrpcWeb:
                 '-o', 'protobuf.preload_protos: TRUE',
                 '-o', 'protobuf.pbf_as_hf: TRUE',
                 '-d', 'tcp.port==57226,http',
+                '-2',
                 '-Y', '(tcp.stream eq 5) && (pbf.greet.HelloRequest.name == "88888888"'
                         '|| pbf.greet.HelloRequest.name == "99999999"'
                         '|| pbf.greet.HelloReply.message == "Hello 99999999")',
@@ -297,6 +304,7 @@ class TestDissectGrpcWeb:
                 '-o', 'protobuf.preload_protos: TRUE',
                 '-o', 'protobuf.pbf_as_hf: TRUE',
                 '-d', 'tcp.port==57228,http2',
+                '-2',
                 '-Y', '(tcp.stream eq 6) && (pbf.greet.HelloRequest.name == "88888888"'
                         '|| pbf.greet.HelloRequest.name == "99999999"'
                         '|| pbf.greet.HelloReply.message == "Hello 99999999")',
@@ -318,6 +326,7 @@ class TestDissectGrpcWeb:
                 '-o', 'protobuf.preload_protos: TRUE',
                 '-o', 'protobuf.pbf_as_hf: TRUE',
                 '-d', 'tcp.port==57228,http2',
+                '-2',
                 '-Y', '(tcp.stream eq 8) && ((pbf.greet.HelloRequest.name && grpc.message_length == 80004)'
                        '|| (pbf.greet.HelloReply.message && (grpc.message_length == 23 || grpc.message_length == 80012)))',
             ), encoding='utf-8', env=test_env)
@@ -336,6 +345,7 @@ class TestDissectGrpcWeb:
                 '-o', 'protobuf.preload_protos: TRUE',
                 '-o', 'protobuf.pbf_as_hf: TRUE',
                 '-d', 'tcp.port==57226,http',
+                '-2',
                 '-Y', '(tcp.stream eq 7) && (grpc.message_length == 80004 || grpc.message_length == 80010)',
             ), encoding='utf-8', env=test_env)
         assert grep_output(stdout, 'GRPC-Web-Text')
@@ -353,6 +363,7 @@ class TestDissectGrpcWeb:
                 '-o', 'protobuf.preload_protos: TRUE',
                 '-o', 'protobuf.pbf_as_hf: TRUE',
                 '-d', 'tcp.port==57226,http',
+                '-2',
                 '-Y', '(tcp.stream eq 9) && ((pbf.greet.HelloRequest.name && grpc.message_length == 10)'
                        '|| (pbf.greet.HelloReply.message && grpc.message_length == 18))',
             ), encoding='utf-8', env=test_env)
@@ -371,6 +382,7 @@ class TestDissectGrpcWeb:
                 '-o', 'protobuf.preload_protos: TRUE',
                 '-o', 'protobuf.pbf_as_hf: TRUE',
                 '-d', 'tcp.port==57226,http',
+                '-2',
                 '-Y', '(tcp.stream eq 10) && ((pbf.greet.HelloRequest.name && grpc.message_length == 80004)'
                        '|| (pbf.greet.HelloReply.message && (grpc.message_length == 23 || grpc.message_length == 80012)))',
             ), encoding='utf-8', env=test_env)
@@ -451,6 +463,25 @@ class TestDissectHttp2:
         assert not grep_output(stdout, '00000000  00 00 2c 01 05 00 00 00')
         # Stream ID 1 bytes, decrypted and uncompressed, human readable
         assert grep_output(stdout, '00000000  3a 6d 65 74 68 6f 64 3a')
+
+class TestDissectHttp2:
+    def test_http3_qpack_reassembly(self, cmd_tshark, features, dirs, capture_file, test_env):
+        '''HTTP/3 QPACK encoder stream reassembly'''
+        if not features.have_nghttp3:
+            pytest.skip('Requires nghttp3.')
+        stdout = subprocess.check_output((cmd_tshark,
+                '-r', capture_file('http3-qpack-reassembly-anon.pcapng'),
+                '-Y', 'http3.frame_type == "HEADERS"',
+                '-T', 'fields', '-e', 'http3.headers.method',
+                '-e', 'http3.headers.authority',
+                '-e', 'http3.headers.referer', '-e', 'http3.headers.user_agent',
+                '-e', 'http3.qpack.encoder.icnt'
+            ), encoding='utf-8', env=test_env)
+        assert grep_output(stdout, 'POST')
+        assert grep_output(stdout, 'googlevideo.com')
+        assert grep_output(stdout, 'https://www.youtube.com')
+        assert grep_output(stdout, 'Mozilla/5.0')
+        assert grep_output(stdout, '21') # Total number of QPACK insertions
 
 class TestDissectProtobuf:
     def test_protobuf_udp_message_mapping(self, cmd_tshark, features, dirs, capture_file, test_env):
@@ -628,29 +659,34 @@ class TestDissectTcp:
             '-r', capture_file('http-ooo2.pcap'),
             '-otcp.reassemble_out_of_order:TRUE',
             '-Tfields',
-            '-eframe.number', '-etcp.reassembled_in', '-e_ws.col.Info',
+            '-eframe.number', '-etcp.reassembled_in', '-e_ws.col.info',
             '-2',
             ), encoding='utf-8', env=test_env)
         lines = stdout.split('\n')
         # 2 - start of OoO MSP
         assert '2\t6\t[TCP Previous segment not captured]' in lines[1]
-        assert '[TCP segment of a reassembled PDU]' in lines[1]
+        assert '[TCP segment of a reassembled PDU]' in lines[1] or '[TCP PDU reassembled in' in lines[1]
+
         # H - first time that the start of the MSP is delivered
         assert '3\t6\t[TCP Out-Of-Order]' in lines[2]
-        assert '[TCP segment of a reassembled PDU]' in lines[2]
+        assert '[TCP segment of a reassembled PDU]' in lines[2] or '[TCP PDU reassembled in' in lines[2]
+
         # H - first retransmission. Because this is before the reassembly
         # completes we can add it to the reassembly
         assert '4\t6\t[TCP Retransmission]' in lines[3]
-        assert '[TCP segment of a reassembled PDU]' in lines[3]
+        assert '[TCP segment of a reassembled PDU]' in lines[3] or '[TCP PDU reassembled in' in lines[3]
+
         # 1 - continue reassembly
         assert '5\t6\t[TCP Out-Of-Order]' in lines[4]
-        assert '[TCP segment of a reassembled PDU]' in lines[4]
+        assert '[TCP segment of a reassembled PDU]' in lines[4] or '[TCP PDU reassembled in' in lines[4]
+
         # 3 - finish reassembly
         assert '6\t\tPUT /0 HTTP/1.1' in lines[5]
+
         # H - second retransmission. This is after the reassembly completes
-        # so we do not add it to the ressembly (but throw a ReassemblyError.)
+        # so we do not add it to the reassembly (but throw a ReassemblyError.)
         assert '7\t\t' in lines[6]
-        assert '[TCP segment of a reassembled PDU]' not in lines[6]
+        assert '[TCP segment of a reassembled PDU]' not in lines[6] and '[TCP PDU reassembled in' not in lines[6]
 
     def test_tcp_reassembly_more_data_1(self, cmd_tshark, capture_file, test_env):
         '''
@@ -787,7 +823,7 @@ class TestDissectQuic:
         # multiple packets, fragmented in multiple out of order packets,
         # retried, retried with overlap from the original packets, and retried
         # with one of the original packets missing (but all data there.)
-        # Include -zexpert just to be sure that nothing Warn or higher occured.
+        # Include -zexpert just to be sure that nothing Warn or higher occurred.
         # Note level expert infos may be expected with the overlaps and
         # retransmissions.
         stdout = subprocess.check_output([cmd_tshark,
@@ -888,7 +924,9 @@ class TestDissectCommunityId:
         self.check_baseline(dirs, stdout, 'communityid-filtered.txt')
 
 class TestDecompressMongo:
-    def test_decompress_zstd(self, cmd_tshark, capture_file, test_env):
+    def test_decompress_zstd(self, cmd_tshark, features, capture_file, test_env):
+        if not features.have_zstd:
+            pytest.skip('Requires zstd.')
         stdout = subprocess.check_output((cmd_tshark,
                 '-d', 'tcp.port==27017,mongo',
                 '-r', capture_file('mongo-zstd.pcapng'),

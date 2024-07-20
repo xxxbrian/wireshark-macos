@@ -23,9 +23,9 @@
 void proto_register_krb5rpc (void);
 void proto_reg_handoff_krb5rpc (void);
 
-static int proto_krb5rpc = -1;
+static int proto_krb5rpc;
 
-static gint ett_krb5rpc = -1;
+static gint ett_krb5rpc;
 
 
 static e_guid_t uuid_krb5rpc =
@@ -33,16 +33,16 @@ static e_guid_t uuid_krb5rpc =
                                  0x31}
 };
 static guint16 ver_krb5rpc = 1;
-static int hf_krb5rpc_opnum = -1;
-static int hf_krb5rpc_sendto_kdc_rqst_keysize = -1;
-static int hf_krb5rpc_sendto_kdc_rqst_spare1 = -1;
-static int hf_krb5rpc_sendto_kdc_resp_len = -1;
-static int hf_krb5rpc_sendto_kdc_resp_max = -1;
-static int hf_krb5rpc_sendto_kdc_resp_spare1 = -1;
-static int hf_krb5rpc_sendto_kdc_resp_keysize = -1;
-/* static int hf_krb5rpc_sendto_kdc_resp_st = -1; */
-static int hf_krb5rpc_krb5 = -1;
-static gint ett_krb5rpc_krb5 = -1;
+static int hf_krb5rpc_opnum;
+static int hf_krb5rpc_sendto_kdc_rqst_keysize;
+static int hf_krb5rpc_sendto_kdc_rqst_spare1;
+static int hf_krb5rpc_sendto_kdc_resp_len;
+static int hf_krb5rpc_sendto_kdc_resp_max;
+static int hf_krb5rpc_sendto_kdc_resp_spare1;
+static int hf_krb5rpc_sendto_kdc_resp_keysize;
+/* static int hf_krb5rpc_sendto_kdc_resp_st; */
+static int hf_krb5rpc_krb5;
+static gint ett_krb5rpc_krb5;
 
 static int
 krb5rpc_dissect_sendto_kdc_rqst (tvbuff_t * tvb, int offset,
@@ -73,7 +73,7 @@ krb5rpc_dissect_sendto_kdc_rqst (tvbuff_t * tvb, int offset,
   subtree = proto_item_add_subtree (item, ett_krb5rpc_krb5);
 
   remain = tvb_captured_length_remaining(tvb, offset);
-  krb5_tvb = tvb_new_subset_length_caplen (tvb, offset, remain, remain);
+  krb5_tvb = tvb_new_subset_length(tvb, offset, remain);
   offset = dissect_kerberos_main (krb5_tvb, pinfo, subtree, TRUE, NULL);
 
 
@@ -118,7 +118,7 @@ krb5rpc_dissect_sendto_kdc_resp (tvbuff_t * tvb, int offset,
   item = proto_tree_add_item (tree, hf_krb5rpc_krb5, tvb, offset, -1, ENC_NA);
   subtree = proto_item_add_subtree (item, ett_krb5rpc_krb5);
   remain = tvb_captured_length_remaining(tvb, offset);
-  krb5_tvb = tvb_new_subset_length_caplen (tvb, offset, remain, remain);
+  krb5_tvb = tvb_new_subset_length(tvb, offset, remain);
 
   offset = dissect_kerberos_main (krb5_tvb, pinfo, subtree, TRUE, NULL);
   offset += 16; /* no idea what this is, probably just extended encrypted text. */
@@ -127,7 +127,7 @@ krb5rpc_dissect_sendto_kdc_resp (tvbuff_t * tvb, int offset,
 }
 
 
-static dcerpc_sub_dissector krb5rpc_dissectors[] = {
+static const dcerpc_sub_dissector krb5rpc_dissectors[] = {
   {0, "rsec_krb5rpc_sendto_kdc", krb5rpc_dissect_sendto_kdc_rqst,
    krb5rpc_dissect_sendto_kdc_resp},
   {0, NULL, NULL, NULL},

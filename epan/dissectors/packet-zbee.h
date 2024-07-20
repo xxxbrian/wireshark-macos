@@ -1691,6 +1691,7 @@
 #define ZBEE_PROTOABBREV_ZCL_SUB_GHZ           "zbee_zcl_se.sub_ghz"
 #define ZBEE_PROTOABBREV_ZCL_SHADE_CONFIG      "zbee_zcl_closures.shade_config"
 #define ZBEE_PROTOABBREV_ZCL_DOOR_LOCK         "zbee_zcl_closures.door_lock"
+#define ZBEE_PROTOABBREV_ZCL_WINDOW_COVERING   "zbee_zcl_closures.window_covering"
 #define ZBEE_PROTOABBREV_ZCL_COLOR_CONTROL     "zbee_zcl_lighting.color_ctrl"
 #define ZBEE_PROTOABBREV_ZCL_BALLAST_CONFIG    "zbee_zcl_lighting.ballast_ctrl"
 #define ZBEE_PROTOABBREV_ZCL_TOUCHLINK         "zbee_zcl_general.touchlink"
@@ -1751,7 +1752,7 @@
 
 /* Helper Functions */
 /* Helper Functions */
-extern guint zbee_get_bit_field(guint input, guint mask);
+extern unsigned zbee_get_bit_field(unsigned input, unsigned mask);
 
 #endif /* PACKET_ZBEE_H */
 

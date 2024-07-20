@@ -1,7 +1,7 @@
 /* Do not modify this file. Changes will be overwritten.                      */
 /* Generated automatically by the ASN.1 to Wireshark dissector compiler       */
 /* packet-qsig.c                                                              */
-/* asn2wrs.py -L -c ./qsig.cnf -s ./packet-qsig-template -D . -O ../.. General-Error-List.asn qsig-gf-ext.asn qsig-gf-gp.asn qsig-gf-ade.asn QSIG-NA.asn QSIG-CF.asn QSIG-PR.asn QSIG-CT.asn QSIG-CC.asn QSIG-CO.asn QSIG-DND.asn QSIG-CI.asn QSIG-AOC.asn QSIG-RE.asn SYNC-SIG.asn QSIG-CINT.asn QSIG-CMN.asn QSIG-CPI.asn QSIG-PUMR.asn QSIG-PUMCH.asn QSIG-SSCT.asn QSIG-WTMLR.asn QSIG-WTMCH.asn QSIG-WTMAU.asn QSIG-SD.asn QSIG-CIDL.asn QSIG-SMS.asn QSIG-MCR.asn QSIG-MCM.asn QSIG-MID.asn */
+/* asn2wrs.py -q -L -c ./qsig.cnf -s ./packet-qsig-template -D . -O ../.. General-Error-List.asn qsig-gf-ext.asn qsig-gf-gp.asn qsig-gf-ade.asn QSIG-NA.asn QSIG-CF.asn QSIG-PR.asn QSIG-CT.asn QSIG-CC.asn QSIG-CO.asn QSIG-DND.asn QSIG-CI.asn QSIG-AOC.asn QSIG-RE.asn SYNC-SIG.asn QSIG-CINT.asn QSIG-CMN.asn QSIG-CPI.asn QSIG-PUMR.asn QSIG-PUMCH.asn QSIG-SSCT.asn QSIG-WTMLR.asn QSIG-WTMCH.asn QSIG-WTMAU.asn QSIG-SD.asn QSIG-CIDL.asn QSIG-SMS.asn QSIG-MCR.asn QSIG-MCM.asn QSIG-MID.asn */
 
 /* packet-qsig.c
  * Routines for QSIG packet dissection
@@ -143,7 +143,7 @@ static const value_string qsig_str_service_name[] = {
 };
 
 #define NO_SRV (-1)
-static const gint32 op2srv_tab[] = {
+static const int32_t op2srv_tab[] = {
   /*   0 */ 13868,
   /*   1 */ 13868,
   /*   2 */ 13868,
@@ -666,898 +666,898 @@ static const value_string qsig_str_error[] = {
 };
 
 /* Initialize the protocol and registered fields */
-static int proto_qsig = -1;
-static int hf_qsig_operation = -1;
-static int hf_qsig_service = -1;
-static int hf_qsig_error = -1;
-static int hf_qsig_ie_type = -1;
-static int hf_qsig_ie_type_cs4 = -1;
-static int hf_qsig_ie_type_cs5 = -1;
-static int hf_qsig_ie_len = -1;
-static int hf_qsig_ie_data = -1;
-static int hf_qsig_tc = -1;
-static int hf_qsig_pc = -1;
+static int proto_qsig;
+static int hf_qsig_operation;
+static int hf_qsig_service;
+static int hf_qsig_error;
+static int hf_qsig_ie_type;
+static int hf_qsig_ie_type_cs4;
+static int hf_qsig_ie_type_cs5;
+static int hf_qsig_ie_len;
+static int hf_qsig_ie_data;
+static int hf_qsig_tc;
+static int hf_qsig_pc;
 
 /* --- Modules Manufacturer-specific-service-extension-class-asn1-97 PSS1-generic-parameters-definition-asn1-97 Addressing-Data-Elements-asn1-97 --- --- --- */
 
-static int hf_qsig_extensionId = -1;              /* T_extensionId */
-static int hf_qsig_extensionArgument = -1;        /* T_extensionArgument */
-static int hf_qsig_presentationAllowedAddressS = -1;  /* AddressScreened */
-static int hf_qsig_presentationRestricted = -1;   /* NULL */
-static int hf_qsig_numberNotAvailableDueToInterworking = -1;  /* NULL */
-static int hf_qsig_presentationRestrictedAddressS = -1;  /* AddressScreened */
-static int hf_qsig_presentationAllowedAddressU = -1;  /* Address */
-static int hf_qsig_presentationRestrictedAddressU = -1;  /* Address */
-static int hf_qsig_presentationAllowedAddressNS = -1;  /* NumberScreened */
-static int hf_qsig_presentationRestrictedAddressNS = -1;  /* NumberScreened */
-static int hf_qsig_presentationAllowedAddressNU = -1;  /* PartyNumber */
-static int hf_qsig_presentationRestrictedAddressNU = -1;  /* PartyNumber */
-static int hf_qsig_partyNumber = -1;              /* PartyNumber */
-static int hf_qsig_screeningIndicator = -1;       /* ScreeningIndicator */
-static int hf_qsig_partySubaddress = -1;          /* PartySubaddress */
-static int hf_qsig_unknownPartyNumber = -1;       /* NumberDigits */
-static int hf_qsig_publicPartyNumber = -1;        /* PublicPartyNumber */
-static int hf_qsig_dataPartyNumber = -1;          /* NumberDigits */
-static int hf_qsig_telexPartyNumber = -1;         /* NumberDigits */
-static int hf_qsig_privatePartyNumber = -1;       /* PrivatePartyNumber */
-static int hf_qsig_nationalStandardPartyNumber = -1;  /* NumberDigits */
-static int hf_qsig_publicTypeOfNumber = -1;       /* PublicTypeOfNumber */
-static int hf_qsig_publicNumberDigits = -1;       /* NumberDigits */
-static int hf_qsig_privateTypeOfNumber = -1;      /* PrivateTypeOfNumber */
-static int hf_qsig_privateNumberDigits = -1;      /* NumberDigits */
-static int hf_qsig_userSpecifiedSubaddress = -1;  /* UserSpecifiedSubaddress */
-static int hf_qsig_nSAPSubaddress = -1;           /* NSAPSubaddress */
-static int hf_qsig_subaddressInformation = -1;    /* SubaddressInformation */
-static int hf_qsig_oddCountIndicator = -1;        /* BOOLEAN */
+static int hf_qsig_extensionId;                   /* T_extensionId */
+static int hf_qsig_extensionArgument;             /* T_extensionArgument */
+static int hf_qsig_presentationAllowedAddressS;   /* AddressScreened */
+static int hf_qsig_presentationRestricted;        /* NULL */
+static int hf_qsig_numberNotAvailableDueToInterworking;  /* NULL */
+static int hf_qsig_presentationRestrictedAddressS;  /* AddressScreened */
+static int hf_qsig_presentationAllowedAddressU;   /* Address */
+static int hf_qsig_presentationRestrictedAddressU;  /* Address */
+static int hf_qsig_presentationAllowedAddressNS;  /* NumberScreened */
+static int hf_qsig_presentationRestrictedAddressNS;  /* NumberScreened */
+static int hf_qsig_presentationAllowedAddressNU;  /* PartyNumber */
+static int hf_qsig_presentationRestrictedAddressNU;  /* PartyNumber */
+static int hf_qsig_partyNumber;                   /* PartyNumber */
+static int hf_qsig_screeningIndicator;            /* ScreeningIndicator */
+static int hf_qsig_partySubaddress;               /* PartySubaddress */
+static int hf_qsig_unknownPartyNumber;            /* NumberDigits */
+static int hf_qsig_publicPartyNumber;             /* PublicPartyNumber */
+static int hf_qsig_dataPartyNumber;               /* NumberDigits */
+static int hf_qsig_telexPartyNumber;              /* NumberDigits */
+static int hf_qsig_privatePartyNumber;            /* PrivatePartyNumber */
+static int hf_qsig_nationalStandardPartyNumber;   /* NumberDigits */
+static int hf_qsig_publicTypeOfNumber;            /* PublicTypeOfNumber */
+static int hf_qsig_publicNumberDigits;            /* NumberDigits */
+static int hf_qsig_privateTypeOfNumber;           /* PrivateTypeOfNumber */
+static int hf_qsig_privateNumberDigits;           /* NumberDigits */
+static int hf_qsig_userSpecifiedSubaddress;       /* UserSpecifiedSubaddress */
+static int hf_qsig_nSAPSubaddress;                /* NSAPSubaddress */
+static int hf_qsig_subaddressInformation;         /* SubaddressInformation */
+static int hf_qsig_oddCountIndicator;             /* BOOLEAN */
 
 /* --- Module Name-Operations-asn1-97 --- --- ---                             */
 
-static int hf_qsig_na_qsig_na_NameArg_PDU = -1;   /* NameArg */
-static int hf_qsig_na_name = -1;                  /* Name */
-static int hf_qsig_na_nameSequence = -1;          /* T_nameSequence */
-static int hf_qsig_na_extensionNA = -1;           /* NameExtension */
-static int hf_qsig_na_single = -1;                /* Extension */
-static int hf_qsig_na_multiple = -1;              /* SEQUENCE_OF_Extension */
-static int hf_qsig_na_multiple_item = -1;         /* Extension */
-static int hf_qsig_na_namePresentationAllowed = -1;  /* NamePresentationAllowed */
-static int hf_qsig_na_namePresentationRestricted = -1;  /* NamePresentationRestricted */
-static int hf_qsig_na_nameNotAvailable = -1;      /* NameNotAvailable */
-static int hf_qsig_na_namePresentationAllowedSimple = -1;  /* NameData */
-static int hf_qsig_na_namePresentationAllowedExtended = -1;  /* NameSet */
-static int hf_qsig_na_namePresentationRestrictedSimple = -1;  /* NameData */
-static int hf_qsig_na_namePresentationRestrictedExtended = -1;  /* NameSet */
-static int hf_qsig_na_namePresentationRestrictedNull = -1;  /* NULL */
-static int hf_qsig_na_nameData = -1;              /* NameData */
-static int hf_qsig_na_characterSet = -1;          /* CharacterSet */
+static int hf_qsig_na_qsig_na_NameArg_PDU;        /* NameArg */
+static int hf_qsig_na_name;                       /* Name */
+static int hf_qsig_na_nameSequence;               /* T_nameSequence */
+static int hf_qsig_na_extensionNA;                /* NameExtension */
+static int hf_qsig_na_single;                     /* Extension */
+static int hf_qsig_na_multiple;                   /* SEQUENCE_OF_Extension */
+static int hf_qsig_na_multiple_item;              /* Extension */
+static int hf_qsig_na_namePresentationAllowed;    /* NamePresentationAllowed */
+static int hf_qsig_na_namePresentationRestricted;  /* NamePresentationRestricted */
+static int hf_qsig_na_nameNotAvailable;           /* NameNotAvailable */
+static int hf_qsig_na_namePresentationAllowedSimple;  /* NameData */
+static int hf_qsig_na_namePresentationAllowedExtended;  /* NameSet */
+static int hf_qsig_na_namePresentationRestrictedSimple;  /* NameData */
+static int hf_qsig_na_namePresentationRestrictedExtended;  /* NameSet */
+static int hf_qsig_na_namePresentationRestrictedNull;  /* NULL */
+static int hf_qsig_na_nameData;                   /* NameData */
+static int hf_qsig_na_characterSet;               /* CharacterSet */
 
 /* --- Module Call-Diversion-Operations-asn1-97 --- --- ---                   */
 
-static int hf_qsig_cf_qsig_cf_ARG_activateDiversionQ_PDU = -1;  /* ARG_activateDiversionQ */
-static int hf_qsig_cf_qsig_cf_RES_activateDiversionQ_PDU = -1;  /* RES_activateDiversionQ */
-static int hf_qsig_cf_qsig_cf_ARG_deactivateDiversionQ_PDU = -1;  /* ARG_deactivateDiversionQ */
-static int hf_qsig_cf_qsig_cf_RES_deactivateDiversionQ_PDU = -1;  /* RES_deactivateDiversionQ */
-static int hf_qsig_cf_qsig_cf_ARG_interrogateDiversionQ_PDU = -1;  /* ARG_interrogateDiversionQ */
-static int hf_qsig_cf_qsig_cf_IntResultList_PDU = -1;  /* IntResultList */
-static int hf_qsig_cf_qsig_cf_ARG_checkRestriction_PDU = -1;  /* ARG_checkRestriction */
-static int hf_qsig_cf_qsig_cf_RES_checkRestriction_PDU = -1;  /* RES_checkRestriction */
-static int hf_qsig_cf_qsig_cf_ARG_callRerouteing_PDU = -1;  /* ARG_callRerouteing */
-static int hf_qsig_cf_qsig_cf_RES_callRerouteing_PDU = -1;  /* RES_callRerouteing */
-static int hf_qsig_cf_qsig_cf_ARG_divertingLegInformation1_PDU = -1;  /* ARG_divertingLegInformation1 */
-static int hf_qsig_cf_qsig_cf_ARG_divertingLegInformation2_PDU = -1;  /* ARG_divertingLegInformation2 */
-static int hf_qsig_cf_qsig_cf_ARG_divertingLegInformation3_PDU = -1;  /* ARG_divertingLegInformation3 */
-static int hf_qsig_cf_qsig_cf_ARG_cfnrDivertedLegFailed_PDU = -1;  /* ARG_cfnrDivertedLegFailed */
-static int hf_qsig_cf_qsig_cf_Extension_PDU = -1;  /* Extension */
-static int hf_qsig_cf_procedure = -1;             /* Procedure */
-static int hf_qsig_cf_basicService = -1;          /* BasicService */
-static int hf_qsig_cf_divertedToAddress = -1;     /* Address */
-static int hf_qsig_cf_servedUserNr = -1;          /* PartyNumber */
-static int hf_qsig_cf_activatingUserNr = -1;      /* PartyNumber */
-static int hf_qsig_cf_extensionAD = -1;           /* ADExtension */
-static int hf_qsig_cf_single = -1;                /* Extension */
-static int hf_qsig_cf_multiple = -1;              /* SEQUENCE_OF_Extension */
-static int hf_qsig_cf_multiple_item = -1;         /* Extension */
-static int hf_qsig_cf_null = -1;                  /* NULL */
-static int hf_qsig_cf_deactivatingUserNr = -1;    /* PartyNumber */
-static int hf_qsig_cf_extensionDD = -1;           /* DDExtension */
-static int hf_qsig_cf_interrogatingUserNr = -1;   /* PartyNumber */
-static int hf_qsig_cf_extensionID = -1;           /* IDExtension */
-static int hf_qsig_cf_divertedToNr = -1;          /* PartyNumber */
-static int hf_qsig_cf_extensionCHR = -1;          /* CHRExtension */
-static int hf_qsig_cf_rerouteingReason = -1;      /* DiversionReason */
-static int hf_qsig_cf_originalRerouteingReason = -1;  /* DiversionReason */
-static int hf_qsig_cf_calledAddress = -1;         /* Address */
-static int hf_qsig_cf_diversionCounter = -1;      /* INTEGER_1_15 */
-static int hf_qsig_cf_pSS1InfoElement = -1;       /* PSS1InformationElement */
-static int hf_qsig_cf_lastRerouteingNr = -1;      /* PresentedNumberUnscreened */
-static int hf_qsig_cf_subscriptionOption = -1;    /* SubscriptionOption */
-static int hf_qsig_cf_callingPartySubaddress = -1;  /* PartySubaddress */
-static int hf_qsig_cf_callingNumber = -1;         /* PresentedNumberScreened */
-static int hf_qsig_cf_callingName = -1;           /* Name */
-static int hf_qsig_cf_originalCalledNr = -1;      /* PresentedNumberUnscreened */
-static int hf_qsig_cf_redirectingName = -1;       /* Name */
-static int hf_qsig_cf_originalCalledName = -1;    /* Name */
-static int hf_qsig_cf_extensionCRR = -1;          /* CRRExtension */
-static int hf_qsig_cf_diversionReason = -1;       /* DiversionReason */
-static int hf_qsig_cf_nominatedNr = -1;           /* PartyNumber */
-static int hf_qsig_cf_extensionDLI1 = -1;         /* DLI1Extension */
-static int hf_qsig_cf_originalDiversionReason = -1;  /* DiversionReason */
-static int hf_qsig_cf_divertingNr = -1;           /* PresentedNumberUnscreened */
-static int hf_qsig_cf_extensionDLI2 = -1;         /* DLI2Extension */
-static int hf_qsig_cf_presentationAllowedIndicator = -1;  /* PresentationAllowedIndicator */
-static int hf_qsig_cf_redirectionName = -1;       /* Name */
-static int hf_qsig_cf_extensionDLI3 = -1;         /* DLI3Extension */
-static int hf_qsig_cf_IntResultList_item = -1;    /* IntResult */
-static int hf_qsig_cf_remoteEnabled = -1;         /* BOOLEAN */
-static int hf_qsig_cf_extensionIR = -1;           /* IRExtension */
+static int hf_qsig_cf_qsig_cf_ARG_activateDiversionQ_PDU;  /* ARG_activateDiversionQ */
+static int hf_qsig_cf_qsig_cf_RES_activateDiversionQ_PDU;  /* RES_activateDiversionQ */
+static int hf_qsig_cf_qsig_cf_ARG_deactivateDiversionQ_PDU;  /* ARG_deactivateDiversionQ */
+static int hf_qsig_cf_qsig_cf_RES_deactivateDiversionQ_PDU;  /* RES_deactivateDiversionQ */
+static int hf_qsig_cf_qsig_cf_ARG_interrogateDiversionQ_PDU;  /* ARG_interrogateDiversionQ */
+static int hf_qsig_cf_qsig_cf_IntResultList_PDU;  /* IntResultList */
+static int hf_qsig_cf_qsig_cf_ARG_checkRestriction_PDU;  /* ARG_checkRestriction */
+static int hf_qsig_cf_qsig_cf_RES_checkRestriction_PDU;  /* RES_checkRestriction */
+static int hf_qsig_cf_qsig_cf_ARG_callRerouteing_PDU;  /* ARG_callRerouteing */
+static int hf_qsig_cf_qsig_cf_RES_callRerouteing_PDU;  /* RES_callRerouteing */
+static int hf_qsig_cf_qsig_cf_ARG_divertingLegInformation1_PDU;  /* ARG_divertingLegInformation1 */
+static int hf_qsig_cf_qsig_cf_ARG_divertingLegInformation2_PDU;  /* ARG_divertingLegInformation2 */
+static int hf_qsig_cf_qsig_cf_ARG_divertingLegInformation3_PDU;  /* ARG_divertingLegInformation3 */
+static int hf_qsig_cf_qsig_cf_ARG_cfnrDivertedLegFailed_PDU;  /* ARG_cfnrDivertedLegFailed */
+static int hf_qsig_cf_qsig_cf_Extension_PDU;      /* Extension */
+static int hf_qsig_cf_procedure;                  /* Procedure */
+static int hf_qsig_cf_basicService;               /* BasicService */
+static int hf_qsig_cf_divertedToAddress;          /* Address */
+static int hf_qsig_cf_servedUserNr;               /* PartyNumber */
+static int hf_qsig_cf_activatingUserNr;           /* PartyNumber */
+static int hf_qsig_cf_extensionAD;                /* ADExtension */
+static int hf_qsig_cf_single;                     /* Extension */
+static int hf_qsig_cf_multiple;                   /* SEQUENCE_OF_Extension */
+static int hf_qsig_cf_multiple_item;              /* Extension */
+static int hf_qsig_cf_null;                       /* NULL */
+static int hf_qsig_cf_deactivatingUserNr;         /* PartyNumber */
+static int hf_qsig_cf_extensionDD;                /* DDExtension */
+static int hf_qsig_cf_interrogatingUserNr;        /* PartyNumber */
+static int hf_qsig_cf_extensionID;                /* IDExtension */
+static int hf_qsig_cf_divertedToNr;               /* PartyNumber */
+static int hf_qsig_cf_extensionCHR;               /* CHRExtension */
+static int hf_qsig_cf_rerouteingReason;           /* DiversionReason */
+static int hf_qsig_cf_originalRerouteingReason;   /* DiversionReason */
+static int hf_qsig_cf_calledAddress;              /* Address */
+static int hf_qsig_cf_diversionCounter;           /* INTEGER_1_15 */
+static int hf_qsig_cf_pSS1InfoElement;            /* PSS1InformationElement */
+static int hf_qsig_cf_lastRerouteingNr;           /* PresentedNumberUnscreened */
+static int hf_qsig_cf_subscriptionOption;         /* SubscriptionOption */
+static int hf_qsig_cf_callingPartySubaddress;     /* PartySubaddress */
+static int hf_qsig_cf_callingNumber;              /* PresentedNumberScreened */
+static int hf_qsig_cf_callingName;                /* Name */
+static int hf_qsig_cf_originalCalledNr;           /* PresentedNumberUnscreened */
+static int hf_qsig_cf_redirectingName;            /* Name */
+static int hf_qsig_cf_originalCalledName;         /* Name */
+static int hf_qsig_cf_extensionCRR;               /* CRRExtension */
+static int hf_qsig_cf_diversionReason;            /* DiversionReason */
+static int hf_qsig_cf_nominatedNr;                /* PartyNumber */
+static int hf_qsig_cf_extensionDLI1;              /* DLI1Extension */
+static int hf_qsig_cf_originalDiversionReason;    /* DiversionReason */
+static int hf_qsig_cf_divertingNr;                /* PresentedNumberUnscreened */
+static int hf_qsig_cf_extensionDLI2;              /* DLI2Extension */
+static int hf_qsig_cf_presentationAllowedIndicator;  /* PresentationAllowedIndicator */
+static int hf_qsig_cf_redirectionName;            /* Name */
+static int hf_qsig_cf_extensionDLI3;              /* DLI3Extension */
+static int hf_qsig_cf_IntResultList_item;         /* IntResult */
+static int hf_qsig_cf_remoteEnabled;              /* BOOLEAN */
+static int hf_qsig_cf_extensionIR;                /* IRExtension */
 
 /* --- Module Path-Replacement-Operations-asn1-97 --- --- ---                 */
 
-static int hf_qsig_pr_qsig_pr_DummyArg_PDU = -1;  /* DummyArg */
-static int hf_qsig_pr_qsig_pr_PRProposeArg_PDU = -1;  /* PRProposeArg */
-static int hf_qsig_pr_qsig_pr_PRSetupArg_PDU = -1;  /* PRSetupArg */
-static int hf_qsig_pr_qsig_pr_DummyResult_PDU = -1;  /* DummyResult */
-static int hf_qsig_pr_qsig_pr_PRRetainArg_PDU = -1;  /* PRRetainArg */
-static int hf_qsig_pr_qsig_pr_Extension_PDU = -1;  /* Extension */
-static int hf_qsig_pr_callIdentity = -1;          /* CallIdentity */
-static int hf_qsig_pr_rerouteingNumber = -1;      /* PartyNumber */
-static int hf_qsig_pr_extensionPRP = -1;          /* PRPExtension */
-static int hf_qsig_pr_single = -1;                /* Extension */
-static int hf_qsig_pr_multiple = -1;              /* SEQUENCE_OF_Extension */
-static int hf_qsig_pr_multiple_item = -1;         /* Extension */
-static int hf_qsig_pr_extensionPRS = -1;          /* PRSExtension */
-static int hf_qsig_pr_extensionPRR = -1;          /* PRRExtension */
-static int hf_qsig_pr_null = -1;                  /* NULL */
+static int hf_qsig_pr_qsig_pr_DummyArg_PDU;       /* DummyArg */
+static int hf_qsig_pr_qsig_pr_PRProposeArg_PDU;   /* PRProposeArg */
+static int hf_qsig_pr_qsig_pr_PRSetupArg_PDU;     /* PRSetupArg */
+static int hf_qsig_pr_qsig_pr_DummyResult_PDU;    /* DummyResult */
+static int hf_qsig_pr_qsig_pr_PRRetainArg_PDU;    /* PRRetainArg */
+static int hf_qsig_pr_qsig_pr_Extension_PDU;      /* Extension */
+static int hf_qsig_pr_callIdentity;               /* CallIdentity */
+static int hf_qsig_pr_rerouteingNumber;           /* PartyNumber */
+static int hf_qsig_pr_extensionPRP;               /* PRPExtension */
+static int hf_qsig_pr_single;                     /* Extension */
+static int hf_qsig_pr_multiple;                   /* SEQUENCE_OF_Extension */
+static int hf_qsig_pr_multiple_item;              /* Extension */
+static int hf_qsig_pr_extensionPRS;               /* PRSExtension */
+static int hf_qsig_pr_extensionPRR;               /* PRRExtension */
+static int hf_qsig_pr_null;                       /* NULL */
 
 /* --- Module Call-Transfer-Operations-asn1-97 --- --- ---                    */
 
-static int hf_qsig_ct_qsig_ct_DummyArg_PDU = -1;  /* DummyArg */
-static int hf_qsig_ct_qsig_ct_CTIdentifyRes_PDU = -1;  /* CTIdentifyRes */
-static int hf_qsig_ct_qsig_ct_CTInitiateArg_PDU = -1;  /* CTInitiateArg */
-static int hf_qsig_ct_qsig_ct_DummyRes_PDU = -1;  /* DummyRes */
-static int hf_qsig_ct_qsig_ct_CTSetupArg_PDU = -1;  /* CTSetupArg */
-static int hf_qsig_ct_qsig_ct_CTActiveArg_PDU = -1;  /* CTActiveArg */
-static int hf_qsig_ct_qsig_ct_CTCompleteArg_PDU = -1;  /* CTCompleteArg */
-static int hf_qsig_ct_qsig_ct_CTUpdateArg_PDU = -1;  /* CTUpdateArg */
-static int hf_qsig_ct_qsig_ct_SubaddressTransferArg_PDU = -1;  /* SubaddressTransferArg */
-static int hf_qsig_ct_qsig_ct_Extension_PDU = -1;  /* Extension */
-static int hf_qsig_ct_null = -1;                  /* NULL */
-static int hf_qsig_ct_single = -1;                /* Extension */
-static int hf_qsig_ct_multiple = -1;              /* SEQUENCE_OF_Extension */
-static int hf_qsig_ct_multiple_item = -1;         /* Extension */
-static int hf_qsig_ct_callIdentity = -1;          /* CallIdentity */
-static int hf_qsig_ct_rerouteingNumber = -1;      /* PartyNumber */
-static int hf_qsig_ct_resultExtension = -1;       /* T_resultExtension */
-static int hf_qsig_ct_argumentExtensionCTI = -1;  /* CTIargumentExtension */
-static int hf_qsig_ct_argumentExtensionCTS = -1;  /* CTSargumentExtension */
-static int hf_qsig_ct_connectedAddress = -1;      /* PresentedAddressScreened */
-static int hf_qsig_ct_basicCallInfoElements = -1;  /* PSS1InformationElement */
-static int hf_qsig_ct_connectedName = -1;         /* Name */
-static int hf_qsig_ct_argumentExtensionCTA = -1;  /* CTAargumentExtension */
-static int hf_qsig_ct_endDesignation = -1;        /* EndDesignation */
-static int hf_qsig_ct_redirectionNumber = -1;     /* PresentedNumberScreened */
-static int hf_qsig_ct_redirectionName = -1;       /* Name */
-static int hf_qsig_ct_callStatus = -1;            /* CallStatus */
-static int hf_qsig_ct_argumentExtensionCTC = -1;  /* CTCargumentExtension */
-static int hf_qsig_ct_argumentExtensionCTU = -1;  /* CTUargumentExtension */
-static int hf_qsig_ct_redirectionSubaddress = -1;  /* PartySubaddress */
-static int hf_qsig_ct_argumentExtensionST = -1;   /* STargumentExtension */
+static int hf_qsig_ct_qsig_ct_DummyArg_PDU;       /* DummyArg */
+static int hf_qsig_ct_qsig_ct_CTIdentifyRes_PDU;  /* CTIdentifyRes */
+static int hf_qsig_ct_qsig_ct_CTInitiateArg_PDU;  /* CTInitiateArg */
+static int hf_qsig_ct_qsig_ct_DummyRes_PDU;       /* DummyRes */
+static int hf_qsig_ct_qsig_ct_CTSetupArg_PDU;     /* CTSetupArg */
+static int hf_qsig_ct_qsig_ct_CTActiveArg_PDU;    /* CTActiveArg */
+static int hf_qsig_ct_qsig_ct_CTCompleteArg_PDU;  /* CTCompleteArg */
+static int hf_qsig_ct_qsig_ct_CTUpdateArg_PDU;    /* CTUpdateArg */
+static int hf_qsig_ct_qsig_ct_SubaddressTransferArg_PDU;  /* SubaddressTransferArg */
+static int hf_qsig_ct_qsig_ct_Extension_PDU;      /* Extension */
+static int hf_qsig_ct_null;                       /* NULL */
+static int hf_qsig_ct_single;                     /* Extension */
+static int hf_qsig_ct_multiple;                   /* SEQUENCE_OF_Extension */
+static int hf_qsig_ct_multiple_item;              /* Extension */
+static int hf_qsig_ct_callIdentity;               /* CallIdentity */
+static int hf_qsig_ct_rerouteingNumber;           /* PartyNumber */
+static int hf_qsig_ct_resultExtension;            /* T_resultExtension */
+static int hf_qsig_ct_argumentExtensionCTI;       /* CTIargumentExtension */
+static int hf_qsig_ct_argumentExtensionCTS;       /* CTSargumentExtension */
+static int hf_qsig_ct_connectedAddress;           /* PresentedAddressScreened */
+static int hf_qsig_ct_basicCallInfoElements;      /* PSS1InformationElement */
+static int hf_qsig_ct_connectedName;              /* Name */
+static int hf_qsig_ct_argumentExtensionCTA;       /* CTAargumentExtension */
+static int hf_qsig_ct_endDesignation;             /* EndDesignation */
+static int hf_qsig_ct_redirectionNumber;          /* PresentedNumberScreened */
+static int hf_qsig_ct_redirectionName;            /* Name */
+static int hf_qsig_ct_callStatus;                 /* CallStatus */
+static int hf_qsig_ct_argumentExtensionCTC;       /* CTCargumentExtension */
+static int hf_qsig_ct_argumentExtensionCTU;       /* CTUargumentExtension */
+static int hf_qsig_ct_redirectionSubaddress;      /* PartySubaddress */
+static int hf_qsig_ct_argumentExtensionST;        /* STargumentExtension */
 
 /* --- Module SS-CC-Operations-asn1-97 --- --- ---                            */
 
-static int hf_qsig_cc_qsig_cc_CcRequestArg_PDU = -1;  /* CcRequestArg */
-static int hf_qsig_cc_qsig_cc_CcRequestRes_PDU = -1;  /* CcRequestRes */
-static int hf_qsig_cc_qsig_cc_CcOptionalArg_PDU = -1;  /* CcOptionalArg */
-static int hf_qsig_cc_qsig_cc_CcExtension_PDU = -1;  /* CcExtension */
-static int hf_qsig_cc_qsig_cc_Extension_PDU = -1;  /* Extension */
-static int hf_qsig_cc_numberA = -1;               /* PresentedNumberUnscreened */
-static int hf_qsig_cc_numberB = -1;               /* PartyNumber */
-static int hf_qsig_cc_service = -1;               /* PSS1InformationElement */
-static int hf_qsig_cc_subaddrA = -1;              /* PartySubaddress */
-static int hf_qsig_cc_subaddrB = -1;              /* PartySubaddress */
-static int hf_qsig_cc_can_retain_service = -1;    /* BOOLEAN */
-static int hf_qsig_cc_retain_sig_connection = -1;  /* BOOLEAN */
-static int hf_qsig_cc_extension = -1;             /* CcExtension */
-static int hf_qsig_cc_no_path_reservation = -1;   /* BOOLEAN */
-static int hf_qsig_cc_retain_service = -1;        /* BOOLEAN */
-static int hf_qsig_cc_fullArg = -1;               /* T_fullArg */
-static int hf_qsig_cc_numberA_01 = -1;            /* PartyNumber */
-static int hf_qsig_cc_extArg = -1;                /* CcExtension */
-static int hf_qsig_cc_none = -1;                  /* NULL */
-static int hf_qsig_cc_single = -1;                /* Extension */
-static int hf_qsig_cc_multiple = -1;              /* SEQUENCE_OF_Extension */
-static int hf_qsig_cc_multiple_item = -1;         /* Extension */
+static int hf_qsig_cc_qsig_cc_CcRequestArg_PDU;   /* CcRequestArg */
+static int hf_qsig_cc_qsig_cc_CcRequestRes_PDU;   /* CcRequestRes */
+static int hf_qsig_cc_qsig_cc_CcOptionalArg_PDU;  /* CcOptionalArg */
+static int hf_qsig_cc_qsig_cc_CcExtension_PDU;    /* CcExtension */
+static int hf_qsig_cc_qsig_cc_Extension_PDU;      /* Extension */
+static int hf_qsig_cc_numberA;                    /* PresentedNumberUnscreened */
+static int hf_qsig_cc_numberB;                    /* PartyNumber */
+static int hf_qsig_cc_service;                    /* PSS1InformationElement */
+static int hf_qsig_cc_subaddrA;                   /* PartySubaddress */
+static int hf_qsig_cc_subaddrB;                   /* PartySubaddress */
+static int hf_qsig_cc_can_retain_service;         /* BOOLEAN */
+static int hf_qsig_cc_retain_sig_connection;      /* BOOLEAN */
+static int hf_qsig_cc_extension;                  /* CcExtension */
+static int hf_qsig_cc_no_path_reservation;        /* BOOLEAN */
+static int hf_qsig_cc_retain_service;             /* BOOLEAN */
+static int hf_qsig_cc_fullArg;                    /* T_fullArg */
+static int hf_qsig_cc_numberA_01;                 /* PartyNumber */
+static int hf_qsig_cc_extArg;                     /* CcExtension */
+static int hf_qsig_cc_none;                       /* NULL */
+static int hf_qsig_cc_single;                     /* Extension */
+static int hf_qsig_cc_multiple;                   /* SEQUENCE_OF_Extension */
+static int hf_qsig_cc_multiple_item;              /* Extension */
 
 /* --- Module Call-Offer-Operations-asn1-97 --- --- ---                       */
 
-static int hf_qsig_co_qsig_co_PathRetainArg_PDU = -1;  /* PathRetainArg */
-static int hf_qsig_co_qsig_co_ServiceAvailableArg_PDU = -1;  /* ServiceAvailableArg */
-static int hf_qsig_co_qsig_co_DummyArg_PDU = -1;  /* DummyArg */
-static int hf_qsig_co_qsig_co_DummyRes_PDU = -1;  /* DummyRes */
-static int hf_qsig_co_qsig_co_Extension_PDU = -1;  /* Extension */
-static int hf_qsig_co_serviceList = -1;           /* ServiceList */
-static int hf_qsig_co_extendedServiceList = -1;   /* T_extendedServiceList */
-static int hf_qsig_co_extension = -1;             /* Extension */
-static int hf_qsig_co_extendedServiceList_01 = -1;  /* T_extendedServiceList_01 */
-static int hf_qsig_co_null = -1;                  /* NULL */
-static int hf_qsig_co_sequenceOfExtn = -1;        /* SEQUENCE_OF_Extension */
-static int hf_qsig_co_sequenceOfExtn_item = -1;   /* Extension */
+static int hf_qsig_co_qsig_co_PathRetainArg_PDU;  /* PathRetainArg */
+static int hf_qsig_co_qsig_co_ServiceAvailableArg_PDU;  /* ServiceAvailableArg */
+static int hf_qsig_co_qsig_co_DummyArg_PDU;       /* DummyArg */
+static int hf_qsig_co_qsig_co_DummyRes_PDU;       /* DummyRes */
+static int hf_qsig_co_qsig_co_Extension_PDU;      /* Extension */
+static int hf_qsig_co_serviceList;                /* ServiceList */
+static int hf_qsig_co_extendedServiceList;        /* T_extendedServiceList */
+static int hf_qsig_co_extension;                  /* Extension */
+static int hf_qsig_co_extendedServiceList_01;     /* T_extendedServiceList_01 */
+static int hf_qsig_co_null;                       /* NULL */
+static int hf_qsig_co_sequenceOfExtn;             /* SEQUENCE_OF_Extension */
+static int hf_qsig_co_sequenceOfExtn_item;        /* Extension */
 /* named bits */
-static int hf_qsig_co_ServiceList_callOffer = -1;
+static int hf_qsig_co_ServiceList_callOffer;
 
 /* --- Module Do-Not-Disturb-Operations-asn1-97 --- --- ---                   */
 
-static int hf_qsig_dnd_qsig_dnd_DNDActivateArg_PDU = -1;  /* DNDActivateArg */
-static int hf_qsig_dnd_qsig_dnd_DNDActivateRes_PDU = -1;  /* DNDActivateRes */
-static int hf_qsig_dnd_qsig_dnd_DNDDeactivateArg_PDU = -1;  /* DNDDeactivateArg */
-static int hf_qsig_dnd_qsig_dnd_DummyRes_PDU = -1;  /* DummyRes */
-static int hf_qsig_dnd_qsig_dnd_DNDInterrogateArg_PDU = -1;  /* DNDInterrogateArg */
-static int hf_qsig_dnd_qsig_dnd_DNDInterrogateRes_PDU = -1;  /* DNDInterrogateRes */
-static int hf_qsig_dnd_qsig_dnd_DNDOverrideArg_PDU = -1;  /* DNDOverrideArg */
-static int hf_qsig_dnd_qsig_dnd_PathRetainArg_PDU = -1;  /* PathRetainArg */
-static int hf_qsig_dnd_qsig_dnd_ServiceAvailableArg_PDU = -1;  /* ServiceAvailableArg */
-static int hf_qsig_dnd_qsig_dnd_DummyArg_PDU = -1;  /* DummyArg */
-static int hf_qsig_dnd_qsig_dnd_Extension_PDU = -1;  /* Extension */
-static int hf_qsig_dnd_null = -1;                 /* NULL */
-static int hf_qsig_dnd_extension = -1;            /* Extension */
-static int hf_qsig_dnd_sequenceOfExtn = -1;       /* SEQUENCE_OF_Extension */
-static int hf_qsig_dnd_sequenceOfExtn_item = -1;  /* Extension */
-static int hf_qsig_dnd_basicService = -1;         /* BasicService */
-static int hf_qsig_dnd_servedUserNr = -1;         /* PartyNumber */
-static int hf_qsig_dnd_argumentExtensionDNDA = -1;  /* DNDAargumentExtension */
-static int hf_qsig_dnd_status = -1;               /* T_status */
-static int hf_qsig_dnd_status_item = -1;          /* T_status_item */
-static int hf_qsig_dnd_dndProtectionLevel = -1;   /* DNDProtectionLevel */
-static int hf_qsig_dnd_resultExtension = -1;      /* T_resultExtension */
-static int hf_qsig_dnd_argumentExtensionDNDD = -1;  /* DNDDargumentExtension */
-static int hf_qsig_dnd_argumentExtensionDNDI = -1;  /* DNDIargumentExtension */
-static int hf_qsig_dnd_status_01 = -1;            /* T_status_01 */
-static int hf_qsig_dnd_status_item_01 = -1;       /* T_status_item_01 */
-static int hf_qsig_dnd_resultExtension_01 = -1;   /* T_resultExtension_01 */
-static int hf_qsig_dnd_dndoCapabilityLevel = -1;  /* DNDOCapabilityLevel */
-static int hf_qsig_dnd_argumentExtensionDNDO = -1;  /* DNDOargumentExtension */
-static int hf_qsig_dnd_serviceList = -1;          /* ServiceList */
-static int hf_qsig_dnd_extendedServiceList = -1;  /* T_extendedServiceList */
-static int hf_qsig_dnd_extendedServiceList_01 = -1;  /* T_extendedServiceList_01 */
+static int hf_qsig_dnd_qsig_dnd_DNDActivateArg_PDU;  /* DNDActivateArg */
+static int hf_qsig_dnd_qsig_dnd_DNDActivateRes_PDU;  /* DNDActivateRes */
+static int hf_qsig_dnd_qsig_dnd_DNDDeactivateArg_PDU;  /* DNDDeactivateArg */
+static int hf_qsig_dnd_qsig_dnd_DummyRes_PDU;     /* DummyRes */
+static int hf_qsig_dnd_qsig_dnd_DNDInterrogateArg_PDU;  /* DNDInterrogateArg */
+static int hf_qsig_dnd_qsig_dnd_DNDInterrogateRes_PDU;  /* DNDInterrogateRes */
+static int hf_qsig_dnd_qsig_dnd_DNDOverrideArg_PDU;  /* DNDOverrideArg */
+static int hf_qsig_dnd_qsig_dnd_PathRetainArg_PDU;  /* PathRetainArg */
+static int hf_qsig_dnd_qsig_dnd_ServiceAvailableArg_PDU;  /* ServiceAvailableArg */
+static int hf_qsig_dnd_qsig_dnd_DummyArg_PDU;     /* DummyArg */
+static int hf_qsig_dnd_qsig_dnd_Extension_PDU;    /* Extension */
+static int hf_qsig_dnd_null;                      /* NULL */
+static int hf_qsig_dnd_extension;                 /* Extension */
+static int hf_qsig_dnd_sequenceOfExtn;            /* SEQUENCE_OF_Extension */
+static int hf_qsig_dnd_sequenceOfExtn_item;       /* Extension */
+static int hf_qsig_dnd_basicService;              /* BasicService */
+static int hf_qsig_dnd_servedUserNr;              /* PartyNumber */
+static int hf_qsig_dnd_argumentExtensionDNDA;     /* DNDAargumentExtension */
+static int hf_qsig_dnd_status;                    /* T_status */
+static int hf_qsig_dnd_status_item;               /* T_status_item */
+static int hf_qsig_dnd_dndProtectionLevel;        /* DNDProtectionLevel */
+static int hf_qsig_dnd_resultExtension;           /* T_resultExtension */
+static int hf_qsig_dnd_argumentExtensionDNDD;     /* DNDDargumentExtension */
+static int hf_qsig_dnd_argumentExtensionDNDI;     /* DNDIargumentExtension */
+static int hf_qsig_dnd_status_01;                 /* T_status_01 */
+static int hf_qsig_dnd_status_item_01;            /* T_status_item_01 */
+static int hf_qsig_dnd_resultExtension_01;        /* T_resultExtension_01 */
+static int hf_qsig_dnd_dndoCapabilityLevel;       /* DNDOCapabilityLevel */
+static int hf_qsig_dnd_argumentExtensionDNDO;     /* DNDOargumentExtension */
+static int hf_qsig_dnd_serviceList;               /* ServiceList */
+static int hf_qsig_dnd_extendedServiceList;       /* T_extendedServiceList */
+static int hf_qsig_dnd_extendedServiceList_01;    /* T_extendedServiceList_01 */
 /* named bits */
-static int hf_qsig_dnd_ServiceList_spare_bit0 = -1;
-static int hf_qsig_dnd_ServiceList_dndo_low = -1;
-static int hf_qsig_dnd_ServiceList_dndo_medium = -1;
-static int hf_qsig_dnd_ServiceList_dndo_high = -1;
+static int hf_qsig_dnd_ServiceList_spare_bit0;
+static int hf_qsig_dnd_ServiceList_dndo_low;
+static int hf_qsig_dnd_ServiceList_dndo_medium;
+static int hf_qsig_dnd_ServiceList_dndo_high;
 
 /* --- Module Call-Intrusion-Operations-asn1-97 --- --- ---                   */
 
-static int hf_qsig_ci_qsig_ci_PathRetainArg_PDU = -1;  /* PathRetainArg */
-static int hf_qsig_ci_qsig_ci_ServiceAvailableArg_PDU = -1;  /* ServiceAvailableArg */
-static int hf_qsig_ci_qsig_ci_CIRequestArg_PDU = -1;  /* CIRequestArg */
-static int hf_qsig_ci_qsig_ci_CIRequestRes_PDU = -1;  /* CIRequestRes */
-static int hf_qsig_ci_qsig_ci_DummyArg_PDU = -1;  /* DummyArg */
-static int hf_qsig_ci_qsig_ci_CIGetCIPLRes_PDU = -1;  /* CIGetCIPLRes */
-static int hf_qsig_ci_qsig_ci_DummyRes_PDU = -1;  /* DummyRes */
-static int hf_qsig_ci_qsig_ci_Extension_PDU = -1;  /* Extension */
-static int hf_qsig_ci_serviceList = -1;           /* ServiceList */
-static int hf_qsig_ci_extendedServiceList = -1;   /* T_extendedServiceList */
-static int hf_qsig_ci_extension = -1;             /* Extension */
-static int hf_qsig_ci_extendedServiceList_01 = -1;  /* T_extendedServiceList_01 */
-static int hf_qsig_ci_null = -1;                  /* NULL */
-static int hf_qsig_ci_sequenceOfExtn = -1;        /* SEQUENCE_OF_Extension */
-static int hf_qsig_ci_sequenceOfExtn_item = -1;   /* Extension */
-static int hf_qsig_ci_ciCapabilityLevel = -1;     /* CICapabilityLevel */
-static int hf_qsig_ci_argumentExtension = -1;     /* T_argumentExtension */
-static int hf_qsig_ci_ciUnwantedUserStatus = -1;  /* CIUnwantedUserStatus */
-static int hf_qsig_ci_resultExtension = -1;       /* T_resultExtension */
-static int hf_qsig_ci_ciProtectionLevel = -1;     /* CIProtectionLevel */
-static int hf_qsig_ci_resultExtension_01 = -1;    /* T_resultExtension_01 */
+static int hf_qsig_ci_qsig_ci_PathRetainArg_PDU;  /* PathRetainArg */
+static int hf_qsig_ci_qsig_ci_ServiceAvailableArg_PDU;  /* ServiceAvailableArg */
+static int hf_qsig_ci_qsig_ci_CIRequestArg_PDU;   /* CIRequestArg */
+static int hf_qsig_ci_qsig_ci_CIRequestRes_PDU;   /* CIRequestRes */
+static int hf_qsig_ci_qsig_ci_DummyArg_PDU;       /* DummyArg */
+static int hf_qsig_ci_qsig_ci_CIGetCIPLRes_PDU;   /* CIGetCIPLRes */
+static int hf_qsig_ci_qsig_ci_DummyRes_PDU;       /* DummyRes */
+static int hf_qsig_ci_qsig_ci_Extension_PDU;      /* Extension */
+static int hf_qsig_ci_serviceList;                /* ServiceList */
+static int hf_qsig_ci_extendedServiceList;        /* T_extendedServiceList */
+static int hf_qsig_ci_extension;                  /* Extension */
+static int hf_qsig_ci_extendedServiceList_01;     /* T_extendedServiceList_01 */
+static int hf_qsig_ci_null;                       /* NULL */
+static int hf_qsig_ci_sequenceOfExtn;             /* SEQUENCE_OF_Extension */
+static int hf_qsig_ci_sequenceOfExtn_item;        /* Extension */
+static int hf_qsig_ci_ciCapabilityLevel;          /* CICapabilityLevel */
+static int hf_qsig_ci_argumentExtension;          /* T_argumentExtension */
+static int hf_qsig_ci_ciUnwantedUserStatus;       /* CIUnwantedUserStatus */
+static int hf_qsig_ci_resultExtension;            /* T_resultExtension */
+static int hf_qsig_ci_ciProtectionLevel;          /* CIProtectionLevel */
+static int hf_qsig_ci_resultExtension_01;         /* T_resultExtension_01 */
 /* named bits */
-static int hf_qsig_ci_ServiceList_spare_bit0 = -1;
-static int hf_qsig_ci_ServiceList_spare_bit1 = -1;
-static int hf_qsig_ci_ServiceList_spare_bit2 = -1;
-static int hf_qsig_ci_ServiceList_spare_bit3 = -1;
-static int hf_qsig_ci_ServiceList_ci_low = -1;
-static int hf_qsig_ci_ServiceList_ci_medium = -1;
-static int hf_qsig_ci_ServiceList_ci_high = -1;
+static int hf_qsig_ci_ServiceList_spare_bit0;
+static int hf_qsig_ci_ServiceList_spare_bit1;
+static int hf_qsig_ci_ServiceList_spare_bit2;
+static int hf_qsig_ci_ServiceList_spare_bit3;
+static int hf_qsig_ci_ServiceList_ci_low;
+static int hf_qsig_ci_ServiceList_ci_medium;
+static int hf_qsig_ci_ServiceList_ci_high;
 
 /* --- Module SS-AOC-Operations-asn1-97 --- --- ---                           */
 
-static int hf_qsig_aoc_qsig_aoc_AocRateArg_PDU = -1;  /* AocRateArg */
-static int hf_qsig_aoc_qsig_aoc_AocInterimArg_PDU = -1;  /* AocInterimArg */
-static int hf_qsig_aoc_qsig_aoc_AocFinalArg_PDU = -1;  /* AocFinalArg */
-static int hf_qsig_aoc_qsig_aoc_ChargeRequestArg_PDU = -1;  /* ChargeRequestArg */
-static int hf_qsig_aoc_qsig_aoc_ChargeRequestRes_PDU = -1;  /* ChargeRequestRes */
-static int hf_qsig_aoc_qsig_aoc_DummyArg_PDU = -1;  /* DummyArg */
-static int hf_qsig_aoc_qsig_aoc_AocCompleteArg_PDU = -1;  /* AocCompleteArg */
-static int hf_qsig_aoc_qsig_aoc_AocCompleteRes_PDU = -1;  /* AocCompleteRes */
-static int hf_qsig_aoc_qsig_aoc_AocDivChargeReqArg_PDU = -1;  /* AocDivChargeReqArg */
-static int hf_qsig_aoc_qsig_aoc_Extension_PDU = -1;  /* Extension */
-static int hf_qsig_aoc_aocRate = -1;              /* T_aocRate */
-static int hf_qsig_aoc_chargeNotAvailable = -1;   /* NULL */
-static int hf_qsig_aoc_aocSCurrencyInfoList = -1;  /* AOCSCurrencyInfoList */
-static int hf_qsig_aoc_rateArgExtension = -1;     /* T_rateArgExtension */
-static int hf_qsig_aoc_extension = -1;            /* Extension */
-static int hf_qsig_aoc_multipleExtension = -1;    /* SEQUENCE_OF_Extension */
-static int hf_qsig_aoc_multipleExtension_item = -1;  /* Extension */
-static int hf_qsig_aoc_interimCharge = -1;        /* T_interimCharge */
-static int hf_qsig_aoc_freeOfCharge = -1;         /* NULL */
-static int hf_qsig_aoc_specificCurrency = -1;     /* T_specificCurrency */
-static int hf_qsig_aoc_recordedCurrency = -1;     /* RecordedCurrency */
-static int hf_qsig_aoc_interimBillingId = -1;     /* InterimBillingId */
-static int hf_qsig_aoc_interimArgExtension = -1;  /* T_interimArgExtension */
-static int hf_qsig_aoc_finalCharge = -1;          /* T_finalCharge */
-static int hf_qsig_aoc_specificCurrency_01 = -1;  /* T_specificCurrency_01 */
-static int hf_qsig_aoc_finalBillingId = -1;       /* FinalBillingId */
-static int hf_qsig_aoc_chargingAssociation = -1;  /* ChargingAssociation */
-static int hf_qsig_aoc_finalArgExtension = -1;    /* T_finalArgExtension */
-static int hf_qsig_aoc_AOCSCurrencyInfoList_item = -1;  /* AOCSCurrencyInfo */
-static int hf_qsig_aoc_chargedItem = -1;          /* ChargedItem */
-static int hf_qsig_aoc_rateType = -1;             /* T_rateType */
-static int hf_qsig_aoc_durationCurrency = -1;     /* DurationCurrency */
-static int hf_qsig_aoc_flatRateCurrency = -1;     /* FlatRateCurrency */
-static int hf_qsig_aoc_volumeRateCurrency = -1;   /* VolumeRateCurrency */
-static int hf_qsig_aoc_specialChargingCode = -1;  /* SpecialChargingCode */
-static int hf_qsig_aoc_currencyInfoNotAvailable = -1;  /* NULL */
-static int hf_qsig_aoc_freeOfChargefromBeginning = -1;  /* NULL */
-static int hf_qsig_aoc_dCurrency = -1;            /* Currency */
-static int hf_qsig_aoc_dAmount = -1;              /* Amount */
-static int hf_qsig_aoc_dChargingType = -1;        /* ChargingType */
-static int hf_qsig_aoc_dTime = -1;                /* Time */
-static int hf_qsig_aoc_dGranularity = -1;         /* Time */
-static int hf_qsig_aoc_fRCurrency = -1;           /* Currency */
-static int hf_qsig_aoc_fRAmount = -1;             /* Amount */
-static int hf_qsig_aoc_vRCurrency = -1;           /* Currency */
-static int hf_qsig_aoc_vRAmount = -1;             /* Amount */
-static int hf_qsig_aoc_vRVolumeUnit = -1;         /* VolumeUnit */
-static int hf_qsig_aoc_rCurrency = -1;            /* Currency */
-static int hf_qsig_aoc_rAmount = -1;              /* Amount */
-static int hf_qsig_aoc_currencyAmount = -1;       /* CurrencyAmount */
-static int hf_qsig_aoc_multiplier = -1;           /* Multiplier */
-static int hf_qsig_aoc_lengthOfTimeUnit = -1;     /* LengthOfTimeUnit */
-static int hf_qsig_aoc_scale = -1;                /* Scale */
-static int hf_qsig_aoc_chargeNumber = -1;         /* PartyNumber */
-static int hf_qsig_aoc_chargeIdentifier = -1;     /* ChargeIdentifier */
-static int hf_qsig_aoc_adviceModeCombinations = -1;  /* SEQUENCE_SIZE_0_7_OF_AdviceModeCombination */
-static int hf_qsig_aoc_adviceModeCombinations_item = -1;  /* AdviceModeCombination */
-static int hf_qsig_aoc_chargeReqArgExtension = -1;  /* T_chargeReqArgExtension */
-static int hf_qsig_aoc_adviceModeCombination = -1;  /* AdviceModeCombination */
-static int hf_qsig_aoc_chargeReqResExtension = -1;  /* T_chargeReqResExtension */
-static int hf_qsig_aoc_none = -1;                 /* NULL */
-static int hf_qsig_aoc_chargedUser = -1;          /* PartyNumber */
-static int hf_qsig_aoc_completeArgExtension = -1;  /* T_completeArgExtension */
-static int hf_qsig_aoc_chargingOption = -1;       /* ChargingOption */
-static int hf_qsig_aoc_completeResExtension = -1;  /* T_completeResExtension */
-static int hf_qsig_aoc_divertingUser = -1;        /* PartyNumber */
-static int hf_qsig_aoc_diversionType = -1;        /* DiversionType */
-static int hf_qsig_aoc_aocDivChargeReqArgExt = -1;  /* T_aocDivChargeReqArgExt */
+static int hf_qsig_aoc_qsig_aoc_AocRateArg_PDU;   /* AocRateArg */
+static int hf_qsig_aoc_qsig_aoc_AocInterimArg_PDU;  /* AocInterimArg */
+static int hf_qsig_aoc_qsig_aoc_AocFinalArg_PDU;  /* AocFinalArg */
+static int hf_qsig_aoc_qsig_aoc_ChargeRequestArg_PDU;  /* ChargeRequestArg */
+static int hf_qsig_aoc_qsig_aoc_ChargeRequestRes_PDU;  /* ChargeRequestRes */
+static int hf_qsig_aoc_qsig_aoc_DummyArg_PDU;     /* DummyArg */
+static int hf_qsig_aoc_qsig_aoc_AocCompleteArg_PDU;  /* AocCompleteArg */
+static int hf_qsig_aoc_qsig_aoc_AocCompleteRes_PDU;  /* AocCompleteRes */
+static int hf_qsig_aoc_qsig_aoc_AocDivChargeReqArg_PDU;  /* AocDivChargeReqArg */
+static int hf_qsig_aoc_qsig_aoc_Extension_PDU;    /* Extension */
+static int hf_qsig_aoc_aocRate;                   /* T_aocRate */
+static int hf_qsig_aoc_chargeNotAvailable;        /* NULL */
+static int hf_qsig_aoc_aocSCurrencyInfoList;      /* AOCSCurrencyInfoList */
+static int hf_qsig_aoc_rateArgExtension;          /* T_rateArgExtension */
+static int hf_qsig_aoc_extension;                 /* Extension */
+static int hf_qsig_aoc_multipleExtension;         /* SEQUENCE_OF_Extension */
+static int hf_qsig_aoc_multipleExtension_item;    /* Extension */
+static int hf_qsig_aoc_interimCharge;             /* T_interimCharge */
+static int hf_qsig_aoc_freeOfCharge;              /* NULL */
+static int hf_qsig_aoc_specificCurrency;          /* T_specificCurrency */
+static int hf_qsig_aoc_recordedCurrency;          /* RecordedCurrency */
+static int hf_qsig_aoc_interimBillingId;          /* InterimBillingId */
+static int hf_qsig_aoc_interimArgExtension;       /* T_interimArgExtension */
+static int hf_qsig_aoc_finalCharge;               /* T_finalCharge */
+static int hf_qsig_aoc_specificCurrency_01;       /* T_specificCurrency_01 */
+static int hf_qsig_aoc_finalBillingId;            /* FinalBillingId */
+static int hf_qsig_aoc_chargingAssociation;       /* ChargingAssociation */
+static int hf_qsig_aoc_finalArgExtension;         /* T_finalArgExtension */
+static int hf_qsig_aoc_AOCSCurrencyInfoList_item;  /* AOCSCurrencyInfo */
+static int hf_qsig_aoc_chargedItem;               /* ChargedItem */
+static int hf_qsig_aoc_rateType;                  /* T_rateType */
+static int hf_qsig_aoc_durationCurrency;          /* DurationCurrency */
+static int hf_qsig_aoc_flatRateCurrency;          /* FlatRateCurrency */
+static int hf_qsig_aoc_volumeRateCurrency;        /* VolumeRateCurrency */
+static int hf_qsig_aoc_specialChargingCode;       /* SpecialChargingCode */
+static int hf_qsig_aoc_currencyInfoNotAvailable;  /* NULL */
+static int hf_qsig_aoc_freeOfChargefromBeginning;  /* NULL */
+static int hf_qsig_aoc_dCurrency;                 /* Currency */
+static int hf_qsig_aoc_dAmount;                   /* Amount */
+static int hf_qsig_aoc_dChargingType;             /* ChargingType */
+static int hf_qsig_aoc_dTime;                     /* Time */
+static int hf_qsig_aoc_dGranularity;              /* Time */
+static int hf_qsig_aoc_fRCurrency;                /* Currency */
+static int hf_qsig_aoc_fRAmount;                  /* Amount */
+static int hf_qsig_aoc_vRCurrency;                /* Currency */
+static int hf_qsig_aoc_vRAmount;                  /* Amount */
+static int hf_qsig_aoc_vRVolumeUnit;              /* VolumeUnit */
+static int hf_qsig_aoc_rCurrency;                 /* Currency */
+static int hf_qsig_aoc_rAmount;                   /* Amount */
+static int hf_qsig_aoc_currencyAmount;            /* CurrencyAmount */
+static int hf_qsig_aoc_multiplier;                /* Multiplier */
+static int hf_qsig_aoc_lengthOfTimeUnit;          /* LengthOfTimeUnit */
+static int hf_qsig_aoc_scale;                     /* Scale */
+static int hf_qsig_aoc_chargeNumber;              /* PartyNumber */
+static int hf_qsig_aoc_chargeIdentifier;          /* ChargeIdentifier */
+static int hf_qsig_aoc_adviceModeCombinations;    /* SEQUENCE_SIZE_0_7_OF_AdviceModeCombination */
+static int hf_qsig_aoc_adviceModeCombinations_item;  /* AdviceModeCombination */
+static int hf_qsig_aoc_chargeReqArgExtension;     /* T_chargeReqArgExtension */
+static int hf_qsig_aoc_adviceModeCombination;     /* AdviceModeCombination */
+static int hf_qsig_aoc_chargeReqResExtension;     /* T_chargeReqResExtension */
+static int hf_qsig_aoc_none;                      /* NULL */
+static int hf_qsig_aoc_chargedUser;               /* PartyNumber */
+static int hf_qsig_aoc_completeArgExtension;      /* T_completeArgExtension */
+static int hf_qsig_aoc_chargingOption;            /* ChargingOption */
+static int hf_qsig_aoc_completeResExtension;      /* T_completeResExtension */
+static int hf_qsig_aoc_divertingUser;             /* PartyNumber */
+static int hf_qsig_aoc_diversionType;             /* DiversionType */
+static int hf_qsig_aoc_aocDivChargeReqArgExt;     /* T_aocDivChargeReqArgExt */
 
 /* --- Module Recall-Operations-asn1-97 --- --- ---                           */
 
-static int hf_qsig_re_qsig_re_ReAlertingArg_PDU = -1;  /* ReAlertingArg */
-static int hf_qsig_re_qsig_re_ReAnswerArg_PDU = -1;  /* ReAnswerArg */
-static int hf_qsig_re_alertedNumber = -1;         /* PresentedNumberScreened */
-static int hf_qsig_re_alertedName = -1;           /* Name */
-static int hf_qsig_re_argumentExtension = -1;     /* T_argumentExtension */
-static int hf_qsig_re_extension = -1;             /* Extension */
-static int hf_qsig_re_multipleExtension = -1;     /* SEQUENCE_OF_Extension */
-static int hf_qsig_re_multipleExtension_item = -1;  /* Extension */
-static int hf_qsig_re_connectedNumber = -1;       /* PresentedNumberScreened */
-static int hf_qsig_re_connectedSubaddress = -1;   /* PartySubaddress */
-static int hf_qsig_re_connectedName = -1;         /* Name */
-static int hf_qsig_re_argumentExtension_01 = -1;  /* T_argumentExtension_01 */
+static int hf_qsig_re_qsig_re_ReAlertingArg_PDU;  /* ReAlertingArg */
+static int hf_qsig_re_qsig_re_ReAnswerArg_PDU;    /* ReAnswerArg */
+static int hf_qsig_re_alertedNumber;              /* PresentedNumberScreened */
+static int hf_qsig_re_alertedName;                /* Name */
+static int hf_qsig_re_argumentExtension;          /* T_argumentExtension */
+static int hf_qsig_re_extension;                  /* Extension */
+static int hf_qsig_re_multipleExtension;          /* SEQUENCE_OF_Extension */
+static int hf_qsig_re_multipleExtension_item;     /* Extension */
+static int hf_qsig_re_connectedNumber;            /* PresentedNumberScreened */
+static int hf_qsig_re_connectedSubaddress;        /* PartySubaddress */
+static int hf_qsig_re_connectedName;              /* Name */
+static int hf_qsig_re_argumentExtension_01;       /* T_argumentExtension_01 */
 
 /* --- Module Synchronization-Operations-asn1-97 --- --- ---                  */
 
-static int hf_qsig_sync_qsig_sync_SynchronizationReqArg_PDU = -1;  /* SynchronizationReqArg */
-static int hf_qsig_sync_qsig_sync_SynchronizationReqRes_PDU = -1;  /* SynchronizationReqRes */
-static int hf_qsig_sync_qsig_sync_SynchronizationInfoArg_PDU = -1;  /* SynchronizationInfoArg */
-static int hf_qsig_sync_qsig_sync_Extension_PDU = -1;  /* Extension */
-static int hf_qsig_sync_action = -1;              /* Action */
-static int hf_qsig_sync_argExtension = -1;        /* ArgExtension */
-static int hf_qsig_sync_response = -1;            /* BOOLEAN */
-static int hf_qsig_sync_stateinfo = -1;           /* T_stateinfo */
-static int hf_qsig_sync_extension = -1;           /* Extension */
-static int hf_qsig_sync_sequOfExtn = -1;          /* SEQUENCE_OF_Extension */
-static int hf_qsig_sync_sequOfExtn_item = -1;     /* Extension */
+static int hf_qsig_sync_qsig_sync_SynchronizationReqArg_PDU;  /* SynchronizationReqArg */
+static int hf_qsig_sync_qsig_sync_SynchronizationReqRes_PDU;  /* SynchronizationReqRes */
+static int hf_qsig_sync_qsig_sync_SynchronizationInfoArg_PDU;  /* SynchronizationInfoArg */
+static int hf_qsig_sync_qsig_sync_Extension_PDU;  /* Extension */
+static int hf_qsig_sync_action;                   /* Action */
+static int hf_qsig_sync_argExtension;             /* ArgExtension */
+static int hf_qsig_sync_response;                 /* BOOLEAN */
+static int hf_qsig_sync_stateinfo;                /* T_stateinfo */
+static int hf_qsig_sync_extension;                /* Extension */
+static int hf_qsig_sync_sequOfExtn;               /* SEQUENCE_OF_Extension */
+static int hf_qsig_sync_sequOfExtn_item;          /* Extension */
 
 /* --- Module Call-Interception-Operations-asn1-97 --- --- ---                */
 
-static int hf_qsig_cint_qsig_cint_CintInformation1Arg_PDU = -1;  /* CintInformation1Arg */
-static int hf_qsig_cint_qsig_cint_CintInformation2Arg_PDU = -1;  /* CintInformation2Arg */
-static int hf_qsig_cint_qsig_cint_CintCondArg_PDU = -1;  /* CintCondArg */
-static int hf_qsig_cint_qsig_cint_CintExtension_PDU = -1;  /* CintExtension */
-static int hf_qsig_cint_interceptionCause = -1;   /* CintCause */
-static int hf_qsig_cint_interceptedToNumber = -1;  /* PartyNumber */
-static int hf_qsig_cint_extension = -1;           /* CintExtension */
-static int hf_qsig_cint_calledNumber = -1;        /* PresentedNumberUnscreened */
-static int hf_qsig_cint_originalCalledNumber = -1;  /* PresentedNumberUnscreened */
-static int hf_qsig_cint_calledName = -1;          /* Name */
-static int hf_qsig_cint_originalCalledName = -1;  /* Name */
-static int hf_qsig_cint_interceptionCause_01 = -1;  /* Condition */
-static int hf_qsig_cint_none = -1;                /* NULL */
-static int hf_qsig_cint_single = -1;              /* Extension */
-static int hf_qsig_cint_multiple = -1;            /* SEQUENCE_OF_Extension */
-static int hf_qsig_cint_multiple_item = -1;       /* Extension */
+static int hf_qsig_cint_qsig_cint_CintInformation1Arg_PDU;  /* CintInformation1Arg */
+static int hf_qsig_cint_qsig_cint_CintInformation2Arg_PDU;  /* CintInformation2Arg */
+static int hf_qsig_cint_qsig_cint_CintCondArg_PDU;  /* CintCondArg */
+static int hf_qsig_cint_qsig_cint_CintExtension_PDU;  /* CintExtension */
+static int hf_qsig_cint_interceptionCause;        /* CintCause */
+static int hf_qsig_cint_interceptedToNumber;      /* PartyNumber */
+static int hf_qsig_cint_extension;                /* CintExtension */
+static int hf_qsig_cint_calledNumber;             /* PresentedNumberUnscreened */
+static int hf_qsig_cint_originalCalledNumber;     /* PresentedNumberUnscreened */
+static int hf_qsig_cint_calledName;               /* Name */
+static int hf_qsig_cint_originalCalledName;       /* Name */
+static int hf_qsig_cint_interceptionCause_01;     /* Condition */
+static int hf_qsig_cint_none;                     /* NULL */
+static int hf_qsig_cint_single;                   /* Extension */
+static int hf_qsig_cint_multiple;                 /* SEQUENCE_OF_Extension */
+static int hf_qsig_cint_multiple_item;            /* Extension */
 
 /* --- Module Common-Information-Operations-asn1-97 --- --- ---               */
 
-static int hf_qsig_cmn_qsig_cmn_DummyArg_PDU = -1;  /* DummyArg */
-static int hf_qsig_cmn_qsig_cmn_CmnArg_PDU = -1;  /* CmnArg */
-static int hf_qsig_cmn_featureIdentifier = -1;    /* FeatureIdList */
-static int hf_qsig_cmn_ssDNDOprotectionLevel = -1;  /* INTEGER_0_3 */
-static int hf_qsig_cmn_ssCIprotectionLevel = -1;  /* INTEGER_0_3 */
-static int hf_qsig_cmn_equipmentIdentity = -1;    /* EquipmentId */
-static int hf_qsig_cmn_partyCategory = -1;        /* PartyCategory */
-static int hf_qsig_cmn_extension = -1;            /* T_extension */
-static int hf_qsig_cmn_single = -1;               /* Extension */
-static int hf_qsig_cmn_multiple = -1;             /* SEQUENCE_OF_Extension */
-static int hf_qsig_cmn_multiple_item = -1;        /* Extension */
-static int hf_qsig_cmn_null = -1;                 /* NULL */
-static int hf_qsig_cmn_nodeId = -1;               /* IA5String_SIZE_1_10 */
-static int hf_qsig_cmn_groupId = -1;              /* IA5String_SIZE_1_10 */
-static int hf_qsig_cmn_unitId = -1;               /* IA5String_SIZE_1_10 */
+static int hf_qsig_cmn_qsig_cmn_DummyArg_PDU;     /* DummyArg */
+static int hf_qsig_cmn_qsig_cmn_CmnArg_PDU;       /* CmnArg */
+static int hf_qsig_cmn_featureIdentifier;         /* FeatureIdList */
+static int hf_qsig_cmn_ssDNDOprotectionLevel;     /* INTEGER_0_3 */
+static int hf_qsig_cmn_ssCIprotectionLevel;       /* INTEGER_0_3 */
+static int hf_qsig_cmn_equipmentIdentity;         /* EquipmentId */
+static int hf_qsig_cmn_partyCategory;             /* PartyCategory */
+static int hf_qsig_cmn_extension;                 /* T_extension */
+static int hf_qsig_cmn_single;                    /* Extension */
+static int hf_qsig_cmn_multiple;                  /* SEQUENCE_OF_Extension */
+static int hf_qsig_cmn_multiple_item;             /* Extension */
+static int hf_qsig_cmn_null;                      /* NULL */
+static int hf_qsig_cmn_nodeId;                    /* IA5String_SIZE_1_10 */
+static int hf_qsig_cmn_groupId;                   /* IA5String_SIZE_1_10 */
+static int hf_qsig_cmn_unitId;                    /* IA5String_SIZE_1_10 */
 /* named bits */
-static int hf_qsig_cmn_FeatureIdList_reserved = -1;
-static int hf_qsig_cmn_FeatureIdList_ssCFreRoutingSupported = -1;
-static int hf_qsig_cmn_FeatureIdList_ssCTreRoutingSupported = -1;
-static int hf_qsig_cmn_FeatureIdList_ssCCBSpossible = -1;
-static int hf_qsig_cmn_FeatureIdList_ssCCNRpossible = -1;
-static int hf_qsig_cmn_FeatureIdList_ssCOsupported = -1;
-static int hf_qsig_cmn_FeatureIdList_ssCIforcedRelease = -1;
-static int hf_qsig_cmn_FeatureIdList_ssCIisolation = -1;
-static int hf_qsig_cmn_FeatureIdList_ssCIwaitOnBusy = -1;
-static int hf_qsig_cmn_FeatureIdList_ssAOCsupportChargeRateProvAtGatewPinx = -1;
-static int hf_qsig_cmn_FeatureIdList_ssAOCsupportInterimChargeProvAtGatewPinx = -1;
-static int hf_qsig_cmn_FeatureIdList_ssAOCsupportFinalChargeProvAtGatewPinx = -1;
-static int hf_qsig_cmn_FeatureIdList_anfPRsupportedAtCooperatingPinx = -1;
-static int hf_qsig_cmn_FeatureIdList_anfCINTcanInterceptImmediate = -1;
-static int hf_qsig_cmn_FeatureIdList_anfCINTcanInterceptDelayed = -1;
-static int hf_qsig_cmn_FeatureIdList_anfWTMIreRoutingSupported = -1;
-static int hf_qsig_cmn_FeatureIdList_anfPUMIreRoutingSupported = -1;
-static int hf_qsig_cmn_FeatureIdList_ssSSCTreRoutingSupported = -1;
+static int hf_qsig_cmn_FeatureIdList_reserved;
+static int hf_qsig_cmn_FeatureIdList_ssCFreRoutingSupported;
+static int hf_qsig_cmn_FeatureIdList_ssCTreRoutingSupported;
+static int hf_qsig_cmn_FeatureIdList_ssCCBSpossible;
+static int hf_qsig_cmn_FeatureIdList_ssCCNRpossible;
+static int hf_qsig_cmn_FeatureIdList_ssCOsupported;
+static int hf_qsig_cmn_FeatureIdList_ssCIforcedRelease;
+static int hf_qsig_cmn_FeatureIdList_ssCIisolation;
+static int hf_qsig_cmn_FeatureIdList_ssCIwaitOnBusy;
+static int hf_qsig_cmn_FeatureIdList_ssAOCsupportChargeRateProvAtGatewPinx;
+static int hf_qsig_cmn_FeatureIdList_ssAOCsupportInterimChargeProvAtGatewPinx;
+static int hf_qsig_cmn_FeatureIdList_ssAOCsupportFinalChargeProvAtGatewPinx;
+static int hf_qsig_cmn_FeatureIdList_anfPRsupportedAtCooperatingPinx;
+static int hf_qsig_cmn_FeatureIdList_anfCINTcanInterceptImmediate;
+static int hf_qsig_cmn_FeatureIdList_anfCINTcanInterceptDelayed;
+static int hf_qsig_cmn_FeatureIdList_anfWTMIreRoutingSupported;
+static int hf_qsig_cmn_FeatureIdList_anfPUMIreRoutingSupported;
+static int hf_qsig_cmn_FeatureIdList_ssSSCTreRoutingSupported;
 
 /* --- Module Call-Interruption-Operations-asn1-97 --- --- ---                */
 
-static int hf_qsig_cpi_qsig_cpi_CPIRequestArg_PDU = -1;  /* CPIRequestArg */
-static int hf_qsig_cpi_qsig_cpi_CPIPRequestArg_PDU = -1;  /* CPIPRequestArg */
-static int hf_qsig_cpi_cpiCapabilityLevel = -1;   /* CPICapabilityLevel */
-static int hf_qsig_cpi_argumentExtension = -1;    /* T_argumentExtension */
-static int hf_qsig_cpi_extension = -1;            /* Extension */
-static int hf_qsig_cpi_sequenceOfExtn = -1;       /* SEQUENCE_OF_Extension */
-static int hf_qsig_cpi_sequenceOfExtn_item = -1;  /* Extension */
-static int hf_qsig_cpi_cpiProtectionLevel = -1;   /* CPIProtectionLevel */
-static int hf_qsig_cpi_argumentExtension_01 = -1;  /* T_argumentExtension_01 */
+static int hf_qsig_cpi_qsig_cpi_CPIRequestArg_PDU;  /* CPIRequestArg */
+static int hf_qsig_cpi_qsig_cpi_CPIPRequestArg_PDU;  /* CPIPRequestArg */
+static int hf_qsig_cpi_cpiCapabilityLevel;        /* CPICapabilityLevel */
+static int hf_qsig_cpi_argumentExtension;         /* T_argumentExtension */
+static int hf_qsig_cpi_extension;                 /* Extension */
+static int hf_qsig_cpi_sequenceOfExtn;            /* SEQUENCE_OF_Extension */
+static int hf_qsig_cpi_sequenceOfExtn_item;       /* Extension */
+static int hf_qsig_cpi_cpiProtectionLevel;        /* CPIProtectionLevel */
+static int hf_qsig_cpi_argumentExtension_01;      /* T_argumentExtension_01 */
 
 /* --- Module PUM-Registration-Operations-asn1-97 --- --- ---                 */
 
-static int hf_qsig_pumr_qsig_pumr_PumRegistrArg_PDU = -1;  /* PumRegistrArg */
-static int hf_qsig_pumr_qsig_pumr_PumRegistrRes_PDU = -1;  /* PumRegistrRes */
-static int hf_qsig_pumr_qsig_pumr_PumDelRegArg_PDU = -1;  /* PumDelRegArg */
-static int hf_qsig_pumr_qsig_pumr_DummyRes_PDU = -1;  /* DummyRes */
-static int hf_qsig_pumr_qsig_pumr_PumDe_regArg_PDU = -1;  /* PumDe_regArg */
-static int hf_qsig_pumr_qsig_pumr_PumInterrogArg_PDU = -1;  /* PumInterrogArg */
-static int hf_qsig_pumr_qsig_pumr_PumInterrogRes_PDU = -1;  /* PumInterrogRes */
-static int hf_qsig_pumr_qsig_pumr_Extension_PDU = -1;  /* Extension */
-static int hf_qsig_pumr_pumRUserId = -1;          /* RpumUserId */
-static int hf_qsig_pumr_pumNumber = -1;           /* PartyNumber */
-static int hf_qsig_pumr_alternativeId = -1;       /* AlternativeId */
-static int hf_qsig_pumr_basicService = -1;        /* BasicService */
-static int hf_qsig_pumr_hostingAddr = -1;         /* PartyNumber */
-static int hf_qsig_pumr_activatingUserAddr = -1;  /* PartyNumber */
-static int hf_qsig_pumr_serviceOption = -1;       /* ServiceOption */
-static int hf_qsig_pumr_sessionParams = -1;       /* SessionParams */
-static int hf_qsig_pumr_userPin = -1;             /* T_userPin */
-static int hf_qsig_pumr_pumUserPin = -1;          /* UserPin */
-static int hf_qsig_pumr_activatingUserPin = -1;   /* UserPin */
-static int hf_qsig_pumr_argExtension = -1;        /* PumrExtension */
-static int hf_qsig_pumr_null = -1;                /* NULL */
-static int hf_qsig_pumr_extension = -1;           /* Extension */
-static int hf_qsig_pumr_sequOfExtn = -1;          /* SEQUENCE_OF_Extension */
-static int hf_qsig_pumr_sequOfExtn_item = -1;     /* Extension */
-static int hf_qsig_pumr_pumXUserId = -1;          /* XpumUserId */
-static int hf_qsig_pumr_pumDUserId = -1;          /* DpumUserId */
-static int hf_qsig_pumr_userPin_01 = -1;          /* T_userPin_01 */
-static int hf_qsig_pumr_pumIUserId = -1;          /* IpumUserId */
-static int hf_qsig_pumr_homeInfoOnly = -1;        /* BOOLEAN */
-static int hf_qsig_pumr_userPin_02 = -1;          /* T_userPin_02 */
-static int hf_qsig_pumr_PumInterrogRes_item = -1;  /* PumInterrogRes_item */
-static int hf_qsig_pumr_interrogParams = -1;      /* SessionParams */
-static int hf_qsig_pumr_durationOfSession = -1;   /* INTEGER */
-static int hf_qsig_pumr_numberOfOutgCalls = -1;   /* INTEGER */
+static int hf_qsig_pumr_qsig_pumr_PumRegistrArg_PDU;  /* PumRegistrArg */
+static int hf_qsig_pumr_qsig_pumr_PumRegistrRes_PDU;  /* PumRegistrRes */
+static int hf_qsig_pumr_qsig_pumr_PumDelRegArg_PDU;  /* PumDelRegArg */
+static int hf_qsig_pumr_qsig_pumr_DummyRes_PDU;   /* DummyRes */
+static int hf_qsig_pumr_qsig_pumr_PumDe_regArg_PDU;  /* PumDe_regArg */
+static int hf_qsig_pumr_qsig_pumr_PumInterrogArg_PDU;  /* PumInterrogArg */
+static int hf_qsig_pumr_qsig_pumr_PumInterrogRes_PDU;  /* PumInterrogRes */
+static int hf_qsig_pumr_qsig_pumr_Extension_PDU;  /* Extension */
+static int hf_qsig_pumr_pumRUserId;               /* RpumUserId */
+static int hf_qsig_pumr_pumNumber;                /* PartyNumber */
+static int hf_qsig_pumr_alternativeId;            /* AlternativeId */
+static int hf_qsig_pumr_basicService;             /* BasicService */
+static int hf_qsig_pumr_hostingAddr;              /* PartyNumber */
+static int hf_qsig_pumr_activatingUserAddr;       /* PartyNumber */
+static int hf_qsig_pumr_serviceOption;            /* ServiceOption */
+static int hf_qsig_pumr_sessionParams;            /* SessionParams */
+static int hf_qsig_pumr_userPin;                  /* T_userPin */
+static int hf_qsig_pumr_pumUserPin;               /* UserPin */
+static int hf_qsig_pumr_activatingUserPin;        /* UserPin */
+static int hf_qsig_pumr_argExtension;             /* PumrExtension */
+static int hf_qsig_pumr_null;                     /* NULL */
+static int hf_qsig_pumr_extension;                /* Extension */
+static int hf_qsig_pumr_sequOfExtn;               /* SEQUENCE_OF_Extension */
+static int hf_qsig_pumr_sequOfExtn_item;          /* Extension */
+static int hf_qsig_pumr_pumXUserId;               /* XpumUserId */
+static int hf_qsig_pumr_pumDUserId;               /* DpumUserId */
+static int hf_qsig_pumr_userPin_01;               /* T_userPin_01 */
+static int hf_qsig_pumr_pumIUserId;               /* IpumUserId */
+static int hf_qsig_pumr_homeInfoOnly;             /* BOOLEAN */
+static int hf_qsig_pumr_userPin_02;               /* T_userPin_02 */
+static int hf_qsig_pumr_PumInterrogRes_item;      /* PumInterrogRes_item */
+static int hf_qsig_pumr_interrogParams;           /* SessionParams */
+static int hf_qsig_pumr_durationOfSession;        /* INTEGER */
+static int hf_qsig_pumr_numberOfOutgCalls;        /* INTEGER */
 
 /* --- Module Private-User-Mobility-Call-Handling-Operations-asn1-97 --- --- --- */
 
-static int hf_qsig_pumch_qsig_pumch_EnquiryArg_PDU = -1;  /* EnquiryArg */
-static int hf_qsig_pumch_qsig_pumch_EnquiryRes_PDU = -1;  /* EnquiryRes */
-static int hf_qsig_pumch_qsig_pumch_DivertArg_PDU = -1;  /* DivertArg */
-static int hf_qsig_pumch_qsig_pumch_DummyRes_PDU = -1;  /* DummyRes */
-static int hf_qsig_pumch_qsig_pumch_InformArg_PDU = -1;  /* InformArg */
-static int hf_qsig_pumch_qsig_pumch_PumoArg_PDU = -1;  /* PumoArg */
-static int hf_qsig_pumch_qsig_pumch_Extension_PDU = -1;  /* Extension */
-static int hf_qsig_pumch_pisnNumber = -1;         /* PartyNumber */
-static int hf_qsig_pumch_qSIGInfoElement = -1;    /* PSS1InformationElement */
-static int hf_qsig_pumch_argExtension = -1;       /* PumiExtension */
-static int hf_qsig_pumch_hostingAddr = -1;        /* PartyNumber */
-static int hf_qsig_pumch_callingNumber = -1;      /* PresentedNumberScreened */
-static int hf_qsig_pumch_pumIdentity = -1;        /* PumIdentity */
-static int hf_qsig_pumch_callingUserSub = -1;     /* PartySubaddress */
-static int hf_qsig_pumch_callingUserName = -1;    /* Name */
-static int hf_qsig_pumch_pumUserSub = -1;         /* PartySubaddress */
-static int hf_qsig_pumch_currLocation = -1;       /* CurrLocation */
-static int hf_qsig_pumch_cfuActivated = -1;       /* CfuActivated */
-static int hf_qsig_pumch_divToAddress = -1;       /* Address */
-static int hf_qsig_pumch_divOptions = -1;         /* SubscriptionOption */
-static int hf_qsig_pumch_pumName = -1;            /* Name */
-static int hf_qsig_pumch_null = -1;               /* NULL */
-static int hf_qsig_pumch_extension = -1;          /* Extension */
-static int hf_qsig_pumch_sequOfExtn = -1;         /* SEQUENCE_OF_Extension */
-static int hf_qsig_pumch_sequOfExtn_item = -1;    /* Extension */
-static int hf_qsig_pumch_alternativeId = -1;      /* AlternativeId */
-static int hf_qsig_pumch_both = -1;               /* T_both */
-static int hf_qsig_pumch_destinationNumber = -1;  /* PartyNumber */
-static int hf_qsig_pumch_sendingComplete = -1;    /* NULL */
-static int hf_qsig_pumch_pumoaextension = -1;     /* T_pumoaextension */
-static int hf_qsig_pumch_single = -1;             /* Extension */
-static int hf_qsig_pumch_multiple = -1;           /* SEQUENCE_OF_Extension */
-static int hf_qsig_pumch_multiple_item = -1;      /* Extension */
+static int hf_qsig_pumch_qsig_pumch_EnquiryArg_PDU;  /* EnquiryArg */
+static int hf_qsig_pumch_qsig_pumch_EnquiryRes_PDU;  /* EnquiryRes */
+static int hf_qsig_pumch_qsig_pumch_DivertArg_PDU;  /* DivertArg */
+static int hf_qsig_pumch_qsig_pumch_DummyRes_PDU;  /* DummyRes */
+static int hf_qsig_pumch_qsig_pumch_InformArg_PDU;  /* InformArg */
+static int hf_qsig_pumch_qsig_pumch_PumoArg_PDU;  /* PumoArg */
+static int hf_qsig_pumch_qsig_pumch_Extension_PDU;  /* Extension */
+static int hf_qsig_pumch_pisnNumber;              /* PartyNumber */
+static int hf_qsig_pumch_qSIGInfoElement;         /* PSS1InformationElement */
+static int hf_qsig_pumch_argExtension;            /* PumiExtension */
+static int hf_qsig_pumch_hostingAddr;             /* PartyNumber */
+static int hf_qsig_pumch_callingNumber;           /* PresentedNumberScreened */
+static int hf_qsig_pumch_pumIdentity;             /* PumIdentity */
+static int hf_qsig_pumch_callingUserSub;          /* PartySubaddress */
+static int hf_qsig_pumch_callingUserName;         /* Name */
+static int hf_qsig_pumch_pumUserSub;              /* PartySubaddress */
+static int hf_qsig_pumch_currLocation;            /* CurrLocation */
+static int hf_qsig_pumch_cfuActivated;            /* CfuActivated */
+static int hf_qsig_pumch_divToAddress;            /* Address */
+static int hf_qsig_pumch_divOptions;              /* SubscriptionOption */
+static int hf_qsig_pumch_pumName;                 /* Name */
+static int hf_qsig_pumch_null;                    /* NULL */
+static int hf_qsig_pumch_extension;               /* Extension */
+static int hf_qsig_pumch_sequOfExtn;              /* SEQUENCE_OF_Extension */
+static int hf_qsig_pumch_sequOfExtn_item;         /* Extension */
+static int hf_qsig_pumch_alternativeId;           /* AlternativeId */
+static int hf_qsig_pumch_both;                    /* T_both */
+static int hf_qsig_pumch_destinationNumber;       /* PartyNumber */
+static int hf_qsig_pumch_sendingComplete;         /* NULL */
+static int hf_qsig_pumch_pumoaextension;          /* T_pumoaextension */
+static int hf_qsig_pumch_single;                  /* Extension */
+static int hf_qsig_pumch_multiple;                /* SEQUENCE_OF_Extension */
+static int hf_qsig_pumch_multiple_item;           /* Extension */
 
 /* --- Module Single-Step-Call-Transfer-Operations-asn1-97 --- --- ---        */
 
-static int hf_qsig_ssct_qsig_ssct_SSCTInitiateArg_PDU = -1;  /* SSCTInitiateArg */
-static int hf_qsig_ssct_qsig_ssct_DummyRes_PDU = -1;  /* DummyRes */
-static int hf_qsig_ssct_qsig_ssct_SSCTSetupArg_PDU = -1;  /* SSCTSetupArg */
-static int hf_qsig_ssct_qsig_ssct_DummyArg_PDU = -1;  /* DummyArg */
-static int hf_qsig_ssct_qsig_ssct_SSCTDigitInfoArg_PDU = -1;  /* SSCTDigitInfoArg */
-static int hf_qsig_ssct_qsig_ssct_Extension_PDU = -1;  /* Extension */
-static int hf_qsig_ssct_null = -1;                /* NULL */
-static int hf_qsig_ssct_single = -1;              /* Extension */
-static int hf_qsig_ssct_multiple = -1;            /* SEQUENCE_OF_Extension */
-static int hf_qsig_ssct_multiple_item = -1;       /* Extension */
-static int hf_qsig_ssct_rerouteingNumber = -1;    /* PartyNumber */
-static int hf_qsig_ssct_transferredAddress = -1;  /* PresentedAddressScreened */
-static int hf_qsig_ssct_awaitConnect = -1;        /* AwaitConnect */
-static int hf_qsig_ssct_transferredName = -1;     /* Name */
-static int hf_qsig_ssct_transferringAddress = -1;  /* PresentedAddressScreened */
-static int hf_qsig_ssct_transferringName = -1;    /* Name */
-static int hf_qsig_ssct_argumentExtensionSSCTI = -1;  /* SSCTIargumentExtension */
-static int hf_qsig_ssct_argumentExtensionSSCTS = -1;  /* SSCTSargumentExtension */
-static int hf_qsig_ssct_reroutingNumber = -1;     /* PartyNumber */
-static int hf_qsig_ssct_sendingComplete = -1;     /* NULL */
-static int hf_qsig_ssct_argumentExtensionSSCTD = -1;  /* SSCTDargumentExtension */
+static int hf_qsig_ssct_qsig_ssct_SSCTInitiateArg_PDU;  /* SSCTInitiateArg */
+static int hf_qsig_ssct_qsig_ssct_DummyRes_PDU;   /* DummyRes */
+static int hf_qsig_ssct_qsig_ssct_SSCTSetupArg_PDU;  /* SSCTSetupArg */
+static int hf_qsig_ssct_qsig_ssct_DummyArg_PDU;   /* DummyArg */
+static int hf_qsig_ssct_qsig_ssct_SSCTDigitInfoArg_PDU;  /* SSCTDigitInfoArg */
+static int hf_qsig_ssct_qsig_ssct_Extension_PDU;  /* Extension */
+static int hf_qsig_ssct_null;                     /* NULL */
+static int hf_qsig_ssct_single;                   /* Extension */
+static int hf_qsig_ssct_multiple;                 /* SEQUENCE_OF_Extension */
+static int hf_qsig_ssct_multiple_item;            /* Extension */
+static int hf_qsig_ssct_rerouteingNumber;         /* PartyNumber */
+static int hf_qsig_ssct_transferredAddress;       /* PresentedAddressScreened */
+static int hf_qsig_ssct_awaitConnect;             /* AwaitConnect */
+static int hf_qsig_ssct_transferredName;          /* Name */
+static int hf_qsig_ssct_transferringAddress;      /* PresentedAddressScreened */
+static int hf_qsig_ssct_transferringName;         /* Name */
+static int hf_qsig_ssct_argumentExtensionSSCTI;   /* SSCTIargumentExtension */
+static int hf_qsig_ssct_argumentExtensionSSCTS;   /* SSCTSargumentExtension */
+static int hf_qsig_ssct_reroutingNumber;          /* PartyNumber */
+static int hf_qsig_ssct_sendingComplete;          /* NULL */
+static int hf_qsig_ssct_argumentExtensionSSCTD;   /* SSCTDargumentExtension */
 
 /* --- Module WTM-Location-Registration-Operations-asn1-97 --- --- ---        */
 
-static int hf_qsig_wtmlr_qsig_wtmlr_LocUpdArg_PDU = -1;  /* LocUpdArg */
-static int hf_qsig_wtmlr_qsig_wtmlr_DummyRes_PDU = -1;  /* DummyRes */
-static int hf_qsig_wtmlr_qsig_wtmlr_LocDelArg_PDU = -1;  /* LocDelArg */
-static int hf_qsig_wtmlr_qsig_wtmlr_LocDeRegArg_PDU = -1;  /* LocDeRegArg */
-static int hf_qsig_wtmlr_qsig_wtmlr_PisnEnqArg_PDU = -1;  /* PisnEnqArg */
-static int hf_qsig_wtmlr_qsig_wtmlr_PisnEnqRes_PDU = -1;  /* PisnEnqRes */
-static int hf_qsig_wtmlr_qsig_wtmlr_GetRRCInfArg_PDU = -1;  /* GetRRCInfArg */
-static int hf_qsig_wtmlr_qsig_wtmlr_GetRRCInfRes_PDU = -1;  /* GetRRCInfRes */
-static int hf_qsig_wtmlr_qsig_wtmlr_LocInfoCheckArg_PDU = -1;  /* LocInfoCheckArg */
-static int hf_qsig_wtmlr_qsig_wtmlr_LocInfoCheckRes_PDU = -1;  /* LocInfoCheckRes */
-static int hf_qsig_wtmlr_qsig_wtmlr_Extension_PDU = -1;  /* Extension */
-static int hf_qsig_wtmlr_wtmUserId = -1;          /* WtmUserId */
-static int hf_qsig_wtmlr_basicService = -1;       /* BasicService */
-static int hf_qsig_wtmlr_visitPINX = -1;          /* PartyNumber */
-static int hf_qsig_wtmlr_argExtension = -1;       /* LrExtension */
-static int hf_qsig_wtmlr_null = -1;               /* NULL */
-static int hf_qsig_wtmlr_extension = -1;          /* Extension */
-static int hf_qsig_wtmlr_sequOfExtn = -1;         /* SEQUENCE_OF_Extension */
-static int hf_qsig_wtmlr_sequOfExtn_item = -1;    /* Extension */
-static int hf_qsig_wtmlr_alternativeId = -1;      /* AlternativeId */
-static int hf_qsig_wtmlr_resExtension = -1;       /* LrExtension */
-static int hf_qsig_wtmlr_rrClass = -1;            /* RRClass */
-static int hf_qsig_wtmlr_checkResult = -1;        /* CheckResult */
-static int hf_qsig_wtmlr_pisnNumber = -1;         /* PartyNumber */
+static int hf_qsig_wtmlr_qsig_wtmlr_LocUpdArg_PDU;  /* LocUpdArg */
+static int hf_qsig_wtmlr_qsig_wtmlr_DummyRes_PDU;  /* DummyRes */
+static int hf_qsig_wtmlr_qsig_wtmlr_LocDelArg_PDU;  /* LocDelArg */
+static int hf_qsig_wtmlr_qsig_wtmlr_LocDeRegArg_PDU;  /* LocDeRegArg */
+static int hf_qsig_wtmlr_qsig_wtmlr_PisnEnqArg_PDU;  /* PisnEnqArg */
+static int hf_qsig_wtmlr_qsig_wtmlr_PisnEnqRes_PDU;  /* PisnEnqRes */
+static int hf_qsig_wtmlr_qsig_wtmlr_GetRRCInfArg_PDU;  /* GetRRCInfArg */
+static int hf_qsig_wtmlr_qsig_wtmlr_GetRRCInfRes_PDU;  /* GetRRCInfRes */
+static int hf_qsig_wtmlr_qsig_wtmlr_LocInfoCheckArg_PDU;  /* LocInfoCheckArg */
+static int hf_qsig_wtmlr_qsig_wtmlr_LocInfoCheckRes_PDU;  /* LocInfoCheckRes */
+static int hf_qsig_wtmlr_qsig_wtmlr_Extension_PDU;  /* Extension */
+static int hf_qsig_wtmlr_wtmUserId;               /* WtmUserId */
+static int hf_qsig_wtmlr_basicService;            /* BasicService */
+static int hf_qsig_wtmlr_visitPINX;               /* PartyNumber */
+static int hf_qsig_wtmlr_argExtension;            /* LrExtension */
+static int hf_qsig_wtmlr_null;                    /* NULL */
+static int hf_qsig_wtmlr_extension;               /* Extension */
+static int hf_qsig_wtmlr_sequOfExtn;              /* SEQUENCE_OF_Extension */
+static int hf_qsig_wtmlr_sequOfExtn_item;         /* Extension */
+static int hf_qsig_wtmlr_alternativeId;           /* AlternativeId */
+static int hf_qsig_wtmlr_resExtension;            /* LrExtension */
+static int hf_qsig_wtmlr_rrClass;                 /* RRClass */
+static int hf_qsig_wtmlr_checkResult;             /* CheckResult */
+static int hf_qsig_wtmlr_pisnNumber;              /* PartyNumber */
 
 /* --- Module Wireless-Terminal-Call-Handling-Operations-asn1-97 --- --- ---  */
 
-static int hf_qsig_wtmch_qsig_wtmch_EnquiryArg_PDU = -1;  /* EnquiryArg */
-static int hf_qsig_wtmch_qsig_wtmch_EnquiryRes_PDU = -1;  /* EnquiryRes */
-static int hf_qsig_wtmch_qsig_wtmch_DivertArg_PDU = -1;  /* DivertArg */
-static int hf_qsig_wtmch_qsig_wtmch_DummyRes_PDU = -1;  /* DummyRes */
-static int hf_qsig_wtmch_qsig_wtmch_InformArg_PDU = -1;  /* InformArg */
-static int hf_qsig_wtmch_qsig_wtmch_WtmoArg_PDU = -1;  /* WtmoArg */
-static int hf_qsig_wtmch_qsig_wtmch_Extension_PDU = -1;  /* Extension */
-static int hf_qsig_wtmch_pisnNumber = -1;         /* PartyNumber */
-static int hf_qsig_wtmch_qSIGInfoElement = -1;    /* PSS1InformationElement */
-static int hf_qsig_wtmch_argExtension = -1;       /* WtmiExtension */
-static int hf_qsig_wtmch_visitPINX = -1;          /* PartyNumber */
-static int hf_qsig_wtmch_callingNumber = -1;      /* PresentedNumberScreened */
-static int hf_qsig_wtmch_wtmIdentity = -1;        /* WtmIdentity */
-static int hf_qsig_wtmch_callingUserSub = -1;     /* PartySubaddress */
-static int hf_qsig_wtmch_callingName = -1;        /* Name */
-static int hf_qsig_wtmch_wtmUserSub = -1;         /* PartySubaddress */
-static int hf_qsig_wtmch_currLocation = -1;       /* CurrLocation */
-static int hf_qsig_wtmch_cfuActivated = -1;       /* CfuActivated */
-static int hf_qsig_wtmch_divToAddress = -1;       /* Address */
-static int hf_qsig_wtmch_divOptions = -1;         /* SubscriptionOption */
-static int hf_qsig_wtmch_wtmName = -1;            /* Name */
-static int hf_qsig_wtmch_null = -1;               /* NULL */
-static int hf_qsig_wtmch_extension = -1;          /* Extension */
-static int hf_qsig_wtmch_sequOfExtn = -1;         /* SEQUENCE_OF_Extension */
-static int hf_qsig_wtmch_sequOfExtn_item = -1;    /* Extension */
-static int hf_qsig_wtmch_alternativeId = -1;      /* AlternativeId */
-static int hf_qsig_wtmch_both = -1;               /* T_both */
-static int hf_qsig_wtmch_destinationNumber = -1;  /* PartyNumber */
-static int hf_qsig_wtmch_sendingComplete = -1;    /* NULL */
-static int hf_qsig_wtmch_wtmoaextension = -1;     /* T_wtmoaextension */
-static int hf_qsig_wtmch_single = -1;             /* Extension */
-static int hf_qsig_wtmch_multiple = -1;           /* SEQUENCE_OF_Extension */
-static int hf_qsig_wtmch_multiple_item = -1;      /* Extension */
+static int hf_qsig_wtmch_qsig_wtmch_EnquiryArg_PDU;  /* EnquiryArg */
+static int hf_qsig_wtmch_qsig_wtmch_EnquiryRes_PDU;  /* EnquiryRes */
+static int hf_qsig_wtmch_qsig_wtmch_DivertArg_PDU;  /* DivertArg */
+static int hf_qsig_wtmch_qsig_wtmch_DummyRes_PDU;  /* DummyRes */
+static int hf_qsig_wtmch_qsig_wtmch_InformArg_PDU;  /* InformArg */
+static int hf_qsig_wtmch_qsig_wtmch_WtmoArg_PDU;  /* WtmoArg */
+static int hf_qsig_wtmch_qsig_wtmch_Extension_PDU;  /* Extension */
+static int hf_qsig_wtmch_pisnNumber;              /* PartyNumber */
+static int hf_qsig_wtmch_qSIGInfoElement;         /* PSS1InformationElement */
+static int hf_qsig_wtmch_argExtension;            /* WtmiExtension */
+static int hf_qsig_wtmch_visitPINX;               /* PartyNumber */
+static int hf_qsig_wtmch_callingNumber;           /* PresentedNumberScreened */
+static int hf_qsig_wtmch_wtmIdentity;             /* WtmIdentity */
+static int hf_qsig_wtmch_callingUserSub;          /* PartySubaddress */
+static int hf_qsig_wtmch_callingName;             /* Name */
+static int hf_qsig_wtmch_wtmUserSub;              /* PartySubaddress */
+static int hf_qsig_wtmch_currLocation;            /* CurrLocation */
+static int hf_qsig_wtmch_cfuActivated;            /* CfuActivated */
+static int hf_qsig_wtmch_divToAddress;            /* Address */
+static int hf_qsig_wtmch_divOptions;              /* SubscriptionOption */
+static int hf_qsig_wtmch_wtmName;                 /* Name */
+static int hf_qsig_wtmch_null;                    /* NULL */
+static int hf_qsig_wtmch_extension;               /* Extension */
+static int hf_qsig_wtmch_sequOfExtn;              /* SEQUENCE_OF_Extension */
+static int hf_qsig_wtmch_sequOfExtn_item;         /* Extension */
+static int hf_qsig_wtmch_alternativeId;           /* AlternativeId */
+static int hf_qsig_wtmch_both;                    /* T_both */
+static int hf_qsig_wtmch_destinationNumber;       /* PartyNumber */
+static int hf_qsig_wtmch_sendingComplete;         /* NULL */
+static int hf_qsig_wtmch_wtmoaextension;          /* T_wtmoaextension */
+static int hf_qsig_wtmch_single;                  /* Extension */
+static int hf_qsig_wtmch_multiple;                /* SEQUENCE_OF_Extension */
+static int hf_qsig_wtmch_multiple_item;           /* Extension */
 
 /* --- Module WTM-Authentication-Operations-asn1-97 --- --- ---               */
 
-static int hf_qsig_wtmau_qsig_wtmau_AuthWtmArg_PDU = -1;  /* AuthWtmArg */
-static int hf_qsig_wtmau_qsig_wtmau_AuthWtmRes_PDU = -1;  /* AuthWtmRes */
-static int hf_qsig_wtmau_qsig_wtmau_WtatParamArg_PDU = -1;  /* WtatParamArg */
-static int hf_qsig_wtmau_qsig_wtmau_WtatParamRes_PDU = -1;  /* WtatParamRes */
-static int hf_qsig_wtmau_qsig_wtmau_WtanParamArg_PDU = -1;  /* WtanParamArg */
-static int hf_qsig_wtmau_qsig_wtmau_WtanParamRes_PDU = -1;  /* WtanParamRes */
-static int hf_qsig_wtmau_qsig_wtmau_ARG_transferAuthParam_PDU = -1;  /* ARG_transferAuthParam */
-static int hf_qsig_wtmau_qsig_wtmau_Extension_PDU = -1;  /* Extension */
-static int hf_qsig_wtmau_wtmUserId = -1;          /* WtmUserId */
-static int hf_qsig_wtmau_calcWtatInfo = -1;       /* CalcWtatInfo */
-static int hf_qsig_wtmau_dummyExtension = -1;     /* DummyExtension */
-static int hf_qsig_wtmau_autWtmResValue = -1;     /* T_autWtmResValue */
-static int hf_qsig_wtmau_canCompute = -1;         /* CanCompute */
-static int hf_qsig_wtmau_authChallenge = -1;      /* AuthChallenge */
-static int hf_qsig_wtmau_wtatParamInfo = -1;      /* WtatParamInfo */
-static int hf_qsig_wtmau_authAlgorithm = -1;      /* AuthAlgorithm */
-static int hf_qsig_wtmau_pisnNumber = -1;         /* PartyNumber */
-static int hf_qsig_wtmau_alternativeId = -1;      /* AlternativeId */
-static int hf_qsig_wtmau_wtanParamInfo = -1;      /* WtanParamInfo */
-static int hf_qsig_wtmau_wtatParamInfoChoice = -1;  /* T_wtatParamInfoChoice */
-static int hf_qsig_wtmau_authSessionKeyInfo = -1;  /* AuthSessionKeyInfo */
-static int hf_qsig_wtmau_authKey = -1;            /* AuthKey */
-static int hf_qsig_wtmau_challLen = -1;           /* INTEGER_1_8 */
-static int hf_qsig_wtmau_calcWtanInfo = -1;       /* CalcWtanInfo */
-static int hf_qsig_wtmau_authSessionKey = -1;     /* AuthSessionKey */
-static int hf_qsig_wtmau_calculationParam = -1;   /* CalculationParam */
-static int hf_qsig_wtmau_CalcWtatInfo_item = -1;  /* CalcWtatInfoUnit */
-static int hf_qsig_wtmau_authResponse = -1;       /* AuthResponse */
-static int hf_qsig_wtmau_derivedCipherKey = -1;   /* DerivedCipherKey */
-static int hf_qsig_wtmau_extension = -1;          /* Extension */
-static int hf_qsig_wtmau_sequOfExtn = -1;         /* SEQUENCE_OF_Extension */
-static int hf_qsig_wtmau_sequOfExtn_item = -1;    /* Extension */
-static int hf_qsig_wtmau_authAlg = -1;            /* DefinedIDs */
-static int hf_qsig_wtmau_param = -1;              /* T_param */
+static int hf_qsig_wtmau_qsig_wtmau_AuthWtmArg_PDU;  /* AuthWtmArg */
+static int hf_qsig_wtmau_qsig_wtmau_AuthWtmRes_PDU;  /* AuthWtmRes */
+static int hf_qsig_wtmau_qsig_wtmau_WtatParamArg_PDU;  /* WtatParamArg */
+static int hf_qsig_wtmau_qsig_wtmau_WtatParamRes_PDU;  /* WtatParamRes */
+static int hf_qsig_wtmau_qsig_wtmau_WtanParamArg_PDU;  /* WtanParamArg */
+static int hf_qsig_wtmau_qsig_wtmau_WtanParamRes_PDU;  /* WtanParamRes */
+static int hf_qsig_wtmau_qsig_wtmau_ARG_transferAuthParam_PDU;  /* ARG_transferAuthParam */
+static int hf_qsig_wtmau_qsig_wtmau_Extension_PDU;  /* Extension */
+static int hf_qsig_wtmau_wtmUserId;               /* WtmUserId */
+static int hf_qsig_wtmau_calcWtatInfo;            /* CalcWtatInfo */
+static int hf_qsig_wtmau_dummyExtension;          /* DummyExtension */
+static int hf_qsig_wtmau_autWtmResValue;          /* T_autWtmResValue */
+static int hf_qsig_wtmau_canCompute;              /* CanCompute */
+static int hf_qsig_wtmau_authChallenge;           /* AuthChallenge */
+static int hf_qsig_wtmau_wtatParamInfo;           /* WtatParamInfo */
+static int hf_qsig_wtmau_authAlgorithm;           /* AuthAlgorithm */
+static int hf_qsig_wtmau_pisnNumber;              /* PartyNumber */
+static int hf_qsig_wtmau_alternativeId;           /* AlternativeId */
+static int hf_qsig_wtmau_wtanParamInfo;           /* WtanParamInfo */
+static int hf_qsig_wtmau_wtatParamInfoChoice;     /* T_wtatParamInfoChoice */
+static int hf_qsig_wtmau_authSessionKeyInfo;      /* AuthSessionKeyInfo */
+static int hf_qsig_wtmau_authKey;                 /* AuthKey */
+static int hf_qsig_wtmau_challLen;                /* INTEGER_1_8 */
+static int hf_qsig_wtmau_calcWtanInfo;            /* CalcWtanInfo */
+static int hf_qsig_wtmau_authSessionKey;          /* AuthSessionKey */
+static int hf_qsig_wtmau_calculationParam;        /* CalculationParam */
+static int hf_qsig_wtmau_CalcWtatInfo_item;       /* CalcWtatInfoUnit */
+static int hf_qsig_wtmau_authResponse;            /* AuthResponse */
+static int hf_qsig_wtmau_derivedCipherKey;        /* DerivedCipherKey */
+static int hf_qsig_wtmau_extension;               /* Extension */
+static int hf_qsig_wtmau_sequOfExtn;              /* SEQUENCE_OF_Extension */
+static int hf_qsig_wtmau_sequOfExtn_item;         /* Extension */
+static int hf_qsig_wtmau_authAlg;                 /* DefinedIDs */
+static int hf_qsig_wtmau_param;                   /* T_param */
 
 /* --- Module SS-SD-Operations-asn1-97 --- --- ---                            */
 
-static int hf_qsig_sd_qsig_sd_DisplayArg_PDU = -1;  /* DisplayArg */
-static int hf_qsig_sd_qsig_sd_KeypadArg_PDU = -1;  /* KeypadArg */
-static int hf_qsig_sd_qsig_sd_Extension_PDU = -1;  /* Extension */
-static int hf_qsig_sd_displayString = -1;         /* DisplayString */
-static int hf_qsig_sd_sdextension = -1;           /* SDExtension */
-static int hf_qsig_sd_displayStringNormal = -1;   /* BMPStringNormal */
-static int hf_qsig_sd_displayStringExtended = -1;  /* BMPStringExtended */
-static int hf_qsig_sd_keypadString = -1;          /* BMPStringNormal */
-static int hf_qsig_sd_extension = -1;             /* Extension */
-static int hf_qsig_sd_multipleExtension = -1;     /* SEQUENCE_OF_Extension */
-static int hf_qsig_sd_multipleExtension_item = -1;  /* Extension */
+static int hf_qsig_sd_qsig_sd_DisplayArg_PDU;     /* DisplayArg */
+static int hf_qsig_sd_qsig_sd_KeypadArg_PDU;      /* KeypadArg */
+static int hf_qsig_sd_qsig_sd_Extension_PDU;      /* Extension */
+static int hf_qsig_sd_displayString;              /* DisplayString */
+static int hf_qsig_sd_sdextension;                /* SDExtension */
+static int hf_qsig_sd_displayStringNormal;        /* BMPStringNormal */
+static int hf_qsig_sd_displayStringExtended;      /* BMPStringExtended */
+static int hf_qsig_sd_keypadString;               /* BMPStringNormal */
+static int hf_qsig_sd_extension;                  /* Extension */
+static int hf_qsig_sd_multipleExtension;          /* SEQUENCE_OF_Extension */
+static int hf_qsig_sd_multipleExtension_item;     /* Extension */
 
 /* --- Module Call-Identification-and-Call-Linkage-Operations-asn1-97 --- --- --- */
 
-static int hf_qsig_cidl_qsig_cidl_CallIdentificationAssignArg_PDU = -1;  /* CallIdentificationAssignArg */
-static int hf_qsig_cidl_qsig_cidl_CallIdentificationUpdateArg_PDU = -1;  /* CallIdentificationUpdateArg */
-static int hf_qsig_cidl_globalCallID = -1;        /* CallIdentificationData */
-static int hf_qsig_cidl_threadID = -1;            /* CallIdentificationData */
-static int hf_qsig_cidl_legID = -1;               /* CallIdentificationData */
-static int hf_qsig_cidl_extensiont = -1;          /* ExtensionType */
-static int hf_qsig_cidl_switchingSubDomainName = -1;  /* SwitchingSubDomainName */
-static int hf_qsig_cidl_linkageID = -1;           /* T_linkageID */
-static int hf_qsig_cidl_subDomainID = -1;         /* SubDomainID */
-static int hf_qsig_cidl_globallyUniqueID = -1;    /* GloballyUniqueID */
-static int hf_qsig_cidl_timeStamp = -1;           /* TimeStamp */
-static int hf_qsig_cidl_extension = -1;           /* Extension */
-static int hf_qsig_cidl_sequenceOfExt = -1;       /* SEQUENCE_OF_Extension */
-static int hf_qsig_cidl_sequenceOfExt_item = -1;  /* Extension */
+static int hf_qsig_cidl_qsig_cidl_CallIdentificationAssignArg_PDU;  /* CallIdentificationAssignArg */
+static int hf_qsig_cidl_qsig_cidl_CallIdentificationUpdateArg_PDU;  /* CallIdentificationUpdateArg */
+static int hf_qsig_cidl_globalCallID;             /* CallIdentificationData */
+static int hf_qsig_cidl_threadID;                 /* CallIdentificationData */
+static int hf_qsig_cidl_legID;                    /* CallIdentificationData */
+static int hf_qsig_cidl_extensiont;               /* ExtensionType */
+static int hf_qsig_cidl_switchingSubDomainName;   /* SwitchingSubDomainName */
+static int hf_qsig_cidl_linkageID;                /* T_linkageID */
+static int hf_qsig_cidl_subDomainID;              /* SubDomainID */
+static int hf_qsig_cidl_globallyUniqueID;         /* GloballyUniqueID */
+static int hf_qsig_cidl_timeStamp;                /* TimeStamp */
+static int hf_qsig_cidl_extension;                /* Extension */
+static int hf_qsig_cidl_sequenceOfExt;            /* SEQUENCE_OF_Extension */
+static int hf_qsig_cidl_sequenceOfExt_item;       /* Extension */
 
 /* --- Module Short-Message-Service-Operations-asn1-97 --- --- ---            */
 
-static int hf_qsig_sms_qsig_sms_SmsSubmitArg_PDU = -1;  /* SmsSubmitArg */
-static int hf_qsig_sms_qsig_sms_SmsSubmitRes_PDU = -1;  /* SmsSubmitRes */
-static int hf_qsig_sms_qsig_sms_SmsDeliverArg_PDU = -1;  /* SmsDeliverArg */
-static int hf_qsig_sms_qsig_sms_SmsDeliverRes_PDU = -1;  /* SmsDeliverRes */
-static int hf_qsig_sms_qsig_sms_SmsStatusReportArg_PDU = -1;  /* SmsStatusReportArg */
-static int hf_qsig_sms_qsig_sms_SmsStatusReportRes_PDU = -1;  /* SmsStatusReportRes */
-static int hf_qsig_sms_qsig_sms_SmsCommandArg_PDU = -1;  /* SmsCommandArg */
-static int hf_qsig_sms_qsig_sms_SmsCommandRes_PDU = -1;  /* SmsCommandRes */
-static int hf_qsig_sms_qsig_sms_ScAlertArg_PDU = -1;  /* ScAlertArg */
-static int hf_qsig_sms_qsig_sms_DummyRes_PDU = -1;  /* DummyRes */
-static int hf_qsig_sms_qsig_sms_PAR_smsDeliverError_PDU = -1;  /* PAR_smsDeliverError */
-static int hf_qsig_sms_qsig_sms_PAR_smsSubmitError_PDU = -1;  /* PAR_smsSubmitError */
-static int hf_qsig_sms_qsig_sms_PAR_smsStatusReportError_PDU = -1;  /* PAR_smsStatusReportError */
-static int hf_qsig_sms_qsig_sms_PAR_smsCommandError_PDU = -1;  /* PAR_smsCommandError */
-static int hf_qsig_sms_qsig_sms_SmsExtension_PDU = -1;  /* SmsExtension */
-static int hf_qsig_sms_destinationAddress = -1;   /* PartyNumber */
-static int hf_qsig_sms_originatingAddress = -1;   /* PartyNumber */
-static int hf_qsig_sms_messageReference = -1;     /* MessageReference */
-static int hf_qsig_sms_smSubmitParameter = -1;    /* SmSubmitParameter */
-static int hf_qsig_sms_userData = -1;             /* UserData */
-static int hf_qsig_sms_smsExtension = -1;         /* SmsExtension */
-static int hf_qsig_sms_serviceCentreTimeStamp = -1;  /* ServiceCentreTimeStamp */
-static int hf_qsig_sms_protocolIdentifier = -1;   /* ProtocolIdentifier */
-static int hf_qsig_sms_originatingName = -1;      /* Name */
-static int hf_qsig_sms_smDeliverParameter = -1;   /* SmDeliverParameter */
-static int hf_qsig_sms_smsDeliverResponseChoice = -1;  /* SmsDeliverResChoice */
-static int hf_qsig_sms_dischargeTime = -1;        /* DischargeTime */
-static int hf_qsig_sms_recipientAddress = -1;     /* PartyNumber */
-static int hf_qsig_sms_recipientName = -1;        /* Name */
-static int hf_qsig_sms_status = -1;               /* Status */
-static int hf_qsig_sms_priority = -1;             /* BOOLEAN */
-static int hf_qsig_sms_moreMessagesToSend = -1;   /* BOOLEAN */
-static int hf_qsig_sms_statusReportQualifier = -1;  /* BOOLEAN */
-static int hf_qsig_sms_smsStatusReportResponseChoice = -1;  /* SmsStatusReportResponseChoice */
-static int hf_qsig_sms_messageNumber = -1;        /* MessageReference */
-static int hf_qsig_sms_commandType = -1;          /* CommandType */
-static int hf_qsig_sms_commandData = -1;          /* CommandData */
-static int hf_qsig_sms_statusReportRequest = -1;  /* BOOLEAN */
-static int hf_qsig_sms_null = -1;                 /* NULL */
-static int hf_qsig_sms_validityPeriod = -1;       /* ValidityPeriod */
-static int hf_qsig_sms_replyPath = -1;            /* BOOLEAN */
-static int hf_qsig_sms_rejectDuplicates = -1;     /* BOOLEAN */
-static int hf_qsig_sms_statusReportIndication = -1;  /* BOOLEAN */
-static int hf_qsig_sms_resChoiceSeq = -1;         /* ResChoiceSeq */
-static int hf_qsig_sms_single = -1;               /* Extension */
-static int hf_qsig_sms_multiple = -1;             /* SEQUENCE_OF_Extension */
-static int hf_qsig_sms_multiple_item = -1;        /* Extension */
-static int hf_qsig_sms_validityPeriodRel = -1;    /* ValidityPeriodRel */
-static int hf_qsig_sms_validityPeriodAbs = -1;    /* ValidityPeriodAbs */
-static int hf_qsig_sms_validityPeriodEnh = -1;    /* ValidityPeriodEnh */
-static int hf_qsig_sms_singleShotSM = -1;         /* BOOLEAN */
-static int hf_qsig_sms_enhancedVP = -1;           /* EnhancedVP */
-static int hf_qsig_sms_validityPeriodSec = -1;    /* INTEGER_0_255 */
-static int hf_qsig_sms_validityPeriodSemi = -1;   /* ValidityPeriodSemi */
-static int hf_qsig_sms_userDataHeader = -1;       /* UserDataHeader */
-static int hf_qsig_sms_class = -1;                /* INTEGER_0_3 */
-static int hf_qsig_sms_compressed = -1;           /* BOOLEAN */
-static int hf_qsig_sms_shortMessageText = -1;     /* ShortMessageText */
-static int hf_qsig_sms_shortMessageTextType = -1;  /* ShortMessageTextType */
-static int hf_qsig_sms_shortMessageTextData = -1;  /* ShortMessageTextData */
-static int hf_qsig_sms_UserDataHeader_item = -1;  /* UserDataHeaderChoice */
-static int hf_qsig_sms_smscControlParameterHeader = -1;  /* SmscControlParameterHeader */
-static int hf_qsig_sms_concatenated8BitSMHeader = -1;  /* Concatenated8BitSMHeader */
-static int hf_qsig_sms_concatenated16BitSMHeader = -1;  /* Concatenated16BitSMHeader */
-static int hf_qsig_sms_applicationPort8BitHeader = -1;  /* ApplicationPort8BitHeader */
-static int hf_qsig_sms_applicationPort16BitHeader = -1;  /* ApplicationPort16BitHeader */
-static int hf_qsig_sms_dataHeaderSourceIndicator = -1;  /* DataHeaderSourceIndicator */
-static int hf_qsig_sms_wirelessControlHeader = -1;  /* WirelessControlHeader */
-static int hf_qsig_sms_genericUserValue = -1;     /* GenericUserValue */
-static int hf_qsig_sms_concatenated8BitSMReferenceNumber = -1;  /* INTEGER_0_255 */
-static int hf_qsig_sms_maximumNumberOf8BitSMInConcatenatedSM = -1;  /* INTEGER_0_255 */
-static int hf_qsig_sms_sequenceNumberOf8BitSM = -1;  /* INTEGER_0_255 */
-static int hf_qsig_sms_concatenated16BitSMReferenceNumber = -1;  /* INTEGER_0_65536 */
-static int hf_qsig_sms_maximumNumberOf16BitSMInConcatenatedSM = -1;  /* INTEGER_0_255 */
-static int hf_qsig_sms_sequenceNumberOf16BitSM = -1;  /* INTEGER_0_255 */
-static int hf_qsig_sms_destination8BitPort = -1;  /* INTEGER_0_255 */
-static int hf_qsig_sms_originator8BitPort = -1;   /* INTEGER_0_255 */
-static int hf_qsig_sms_destination16BitPort = -1;  /* INTEGER_0_65536 */
-static int hf_qsig_sms_originator16BitPort = -1;  /* INTEGER_0_65536 */
-static int hf_qsig_sms_parameterValue = -1;       /* INTEGER_0_255 */
-static int hf_qsig_sms_genericUserData = -1;      /* OCTET_STRING */
-static int hf_qsig_sms_failureCause = -1;         /* FailureCause */
-static int hf_qsig_sms_scAddressSaved = -1;       /* BOOLEAN */
+static int hf_qsig_sms_qsig_sms_SmsSubmitArg_PDU;  /* SmsSubmitArg */
+static int hf_qsig_sms_qsig_sms_SmsSubmitRes_PDU;  /* SmsSubmitRes */
+static int hf_qsig_sms_qsig_sms_SmsDeliverArg_PDU;  /* SmsDeliverArg */
+static int hf_qsig_sms_qsig_sms_SmsDeliverRes_PDU;  /* SmsDeliverRes */
+static int hf_qsig_sms_qsig_sms_SmsStatusReportArg_PDU;  /* SmsStatusReportArg */
+static int hf_qsig_sms_qsig_sms_SmsStatusReportRes_PDU;  /* SmsStatusReportRes */
+static int hf_qsig_sms_qsig_sms_SmsCommandArg_PDU;  /* SmsCommandArg */
+static int hf_qsig_sms_qsig_sms_SmsCommandRes_PDU;  /* SmsCommandRes */
+static int hf_qsig_sms_qsig_sms_ScAlertArg_PDU;   /* ScAlertArg */
+static int hf_qsig_sms_qsig_sms_DummyRes_PDU;     /* DummyRes */
+static int hf_qsig_sms_qsig_sms_PAR_smsDeliverError_PDU;  /* PAR_smsDeliverError */
+static int hf_qsig_sms_qsig_sms_PAR_smsSubmitError_PDU;  /* PAR_smsSubmitError */
+static int hf_qsig_sms_qsig_sms_PAR_smsStatusReportError_PDU;  /* PAR_smsStatusReportError */
+static int hf_qsig_sms_qsig_sms_PAR_smsCommandError_PDU;  /* PAR_smsCommandError */
+static int hf_qsig_sms_qsig_sms_SmsExtension_PDU;  /* SmsExtension */
+static int hf_qsig_sms_destinationAddress;        /* PartyNumber */
+static int hf_qsig_sms_originatingAddress;        /* PartyNumber */
+static int hf_qsig_sms_messageReference;          /* MessageReference */
+static int hf_qsig_sms_smSubmitParameter;         /* SmSubmitParameter */
+static int hf_qsig_sms_userData;                  /* UserData */
+static int hf_qsig_sms_smsExtension;              /* SmsExtension */
+static int hf_qsig_sms_serviceCentreTimeStamp;    /* ServiceCentreTimeStamp */
+static int hf_qsig_sms_protocolIdentifier;        /* ProtocolIdentifier */
+static int hf_qsig_sms_originatingName;           /* Name */
+static int hf_qsig_sms_smDeliverParameter;        /* SmDeliverParameter */
+static int hf_qsig_sms_smsDeliverResponseChoice;  /* SmsDeliverResChoice */
+static int hf_qsig_sms_dischargeTime;             /* DischargeTime */
+static int hf_qsig_sms_recipientAddress;          /* PartyNumber */
+static int hf_qsig_sms_recipientName;             /* Name */
+static int hf_qsig_sms_status;                    /* Status */
+static int hf_qsig_sms_priority;                  /* BOOLEAN */
+static int hf_qsig_sms_moreMessagesToSend;        /* BOOLEAN */
+static int hf_qsig_sms_statusReportQualifier;     /* BOOLEAN */
+static int hf_qsig_sms_smsStatusReportResponseChoice;  /* SmsStatusReportResponseChoice */
+static int hf_qsig_sms_messageNumber;             /* MessageReference */
+static int hf_qsig_sms_commandType;               /* CommandType */
+static int hf_qsig_sms_commandData;               /* CommandData */
+static int hf_qsig_sms_statusReportRequest;       /* BOOLEAN */
+static int hf_qsig_sms_null;                      /* NULL */
+static int hf_qsig_sms_validityPeriod;            /* ValidityPeriod */
+static int hf_qsig_sms_replyPath;                 /* BOOLEAN */
+static int hf_qsig_sms_rejectDuplicates;          /* BOOLEAN */
+static int hf_qsig_sms_statusReportIndication;    /* BOOLEAN */
+static int hf_qsig_sms_resChoiceSeq;              /* ResChoiceSeq */
+static int hf_qsig_sms_single;                    /* Extension */
+static int hf_qsig_sms_multiple;                  /* SEQUENCE_OF_Extension */
+static int hf_qsig_sms_multiple_item;             /* Extension */
+static int hf_qsig_sms_validityPeriodRel;         /* ValidityPeriodRel */
+static int hf_qsig_sms_validityPeriodAbs;         /* ValidityPeriodAbs */
+static int hf_qsig_sms_validityPeriodEnh;         /* ValidityPeriodEnh */
+static int hf_qsig_sms_singleShotSM;              /* BOOLEAN */
+static int hf_qsig_sms_enhancedVP;                /* EnhancedVP */
+static int hf_qsig_sms_validityPeriodSec;         /* INTEGER_0_255 */
+static int hf_qsig_sms_validityPeriodSemi;        /* ValidityPeriodSemi */
+static int hf_qsig_sms_userDataHeader;            /* UserDataHeader */
+static int hf_qsig_sms_class;                     /* INTEGER_0_3 */
+static int hf_qsig_sms_compressed;                /* BOOLEAN */
+static int hf_qsig_sms_shortMessageText;          /* ShortMessageText */
+static int hf_qsig_sms_shortMessageTextType;      /* ShortMessageTextType */
+static int hf_qsig_sms_shortMessageTextData;      /* ShortMessageTextData */
+static int hf_qsig_sms_UserDataHeader_item;       /* UserDataHeaderChoice */
+static int hf_qsig_sms_smscControlParameterHeader;  /* SmscControlParameterHeader */
+static int hf_qsig_sms_concatenated8BitSMHeader;  /* Concatenated8BitSMHeader */
+static int hf_qsig_sms_concatenated16BitSMHeader;  /* Concatenated16BitSMHeader */
+static int hf_qsig_sms_applicationPort8BitHeader;  /* ApplicationPort8BitHeader */
+static int hf_qsig_sms_applicationPort16BitHeader;  /* ApplicationPort16BitHeader */
+static int hf_qsig_sms_dataHeaderSourceIndicator;  /* DataHeaderSourceIndicator */
+static int hf_qsig_sms_wirelessControlHeader;     /* WirelessControlHeader */
+static int hf_qsig_sms_genericUserValue;          /* GenericUserValue */
+static int hf_qsig_sms_concatenated8BitSMReferenceNumber;  /* INTEGER_0_255 */
+static int hf_qsig_sms_maximumNumberOf8BitSMInConcatenatedSM;  /* INTEGER_0_255 */
+static int hf_qsig_sms_sequenceNumberOf8BitSM;    /* INTEGER_0_255 */
+static int hf_qsig_sms_concatenated16BitSMReferenceNumber;  /* INTEGER_0_65536 */
+static int hf_qsig_sms_maximumNumberOf16BitSMInConcatenatedSM;  /* INTEGER_0_255 */
+static int hf_qsig_sms_sequenceNumberOf16BitSM;   /* INTEGER_0_255 */
+static int hf_qsig_sms_destination8BitPort;       /* INTEGER_0_255 */
+static int hf_qsig_sms_originator8BitPort;        /* INTEGER_0_255 */
+static int hf_qsig_sms_destination16BitPort;      /* INTEGER_0_65536 */
+static int hf_qsig_sms_originator16BitPort;       /* INTEGER_0_65536 */
+static int hf_qsig_sms_parameterValue;            /* INTEGER_0_255 */
+static int hf_qsig_sms_genericUserData;           /* OCTET_STRING */
+static int hf_qsig_sms_failureCause;              /* FailureCause */
+static int hf_qsig_sms_scAddressSaved;            /* BOOLEAN */
 /* named bits */
-static int hf_qsig_sms_SmscControlParameterHeader_sRforTransactionCompleted = -1;
-static int hf_qsig_sms_SmscControlParameterHeader_sRforPermanentError = -1;
-static int hf_qsig_sms_SmscControlParameterHeader_sRforTempErrorSCnotTrying = -1;
-static int hf_qsig_sms_SmscControlParameterHeader_sRforTempErrorSCstillTrying = -1;
-static int hf_qsig_sms_SmscControlParameterHeader_spare_bit4 = -1;
-static int hf_qsig_sms_SmscControlParameterHeader_spare_bit5 = -1;
-static int hf_qsig_sms_SmscControlParameterHeader_cancelSRRforConcatenatedSM = -1;
-static int hf_qsig_sms_SmscControlParameterHeader_includeOrigUDHintoSR = -1;
+static int hf_qsig_sms_SmscControlParameterHeader_sRforTransactionCompleted;
+static int hf_qsig_sms_SmscControlParameterHeader_sRforPermanentError;
+static int hf_qsig_sms_SmscControlParameterHeader_sRforTempErrorSCnotTrying;
+static int hf_qsig_sms_SmscControlParameterHeader_sRforTempErrorSCstillTrying;
+static int hf_qsig_sms_SmscControlParameterHeader_spare_bit4;
+static int hf_qsig_sms_SmscControlParameterHeader_spare_bit5;
+static int hf_qsig_sms_SmscControlParameterHeader_cancelSRRforConcatenatedSM;
+static int hf_qsig_sms_SmscControlParameterHeader_includeOrigUDHintoSR;
 
 /* --- Module SS-MCR-Operations-asn97 --- --- ---                             */
 
-static int hf_qsig_mcr_qsig_mcr_MCRequestArg_PDU = -1;  /* MCRequestArg */
-static int hf_qsig_mcr_qsig_mcr_MCRequestResult_PDU = -1;  /* MCRequestResult */
-static int hf_qsig_mcr_qsig_mcr_MCInformArg_PDU = -1;  /* MCInformArg */
-static int hf_qsig_mcr_qsig_mcr_MCAlertingArg_PDU = -1;  /* MCAlertingArg */
-static int hf_qsig_mcr_qsig_mcr_Extension_PDU = -1;  /* Extension */
-static int hf_qsig_mcr_callType = -1;             /* CallType */
-static int hf_qsig_mcr_retainOrigCall = -1;       /* BOOLEAN */
-static int hf_qsig_mcr_destinationAddress = -1;   /* PresentedAddressUnscreened */
-static int hf_qsig_mcr_requestingAddress = -1;    /* PresentedAddressUnscreened */
-static int hf_qsig_mcr_cooperatingAddress = -1;   /* PresentedAddressUnscreened */
-static int hf_qsig_mcr_correlation = -1;          /* Correlation */
-static int hf_qsig_mcr_extensions = -1;           /* MCRExtensions */
-static int hf_qsig_mcr_basicService = -1;         /* BasicService */
-static int hf_qsig_mcr_cisc = -1;                 /* NULL */
-static int hf_qsig_mcr_correlationData = -1;      /* CallIdentity */
-static int hf_qsig_mcr_correlationReason = -1;    /* CorrelationReason */
-static int hf_qsig_mcr_none = -1;                 /* NULL */
-static int hf_qsig_mcr_single = -1;               /* Extension */
-static int hf_qsig_mcr_multiple = -1;             /* SEQUENCE_OF_Extension */
-static int hf_qsig_mcr_multiple_item = -1;        /* Extension */
+static int hf_qsig_mcr_qsig_mcr_MCRequestArg_PDU;  /* MCRequestArg */
+static int hf_qsig_mcr_qsig_mcr_MCRequestResult_PDU;  /* MCRequestResult */
+static int hf_qsig_mcr_qsig_mcr_MCInformArg_PDU;  /* MCInformArg */
+static int hf_qsig_mcr_qsig_mcr_MCAlertingArg_PDU;  /* MCAlertingArg */
+static int hf_qsig_mcr_qsig_mcr_Extension_PDU;    /* Extension */
+static int hf_qsig_mcr_callType;                  /* CallType */
+static int hf_qsig_mcr_retainOrigCall;            /* BOOLEAN */
+static int hf_qsig_mcr_destinationAddress;        /* PresentedAddressUnscreened */
+static int hf_qsig_mcr_requestingAddress;         /* PresentedAddressUnscreened */
+static int hf_qsig_mcr_cooperatingAddress;        /* PresentedAddressUnscreened */
+static int hf_qsig_mcr_correlation;               /* Correlation */
+static int hf_qsig_mcr_extensions;                /* MCRExtensions */
+static int hf_qsig_mcr_basicService;              /* BasicService */
+static int hf_qsig_mcr_cisc;                      /* NULL */
+static int hf_qsig_mcr_correlationData;           /* CallIdentity */
+static int hf_qsig_mcr_correlationReason;         /* CorrelationReason */
+static int hf_qsig_mcr_none;                      /* NULL */
+static int hf_qsig_mcr_single;                    /* Extension */
+static int hf_qsig_mcr_multiple;                  /* SEQUENCE_OF_Extension */
+static int hf_qsig_mcr_multiple_item;             /* Extension */
 
 /* --- Module SS-MCM-Operations-asn1-97 --- --- ---                           */
 
-static int hf_qsig_mcm_qsig_mcm_MCMNewMsgArg_PDU = -1;  /* MCMNewMsgArg */
-static int hf_qsig_mcm_qsig_mcm_MCMDummyRes_PDU = -1;  /* MCMDummyRes */
-static int hf_qsig_mcm_qsig_mcm_MCMNoNewMsgArg_PDU = -1;  /* MCMNoNewMsgArg */
-static int hf_qsig_mcm_qsig_mcm_MCMUpdateArg_PDU = -1;  /* MCMUpdateArg */
-static int hf_qsig_mcm_qsig_mcm_MCMUpdateReqArg_PDU = -1;  /* MCMUpdateReqArg */
-static int hf_qsig_mcm_qsig_mcm_MCMUpdateReqRes_PDU = -1;  /* MCMUpdateReqRes */
-static int hf_qsig_mcm_qsig_mcm_MCMServiceArg_PDU = -1;  /* MCMServiceArg */
-static int hf_qsig_mcm_qsig_mcm_MCMInterrogateArg_PDU = -1;  /* MCMInterrogateArg */
-static int hf_qsig_mcm_qsig_mcm_MCMInterrogateRes_PDU = -1;  /* MCMInterrogateRes */
-static int hf_qsig_mcm_qsig_mcm_MCMailboxFullArg_PDU = -1;  /* MCMailboxFullArg */
-static int hf_qsig_mcm_qsig_mcm_Extension_PDU = -1;  /* Extension */
-static int hf_qsig_mcm_partyInfo = -1;            /* PartyInfo */
-static int hf_qsig_mcm_mailboxFullFor = -1;       /* MailboxFullFor */
-static int hf_qsig_mcm_extensions = -1;           /* MCMExtensions */
-static int hf_qsig_mcm_MailboxFullFor_item = -1;  /* MailboxFullPar */
-static int hf_qsig_mcm_messageType = -1;          /* MessageType */
-static int hf_qsig_mcm_capacityReached = -1;      /* INTEGER_0_100 */
-static int hf_qsig_mcm_mCMChange = -1;            /* MCMChange */
-static int hf_qsig_mcm_activateMCM = -1;          /* SEQUENCE_OF_MCMServiceInfo */
-static int hf_qsig_mcm_activateMCM_item = -1;     /* MCMServiceInfo */
-static int hf_qsig_mcm_deactivateMCM = -1;        /* SEQUENCE_OF_MessageType */
-static int hf_qsig_mcm_deactivateMCM_item = -1;   /* MessageType */
-static int hf_qsig_mcm_setToDefaultValues = -1;   /* NULL */
-static int hf_qsig_mcm_mCMModeNew = -1;           /* MCMMode */
-static int hf_qsig_mcm_mCMModeRetrieved = -1;     /* MCMMode */
-static int hf_qsig_mcm_interrogateInfo = -1;      /* SEQUENCE_OF_MessageType */
-static int hf_qsig_mcm_interrogateInfo_item = -1;  /* MessageType */
-static int hf_qsig_mcm_interrogateResult = -1;    /* SEQUENCE_OF_MCMServiceInfo */
-static int hf_qsig_mcm_interrogateResult_item = -1;  /* MCMServiceInfo */
-static int hf_qsig_mcm_servedUserNr = -1;         /* PartyNumber */
-static int hf_qsig_mcm_specificMessageType = -1;  /* MessageType */
-static int hf_qsig_mcm_msgCentreId = -1;          /* MsgCentreId */
-static int hf_qsig_mcm_nrOfMessages = -1;         /* NrOfMessages */
-static int hf_qsig_mcm_originatingNr = -1;        /* PartyNumber */
-static int hf_qsig_mcm_timestamp = -1;            /* TimeStamp */
-static int hf_qsig_mcm_priority = -1;             /* INTEGER_0_9 */
-static int hf_qsig_mcm_argumentExtMCMNew = -1;    /* MCMNewArgumentExt */
-static int hf_qsig_mcm_extension = -1;            /* Extension */
-static int hf_qsig_mcm_multipleExtension = -1;    /* SEQUENCE_OF_Extension */
-static int hf_qsig_mcm_multipleExtension_item = -1;  /* Extension */
-static int hf_qsig_mcm_argumentExtMCMNoNew = -1;  /* MCMNoNewArgumentExt */
-static int hf_qsig_mcm_updateInfo = -1;           /* UpdateInfo */
-static int hf_qsig_mcm_moreInfoFollows = -1;      /* BOOLEAN */
-static int hf_qsig_mcm_argumentExtMCMUpdArg = -1;  /* MCMUpdArgArgumentExt */
-static int hf_qsig_mcm_MCMUpdateReqRes_item = -1;  /* MCMUpdateReqResElt */
-static int hf_qsig_mcm_argumentExtMCMUpdRes = -1;  /* MCMUpdResArgumentExt */
-static int hf_qsig_mcm_messageCentreID = -1;      /* MsgCentreId */
-static int hf_qsig_mcm_newMsgInfoOnly = -1;       /* MessageInfo */
-static int hf_qsig_mcm_retrievedMsgInfoOnly = -1;  /* MessageInfo */
-static int hf_qsig_mcm_allMsgInfo = -1;           /* AllMsgInfo */
-static int hf_qsig_mcm_newMsgInfo = -1;           /* MessageInfo */
-static int hf_qsig_mcm_retrievedMsgInfo = -1;     /* MessageInfo */
-static int hf_qsig_mcm_completeInfo = -1;         /* CompleteInfo */
-static int hf_qsig_mcm_compressedInfo = -1;       /* CompressedInfo */
-static int hf_qsig_mcm_noMsgsOfMsgType = -1;      /* NULL */
-static int hf_qsig_mcm_CompleteInfo_item = -1;    /* AddressHeader */
-static int hf_qsig_mcm_originatorNr = -1;         /* PartyNumber */
-static int hf_qsig_mcm_timeStamp = -1;            /* TimeStamp */
-static int hf_qsig_mcm_ahpriority = -1;           /* Priority */
-static int hf_qsig_mcm_lastTimeStamp = -1;        /* TimeStamp */
-static int hf_qsig_mcm_highestPriority = -1;      /* Priority */
-static int hf_qsig_mcm_integer = -1;              /* INTEGER_0_65535 */
-static int hf_qsig_mcm_partyNumber = -1;          /* PartyNumber */
-static int hf_qsig_mcm_numericString = -1;        /* NumericString_SIZE_1_10 */
-static int hf_qsig_mcm_none = -1;                 /* NULL */
+static int hf_qsig_mcm_qsig_mcm_MCMNewMsgArg_PDU;  /* MCMNewMsgArg */
+static int hf_qsig_mcm_qsig_mcm_MCMDummyRes_PDU;  /* MCMDummyRes */
+static int hf_qsig_mcm_qsig_mcm_MCMNoNewMsgArg_PDU;  /* MCMNoNewMsgArg */
+static int hf_qsig_mcm_qsig_mcm_MCMUpdateArg_PDU;  /* MCMUpdateArg */
+static int hf_qsig_mcm_qsig_mcm_MCMUpdateReqArg_PDU;  /* MCMUpdateReqArg */
+static int hf_qsig_mcm_qsig_mcm_MCMUpdateReqRes_PDU;  /* MCMUpdateReqRes */
+static int hf_qsig_mcm_qsig_mcm_MCMServiceArg_PDU;  /* MCMServiceArg */
+static int hf_qsig_mcm_qsig_mcm_MCMInterrogateArg_PDU;  /* MCMInterrogateArg */
+static int hf_qsig_mcm_qsig_mcm_MCMInterrogateRes_PDU;  /* MCMInterrogateRes */
+static int hf_qsig_mcm_qsig_mcm_MCMailboxFullArg_PDU;  /* MCMailboxFullArg */
+static int hf_qsig_mcm_qsig_mcm_Extension_PDU;    /* Extension */
+static int hf_qsig_mcm_partyInfo;                 /* PartyInfo */
+static int hf_qsig_mcm_mailboxFullFor;            /* MailboxFullFor */
+static int hf_qsig_mcm_extensions;                /* MCMExtensions */
+static int hf_qsig_mcm_MailboxFullFor_item;       /* MailboxFullPar */
+static int hf_qsig_mcm_messageType;               /* MessageType */
+static int hf_qsig_mcm_capacityReached;           /* INTEGER_0_100 */
+static int hf_qsig_mcm_mCMChange;                 /* MCMChange */
+static int hf_qsig_mcm_activateMCM;               /* SEQUENCE_OF_MCMServiceInfo */
+static int hf_qsig_mcm_activateMCM_item;          /* MCMServiceInfo */
+static int hf_qsig_mcm_deactivateMCM;             /* SEQUENCE_OF_MessageType */
+static int hf_qsig_mcm_deactivateMCM_item;        /* MessageType */
+static int hf_qsig_mcm_setToDefaultValues;        /* NULL */
+static int hf_qsig_mcm_mCMModeNew;                /* MCMMode */
+static int hf_qsig_mcm_mCMModeRetrieved;          /* MCMMode */
+static int hf_qsig_mcm_interrogateInfo;           /* SEQUENCE_OF_MessageType */
+static int hf_qsig_mcm_interrogateInfo_item;      /* MessageType */
+static int hf_qsig_mcm_interrogateResult;         /* SEQUENCE_OF_MCMServiceInfo */
+static int hf_qsig_mcm_interrogateResult_item;    /* MCMServiceInfo */
+static int hf_qsig_mcm_servedUserNr;              /* PartyNumber */
+static int hf_qsig_mcm_specificMessageType;       /* MessageType */
+static int hf_qsig_mcm_msgCentreId;               /* MsgCentreId */
+static int hf_qsig_mcm_nrOfMessages;              /* NrOfMessages */
+static int hf_qsig_mcm_originatingNr;             /* PartyNumber */
+static int hf_qsig_mcm_timestamp;                 /* TimeStamp */
+static int hf_qsig_mcm_priority;                  /* INTEGER_0_9 */
+static int hf_qsig_mcm_argumentExtMCMNew;         /* MCMNewArgumentExt */
+static int hf_qsig_mcm_extension;                 /* Extension */
+static int hf_qsig_mcm_multipleExtension;         /* SEQUENCE_OF_Extension */
+static int hf_qsig_mcm_multipleExtension_item;    /* Extension */
+static int hf_qsig_mcm_argumentExtMCMNoNew;       /* MCMNoNewArgumentExt */
+static int hf_qsig_mcm_updateInfo;                /* UpdateInfo */
+static int hf_qsig_mcm_moreInfoFollows;           /* BOOLEAN */
+static int hf_qsig_mcm_argumentExtMCMUpdArg;      /* MCMUpdArgArgumentExt */
+static int hf_qsig_mcm_MCMUpdateReqRes_item;      /* MCMUpdateReqResElt */
+static int hf_qsig_mcm_argumentExtMCMUpdRes;      /* MCMUpdResArgumentExt */
+static int hf_qsig_mcm_messageCentreID;           /* MsgCentreId */
+static int hf_qsig_mcm_newMsgInfoOnly;            /* MessageInfo */
+static int hf_qsig_mcm_retrievedMsgInfoOnly;      /* MessageInfo */
+static int hf_qsig_mcm_allMsgInfo;                /* AllMsgInfo */
+static int hf_qsig_mcm_newMsgInfo;                /* MessageInfo */
+static int hf_qsig_mcm_retrievedMsgInfo;          /* MessageInfo */
+static int hf_qsig_mcm_completeInfo;              /* CompleteInfo */
+static int hf_qsig_mcm_compressedInfo;            /* CompressedInfo */
+static int hf_qsig_mcm_noMsgsOfMsgType;           /* NULL */
+static int hf_qsig_mcm_CompleteInfo_item;         /* AddressHeader */
+static int hf_qsig_mcm_originatorNr;              /* PartyNumber */
+static int hf_qsig_mcm_timeStamp;                 /* TimeStamp */
+static int hf_qsig_mcm_ahpriority;                /* Priority */
+static int hf_qsig_mcm_lastTimeStamp;             /* TimeStamp */
+static int hf_qsig_mcm_highestPriority;           /* Priority */
+static int hf_qsig_mcm_integer;                   /* INTEGER_0_65535 */
+static int hf_qsig_mcm_partyNumber;               /* PartyNumber */
+static int hf_qsig_mcm_numericString;             /* NumericString_SIZE_1_10 */
+static int hf_qsig_mcm_none;                      /* NULL */
 
 /* --- Module SS-MID-Operations-asn1-97 --- --- ---                           */
 
-static int hf_qsig_mid_qsig_mid_MIDMailboxAuthArg_PDU = -1;  /* MIDMailboxAuthArg */
-static int hf_qsig_mid_qsig_mid_MIDDummyRes_PDU = -1;  /* MIDDummyRes */
-static int hf_qsig_mid_qsig_mid_MIDMailboxIDArg_PDU = -1;  /* MIDMailboxIDArg */
-static int hf_qsig_mid_qsig_mid_Extension_PDU = -1;  /* Extension */
-static int hf_qsig_mid_partyInfo = -1;            /* PartyInfo */
-static int hf_qsig_mid_servedUserName = -1;       /* Name */
-static int hf_qsig_mid_mailBox = -1;              /* String */
-static int hf_qsig_mid_password = -1;             /* String */
-static int hf_qsig_mid_extensions = -1;           /* MIDExtensions */
-static int hf_qsig_mid_servedUserNr = -1;         /* PresentedAddressUnscreened */
-static int hf_qsig_mid_messageType = -1;          /* MessageType */
-static int hf_qsig_mid_messageCentreID = -1;      /* MsgCentreId */
-static int hf_qsig_mid_stringBmp = -1;            /* BMPString */
-static int hf_qsig_mid_stringUtf8 = -1;           /* UTF8String */
-static int hf_qsig_mid_none = -1;                 /* NULL */
-static int hf_qsig_mid_extension = -1;            /* Extension */
-static int hf_qsig_mid_multipleExtension = -1;    /* SEQUENCE_OF_Extension */
-static int hf_qsig_mid_multipleExtension_item = -1;  /* Extension */
+static int hf_qsig_mid_qsig_mid_MIDMailboxAuthArg_PDU;  /* MIDMailboxAuthArg */
+static int hf_qsig_mid_qsig_mid_MIDDummyRes_PDU;  /* MIDDummyRes */
+static int hf_qsig_mid_qsig_mid_MIDMailboxIDArg_PDU;  /* MIDMailboxIDArg */
+static int hf_qsig_mid_qsig_mid_Extension_PDU;    /* Extension */
+static int hf_qsig_mid_partyInfo;                 /* PartyInfo */
+static int hf_qsig_mid_servedUserName;            /* Name */
+static int hf_qsig_mid_mailBox;                   /* String */
+static int hf_qsig_mid_password;                  /* String */
+static int hf_qsig_mid_extensions;                /* MIDExtensions */
+static int hf_qsig_mid_servedUserNr;              /* PresentedAddressUnscreened */
+static int hf_qsig_mid_messageType;               /* MessageType */
+static int hf_qsig_mid_messageCentreID;           /* MsgCentreId */
+static int hf_qsig_mid_stringBmp;                 /* BMPString */
+static int hf_qsig_mid_stringUtf8;                /* UTF8String */
+static int hf_qsig_mid_none;                      /* NULL */
+static int hf_qsig_mid_extension;                 /* Extension */
+static int hf_qsig_mid_multipleExtension;         /* SEQUENCE_OF_Extension */
+static int hf_qsig_mid_multipleExtension_item;    /* Extension */
 
 static int *hf_qsig_ie_type_arr[] = {
   NULL,
@@ -1571,460 +1571,460 @@ static int *hf_qsig_ie_type_arr[] = {
 };
 
 /* Initialize the subtree pointers */
-static gint ett_qsig = -1;
-static gint ett_qsig_ie = -1;
-static gint ett_qsig_unknown_extension = -1;
+static int ett_qsig;
+static int ett_qsig_ie;
+static int ett_qsig_unknown_extension;
 
 /* --- Modules Manufacturer-specific-service-extension-class-asn1-97 PSS1-generic-parameters-definition-asn1-97 Addressing-Data-Elements-asn1-97 --- --- --- */
 
-static gint ett_qsig_Extension = -1;
-static gint ett_qsig_PresentedAddressScreened = -1;
-static gint ett_qsig_PresentedAddressUnscreened = -1;
-static gint ett_qsig_PresentedNumberScreened = -1;
-static gint ett_qsig_PresentedNumberUnscreened = -1;
-static gint ett_qsig_AddressScreened = -1;
-static gint ett_qsig_NumberScreened = -1;
-static gint ett_qsig_Address = -1;
-static gint ett_qsig_PartyNumber = -1;
-static gint ett_qsig_PublicPartyNumber = -1;
-static gint ett_qsig_PrivatePartyNumber = -1;
-static gint ett_qsig_PartySubaddress = -1;
-static gint ett_qsig_UserSpecifiedSubaddress = -1;
+static int ett_qsig_Extension;
+static int ett_qsig_PresentedAddressScreened;
+static int ett_qsig_PresentedAddressUnscreened;
+static int ett_qsig_PresentedNumberScreened;
+static int ett_qsig_PresentedNumberUnscreened;
+static int ett_qsig_AddressScreened;
+static int ett_qsig_NumberScreened;
+static int ett_qsig_Address;
+static int ett_qsig_PartyNumber;
+static int ett_qsig_PublicPartyNumber;
+static int ett_qsig_PrivatePartyNumber;
+static int ett_qsig_PartySubaddress;
+static int ett_qsig_UserSpecifiedSubaddress;
 
 /* --- Module Name-Operations-asn1-97 --- --- ---                             */
 
-static gint ett_qsig_na_NameArg = -1;
-static gint ett_qsig_na_T_nameSequence = -1;
-static gint ett_qsig_na_NameExtension = -1;
-static gint ett_qsig_na_SEQUENCE_OF_Extension = -1;
-static gint ett_qsig_na_Name = -1;
-static gint ett_qsig_na_NamePresentationAllowed = -1;
-static gint ett_qsig_na_NamePresentationRestricted = -1;
-static gint ett_qsig_na_NameSet = -1;
+static int ett_qsig_na_NameArg;
+static int ett_qsig_na_T_nameSequence;
+static int ett_qsig_na_NameExtension;
+static int ett_qsig_na_SEQUENCE_OF_Extension;
+static int ett_qsig_na_Name;
+static int ett_qsig_na_NamePresentationAllowed;
+static int ett_qsig_na_NamePresentationRestricted;
+static int ett_qsig_na_NameSet;
 
 /* --- Module Call-Diversion-Operations-asn1-97 --- --- ---                   */
 
-static gint ett_qsig_cf_ARG_activateDiversionQ = -1;
-static gint ett_qsig_cf_ADExtension = -1;
-static gint ett_qsig_cf_SEQUENCE_OF_Extension = -1;
-static gint ett_qsig_cf_RES_activateDiversionQ = -1;
-static gint ett_qsig_cf_ARG_deactivateDiversionQ = -1;
-static gint ett_qsig_cf_DDExtension = -1;
-static gint ett_qsig_cf_RES_deactivateDiversionQ = -1;
-static gint ett_qsig_cf_ARG_interrogateDiversionQ = -1;
-static gint ett_qsig_cf_IDExtension = -1;
-static gint ett_qsig_cf_ARG_checkRestriction = -1;
-static gint ett_qsig_cf_CHRExtension = -1;
-static gint ett_qsig_cf_RES_checkRestriction = -1;
-static gint ett_qsig_cf_ARG_callRerouteing = -1;
-static gint ett_qsig_cf_CRRExtension = -1;
-static gint ett_qsig_cf_RES_callRerouteing = -1;
-static gint ett_qsig_cf_ARG_divertingLegInformation1 = -1;
-static gint ett_qsig_cf_DLI1Extension = -1;
-static gint ett_qsig_cf_ARG_divertingLegInformation2 = -1;
-static gint ett_qsig_cf_DLI2Extension = -1;
-static gint ett_qsig_cf_ARG_divertingLegInformation3 = -1;
-static gint ett_qsig_cf_DLI3Extension = -1;
-static gint ett_qsig_cf_ARG_cfnrDivertedLegFailed = -1;
-static gint ett_qsig_cf_IntResultList = -1;
-static gint ett_qsig_cf_IntResult = -1;
-static gint ett_qsig_cf_IRExtension = -1;
+static int ett_qsig_cf_ARG_activateDiversionQ;
+static int ett_qsig_cf_ADExtension;
+static int ett_qsig_cf_SEQUENCE_OF_Extension;
+static int ett_qsig_cf_RES_activateDiversionQ;
+static int ett_qsig_cf_ARG_deactivateDiversionQ;
+static int ett_qsig_cf_DDExtension;
+static int ett_qsig_cf_RES_deactivateDiversionQ;
+static int ett_qsig_cf_ARG_interrogateDiversionQ;
+static int ett_qsig_cf_IDExtension;
+static int ett_qsig_cf_ARG_checkRestriction;
+static int ett_qsig_cf_CHRExtension;
+static int ett_qsig_cf_RES_checkRestriction;
+static int ett_qsig_cf_ARG_callRerouteing;
+static int ett_qsig_cf_CRRExtension;
+static int ett_qsig_cf_RES_callRerouteing;
+static int ett_qsig_cf_ARG_divertingLegInformation1;
+static int ett_qsig_cf_DLI1Extension;
+static int ett_qsig_cf_ARG_divertingLegInformation2;
+static int ett_qsig_cf_DLI2Extension;
+static int ett_qsig_cf_ARG_divertingLegInformation3;
+static int ett_qsig_cf_DLI3Extension;
+static int ett_qsig_cf_ARG_cfnrDivertedLegFailed;
+static int ett_qsig_cf_IntResultList;
+static int ett_qsig_cf_IntResult;
+static int ett_qsig_cf_IRExtension;
 
 /* --- Module Path-Replacement-Operations-asn1-97 --- --- ---                 */
 
-static gint ett_qsig_pr_PRProposeArg = -1;
-static gint ett_qsig_pr_PRPExtension = -1;
-static gint ett_qsig_pr_SEQUENCE_OF_Extension = -1;
-static gint ett_qsig_pr_PRSetupArg = -1;
-static gint ett_qsig_pr_PRSExtension = -1;
-static gint ett_qsig_pr_PRRetainArg = -1;
-static gint ett_qsig_pr_PRRExtension = -1;
-static gint ett_qsig_pr_DummyResult = -1;
-static gint ett_qsig_pr_DummyArg = -1;
+static int ett_qsig_pr_PRProposeArg;
+static int ett_qsig_pr_PRPExtension;
+static int ett_qsig_pr_SEQUENCE_OF_Extension;
+static int ett_qsig_pr_PRSetupArg;
+static int ett_qsig_pr_PRSExtension;
+static int ett_qsig_pr_PRRetainArg;
+static int ett_qsig_pr_PRRExtension;
+static int ett_qsig_pr_DummyResult;
+static int ett_qsig_pr_DummyArg;
 
 /* --- Module Call-Transfer-Operations-asn1-97 --- --- ---                    */
 
-static gint ett_qsig_ct_DummyArg = -1;
-static gint ett_qsig_ct_SEQUENCE_OF_Extension = -1;
-static gint ett_qsig_ct_DummyRes = -1;
-static gint ett_qsig_ct_CTIdentifyRes = -1;
-static gint ett_qsig_ct_T_resultExtension = -1;
-static gint ett_qsig_ct_CTInitiateArg = -1;
-static gint ett_qsig_ct_CTIargumentExtension = -1;
-static gint ett_qsig_ct_CTSetupArg = -1;
-static gint ett_qsig_ct_CTSargumentExtension = -1;
-static gint ett_qsig_ct_CTActiveArg = -1;
-static gint ett_qsig_ct_CTAargumentExtension = -1;
-static gint ett_qsig_ct_CTCompleteArg = -1;
-static gint ett_qsig_ct_CTCargumentExtension = -1;
-static gint ett_qsig_ct_CTUpdateArg = -1;
-static gint ett_qsig_ct_CTUargumentExtension = -1;
-static gint ett_qsig_ct_SubaddressTransferArg = -1;
-static gint ett_qsig_ct_STargumentExtension = -1;
+static int ett_qsig_ct_DummyArg;
+static int ett_qsig_ct_SEQUENCE_OF_Extension;
+static int ett_qsig_ct_DummyRes;
+static int ett_qsig_ct_CTIdentifyRes;
+static int ett_qsig_ct_T_resultExtension;
+static int ett_qsig_ct_CTInitiateArg;
+static int ett_qsig_ct_CTIargumentExtension;
+static int ett_qsig_ct_CTSetupArg;
+static int ett_qsig_ct_CTSargumentExtension;
+static int ett_qsig_ct_CTActiveArg;
+static int ett_qsig_ct_CTAargumentExtension;
+static int ett_qsig_ct_CTCompleteArg;
+static int ett_qsig_ct_CTCargumentExtension;
+static int ett_qsig_ct_CTUpdateArg;
+static int ett_qsig_ct_CTUargumentExtension;
+static int ett_qsig_ct_SubaddressTransferArg;
+static int ett_qsig_ct_STargumentExtension;
 
 /* --- Module SS-CC-Operations-asn1-97 --- --- ---                            */
 
-static gint ett_qsig_cc_CcRequestArg = -1;
-static gint ett_qsig_cc_CcRequestRes = -1;
-static gint ett_qsig_cc_CcOptionalArg = -1;
-static gint ett_qsig_cc_T_fullArg = -1;
-static gint ett_qsig_cc_CcExtension = -1;
-static gint ett_qsig_cc_SEQUENCE_OF_Extension = -1;
+static int ett_qsig_cc_CcRequestArg;
+static int ett_qsig_cc_CcRequestRes;
+static int ett_qsig_cc_CcOptionalArg;
+static int ett_qsig_cc_T_fullArg;
+static int ett_qsig_cc_CcExtension;
+static int ett_qsig_cc_SEQUENCE_OF_Extension;
 
 /* --- Module Call-Offer-Operations-asn1-97 --- --- ---                       */
 
-static gint ett_qsig_co_PathRetainArg = -1;
-static gint ett_qsig_co_T_extendedServiceList = -1;
-static gint ett_qsig_co_ServiceAvailableArg = -1;
-static gint ett_qsig_co_T_extendedServiceList_01 = -1;
-static gint ett_qsig_co_ServiceList = -1;
-static gint ett_qsig_co_DummyArg = -1;
-static gint ett_qsig_co_SEQUENCE_OF_Extension = -1;
-static gint ett_qsig_co_DummyRes = -1;
+static int ett_qsig_co_PathRetainArg;
+static int ett_qsig_co_T_extendedServiceList;
+static int ett_qsig_co_ServiceAvailableArg;
+static int ett_qsig_co_T_extendedServiceList_01;
+static int ett_qsig_co_ServiceList;
+static int ett_qsig_co_DummyArg;
+static int ett_qsig_co_SEQUENCE_OF_Extension;
+static int ett_qsig_co_DummyRes;
 
 /* --- Module Do-Not-Disturb-Operations-asn1-97 --- --- ---                   */
 
-static gint ett_qsig_dnd_DummyArg = -1;
-static gint ett_qsig_dnd_SEQUENCE_OF_Extension = -1;
-static gint ett_qsig_dnd_DummyRes = -1;
-static gint ett_qsig_dnd_DNDActivateArg = -1;
-static gint ett_qsig_dnd_DNDAargumentExtension = -1;
-static gint ett_qsig_dnd_DNDActivateRes = -1;
-static gint ett_qsig_dnd_T_status = -1;
-static gint ett_qsig_dnd_T_status_item = -1;
-static gint ett_qsig_dnd_T_resultExtension = -1;
-static gint ett_qsig_dnd_DNDDeactivateArg = -1;
-static gint ett_qsig_dnd_DNDDargumentExtension = -1;
-static gint ett_qsig_dnd_DNDInterrogateArg = -1;
-static gint ett_qsig_dnd_DNDIargumentExtension = -1;
-static gint ett_qsig_dnd_DNDInterrogateRes = -1;
-static gint ett_qsig_dnd_T_status_01 = -1;
-static gint ett_qsig_dnd_T_status_item_01 = -1;
-static gint ett_qsig_dnd_T_resultExtension_01 = -1;
-static gint ett_qsig_dnd_DNDOverrideArg = -1;
-static gint ett_qsig_dnd_DNDOargumentExtension = -1;
-static gint ett_qsig_dnd_PathRetainArg = -1;
-static gint ett_qsig_dnd_T_extendedServiceList = -1;
-static gint ett_qsig_dnd_ServiceAvailableArg = -1;
-static gint ett_qsig_dnd_T_extendedServiceList_01 = -1;
-static gint ett_qsig_dnd_ServiceList = -1;
+static int ett_qsig_dnd_DummyArg;
+static int ett_qsig_dnd_SEQUENCE_OF_Extension;
+static int ett_qsig_dnd_DummyRes;
+static int ett_qsig_dnd_DNDActivateArg;
+static int ett_qsig_dnd_DNDAargumentExtension;
+static int ett_qsig_dnd_DNDActivateRes;
+static int ett_qsig_dnd_T_status;
+static int ett_qsig_dnd_T_status_item;
+static int ett_qsig_dnd_T_resultExtension;
+static int ett_qsig_dnd_DNDDeactivateArg;
+static int ett_qsig_dnd_DNDDargumentExtension;
+static int ett_qsig_dnd_DNDInterrogateArg;
+static int ett_qsig_dnd_DNDIargumentExtension;
+static int ett_qsig_dnd_DNDInterrogateRes;
+static int ett_qsig_dnd_T_status_01;
+static int ett_qsig_dnd_T_status_item_01;
+static int ett_qsig_dnd_T_resultExtension_01;
+static int ett_qsig_dnd_DNDOverrideArg;
+static int ett_qsig_dnd_DNDOargumentExtension;
+static int ett_qsig_dnd_PathRetainArg;
+static int ett_qsig_dnd_T_extendedServiceList;
+static int ett_qsig_dnd_ServiceAvailableArg;
+static int ett_qsig_dnd_T_extendedServiceList_01;
+static int ett_qsig_dnd_ServiceList;
 
 /* --- Module Call-Intrusion-Operations-asn1-97 --- --- ---                   */
 
-static gint ett_qsig_ci_PathRetainArg = -1;
-static gint ett_qsig_ci_T_extendedServiceList = -1;
-static gint ett_qsig_ci_ServiceAvailableArg = -1;
-static gint ett_qsig_ci_T_extendedServiceList_01 = -1;
-static gint ett_qsig_ci_ServiceList = -1;
-static gint ett_qsig_ci_DummyArg = -1;
-static gint ett_qsig_ci_SEQUENCE_OF_Extension = -1;
-static gint ett_qsig_ci_DummyRes = -1;
-static gint ett_qsig_ci_CIRequestArg = -1;
-static gint ett_qsig_ci_T_argumentExtension = -1;
-static gint ett_qsig_ci_CIRequestRes = -1;
-static gint ett_qsig_ci_T_resultExtension = -1;
-static gint ett_qsig_ci_CIGetCIPLRes = -1;
-static gint ett_qsig_ci_T_resultExtension_01 = -1;
+static int ett_qsig_ci_PathRetainArg;
+static int ett_qsig_ci_T_extendedServiceList;
+static int ett_qsig_ci_ServiceAvailableArg;
+static int ett_qsig_ci_T_extendedServiceList_01;
+static int ett_qsig_ci_ServiceList;
+static int ett_qsig_ci_DummyArg;
+static int ett_qsig_ci_SEQUENCE_OF_Extension;
+static int ett_qsig_ci_DummyRes;
+static int ett_qsig_ci_CIRequestArg;
+static int ett_qsig_ci_T_argumentExtension;
+static int ett_qsig_ci_CIRequestRes;
+static int ett_qsig_ci_T_resultExtension;
+static int ett_qsig_ci_CIGetCIPLRes;
+static int ett_qsig_ci_T_resultExtension_01;
 
 /* --- Module SS-AOC-Operations-asn1-97 --- --- ---                           */
 
-static gint ett_qsig_aoc_AocRateArg = -1;
-static gint ett_qsig_aoc_T_aocRate = -1;
-static gint ett_qsig_aoc_T_rateArgExtension = -1;
-static gint ett_qsig_aoc_SEQUENCE_OF_Extension = -1;
-static gint ett_qsig_aoc_AocInterimArg = -1;
-static gint ett_qsig_aoc_T_interimCharge = -1;
-static gint ett_qsig_aoc_T_specificCurrency = -1;
-static gint ett_qsig_aoc_T_interimArgExtension = -1;
-static gint ett_qsig_aoc_AocFinalArg = -1;
-static gint ett_qsig_aoc_T_finalCharge = -1;
-static gint ett_qsig_aoc_T_specificCurrency_01 = -1;
-static gint ett_qsig_aoc_T_finalArgExtension = -1;
-static gint ett_qsig_aoc_AOCSCurrencyInfoList = -1;
-static gint ett_qsig_aoc_AOCSCurrencyInfo = -1;
-static gint ett_qsig_aoc_T_rateType = -1;
-static gint ett_qsig_aoc_DurationCurrency = -1;
-static gint ett_qsig_aoc_FlatRateCurrency = -1;
-static gint ett_qsig_aoc_VolumeRateCurrency = -1;
-static gint ett_qsig_aoc_RecordedCurrency = -1;
-static gint ett_qsig_aoc_Amount = -1;
-static gint ett_qsig_aoc_Time = -1;
-static gint ett_qsig_aoc_ChargingAssociation = -1;
-static gint ett_qsig_aoc_ChargeRequestArg = -1;
-static gint ett_qsig_aoc_SEQUENCE_SIZE_0_7_OF_AdviceModeCombination = -1;
-static gint ett_qsig_aoc_T_chargeReqArgExtension = -1;
-static gint ett_qsig_aoc_ChargeRequestRes = -1;
-static gint ett_qsig_aoc_T_chargeReqResExtension = -1;
-static gint ett_qsig_aoc_DummyArg = -1;
-static gint ett_qsig_aoc_AocCompleteArg = -1;
-static gint ett_qsig_aoc_T_completeArgExtension = -1;
-static gint ett_qsig_aoc_AocCompleteRes = -1;
-static gint ett_qsig_aoc_T_completeResExtension = -1;
-static gint ett_qsig_aoc_AocDivChargeReqArg = -1;
-static gint ett_qsig_aoc_T_aocDivChargeReqArgExt = -1;
+static int ett_qsig_aoc_AocRateArg;
+static int ett_qsig_aoc_T_aocRate;
+static int ett_qsig_aoc_T_rateArgExtension;
+static int ett_qsig_aoc_SEQUENCE_OF_Extension;
+static int ett_qsig_aoc_AocInterimArg;
+static int ett_qsig_aoc_T_interimCharge;
+static int ett_qsig_aoc_T_specificCurrency;
+static int ett_qsig_aoc_T_interimArgExtension;
+static int ett_qsig_aoc_AocFinalArg;
+static int ett_qsig_aoc_T_finalCharge;
+static int ett_qsig_aoc_T_specificCurrency_01;
+static int ett_qsig_aoc_T_finalArgExtension;
+static int ett_qsig_aoc_AOCSCurrencyInfoList;
+static int ett_qsig_aoc_AOCSCurrencyInfo;
+static int ett_qsig_aoc_T_rateType;
+static int ett_qsig_aoc_DurationCurrency;
+static int ett_qsig_aoc_FlatRateCurrency;
+static int ett_qsig_aoc_VolumeRateCurrency;
+static int ett_qsig_aoc_RecordedCurrency;
+static int ett_qsig_aoc_Amount;
+static int ett_qsig_aoc_Time;
+static int ett_qsig_aoc_ChargingAssociation;
+static int ett_qsig_aoc_ChargeRequestArg;
+static int ett_qsig_aoc_SEQUENCE_SIZE_0_7_OF_AdviceModeCombination;
+static int ett_qsig_aoc_T_chargeReqArgExtension;
+static int ett_qsig_aoc_ChargeRequestRes;
+static int ett_qsig_aoc_T_chargeReqResExtension;
+static int ett_qsig_aoc_DummyArg;
+static int ett_qsig_aoc_AocCompleteArg;
+static int ett_qsig_aoc_T_completeArgExtension;
+static int ett_qsig_aoc_AocCompleteRes;
+static int ett_qsig_aoc_T_completeResExtension;
+static int ett_qsig_aoc_AocDivChargeReqArg;
+static int ett_qsig_aoc_T_aocDivChargeReqArgExt;
 
 /* --- Module Recall-Operations-asn1-97 --- --- ---                           */
 
-static gint ett_qsig_re_ReAlertingArg = -1;
-static gint ett_qsig_re_T_argumentExtension = -1;
-static gint ett_qsig_re_SEQUENCE_OF_Extension = -1;
-static gint ett_qsig_re_ReAnswerArg = -1;
-static gint ett_qsig_re_T_argumentExtension_01 = -1;
+static int ett_qsig_re_ReAlertingArg;
+static int ett_qsig_re_T_argumentExtension;
+static int ett_qsig_re_SEQUENCE_OF_Extension;
+static int ett_qsig_re_ReAnswerArg;
+static int ett_qsig_re_T_argumentExtension_01;
 
 /* --- Module Synchronization-Operations-asn1-97 --- --- ---                  */
 
-static gint ett_qsig_sync_SynchronizationReqArg = -1;
-static gint ett_qsig_sync_SynchronizationReqRes = -1;
-static gint ett_qsig_sync_SynchronizationInfoArg = -1;
-static gint ett_qsig_sync_ArgExtension = -1;
-static gint ett_qsig_sync_SEQUENCE_OF_Extension = -1;
+static int ett_qsig_sync_SynchronizationReqArg;
+static int ett_qsig_sync_SynchronizationReqRes;
+static int ett_qsig_sync_SynchronizationInfoArg;
+static int ett_qsig_sync_ArgExtension;
+static int ett_qsig_sync_SEQUENCE_OF_Extension;
 
 /* --- Module Call-Interception-Operations-asn1-97 --- --- ---                */
 
-static gint ett_qsig_cint_CintInformation1Arg = -1;
-static gint ett_qsig_cint_CintInformation2Arg = -1;
-static gint ett_qsig_cint_CintCondArg = -1;
-static gint ett_qsig_cint_CintExtension = -1;
-static gint ett_qsig_cint_SEQUENCE_OF_Extension = -1;
+static int ett_qsig_cint_CintInformation1Arg;
+static int ett_qsig_cint_CintInformation2Arg;
+static int ett_qsig_cint_CintCondArg;
+static int ett_qsig_cint_CintExtension;
+static int ett_qsig_cint_SEQUENCE_OF_Extension;
 
 /* --- Module Common-Information-Operations-asn1-97 --- --- ---               */
 
-static gint ett_qsig_cmn_CmnArg = -1;
-static gint ett_qsig_cmn_T_extension = -1;
-static gint ett_qsig_cmn_SEQUENCE_OF_Extension = -1;
-static gint ett_qsig_cmn_DummyArg = -1;
-static gint ett_qsig_cmn_FeatureIdList = -1;
-static gint ett_qsig_cmn_EquipmentId = -1;
+static int ett_qsig_cmn_CmnArg;
+static int ett_qsig_cmn_T_extension;
+static int ett_qsig_cmn_SEQUENCE_OF_Extension;
+static int ett_qsig_cmn_DummyArg;
+static int ett_qsig_cmn_FeatureIdList;
+static int ett_qsig_cmn_EquipmentId;
 
 /* --- Module Call-Interruption-Operations-asn1-97 --- --- ---                */
 
-static gint ett_qsig_cpi_CPIRequestArg = -1;
-static gint ett_qsig_cpi_T_argumentExtension = -1;
-static gint ett_qsig_cpi_SEQUENCE_OF_Extension = -1;
-static gint ett_qsig_cpi_CPIPRequestArg = -1;
-static gint ett_qsig_cpi_T_argumentExtension_01 = -1;
+static int ett_qsig_cpi_CPIRequestArg;
+static int ett_qsig_cpi_T_argumentExtension;
+static int ett_qsig_cpi_SEQUENCE_OF_Extension;
+static int ett_qsig_cpi_CPIPRequestArg;
+static int ett_qsig_cpi_T_argumentExtension_01;
 
 /* --- Module PUM-Registration-Operations-asn1-97 --- --- ---                 */
 
-static gint ett_qsig_pumr_PumRegistrArg = -1;
-static gint ett_qsig_pumr_RpumUserId = -1;
-static gint ett_qsig_pumr_T_userPin = -1;
-static gint ett_qsig_pumr_PumRegistrRes = -1;
-static gint ett_qsig_pumr_DummyRes = -1;
-static gint ett_qsig_pumr_SEQUENCE_OF_Extension = -1;
-static gint ett_qsig_pumr_PumDelRegArg = -1;
-static gint ett_qsig_pumr_XpumUserId = -1;
-static gint ett_qsig_pumr_PumDe_regArg = -1;
-static gint ett_qsig_pumr_DpumUserId = -1;
-static gint ett_qsig_pumr_T_userPin_01 = -1;
-static gint ett_qsig_pumr_PumInterrogArg = -1;
-static gint ett_qsig_pumr_IpumUserId = -1;
-static gint ett_qsig_pumr_T_userPin_02 = -1;
-static gint ett_qsig_pumr_PumInterrogRes = -1;
-static gint ett_qsig_pumr_PumInterrogRes_item = -1;
-static gint ett_qsig_pumr_SessionParams = -1;
-static gint ett_qsig_pumr_PumrExtension = -1;
+static int ett_qsig_pumr_PumRegistrArg;
+static int ett_qsig_pumr_RpumUserId;
+static int ett_qsig_pumr_T_userPin;
+static int ett_qsig_pumr_PumRegistrRes;
+static int ett_qsig_pumr_DummyRes;
+static int ett_qsig_pumr_SEQUENCE_OF_Extension;
+static int ett_qsig_pumr_PumDelRegArg;
+static int ett_qsig_pumr_XpumUserId;
+static int ett_qsig_pumr_PumDe_regArg;
+static int ett_qsig_pumr_DpumUserId;
+static int ett_qsig_pumr_T_userPin_01;
+static int ett_qsig_pumr_PumInterrogArg;
+static int ett_qsig_pumr_IpumUserId;
+static int ett_qsig_pumr_T_userPin_02;
+static int ett_qsig_pumr_PumInterrogRes;
+static int ett_qsig_pumr_PumInterrogRes_item;
+static int ett_qsig_pumr_SessionParams;
+static int ett_qsig_pumr_PumrExtension;
 
 /* --- Module Private-User-Mobility-Call-Handling-Operations-asn1-97 --- --- --- */
 
-static gint ett_qsig_pumch_EnquiryArg = -1;
-static gint ett_qsig_pumch_DivertArg = -1;
-static gint ett_qsig_pumch_InformArg = -1;
-static gint ett_qsig_pumch_EnquiryRes = -1;
-static gint ett_qsig_pumch_CurrLocation = -1;
-static gint ett_qsig_pumch_CfuActivated = -1;
-static gint ett_qsig_pumch_DummyRes = -1;
-static gint ett_qsig_pumch_SEQUENCE_OF_Extension = -1;
-static gint ett_qsig_pumch_PumiExtension = -1;
-static gint ett_qsig_pumch_PumIdentity = -1;
-static gint ett_qsig_pumch_T_both = -1;
-static gint ett_qsig_pumch_PumoArg = -1;
-static gint ett_qsig_pumch_T_pumoaextension = -1;
+static int ett_qsig_pumch_EnquiryArg;
+static int ett_qsig_pumch_DivertArg;
+static int ett_qsig_pumch_InformArg;
+static int ett_qsig_pumch_EnquiryRes;
+static int ett_qsig_pumch_CurrLocation;
+static int ett_qsig_pumch_CfuActivated;
+static int ett_qsig_pumch_DummyRes;
+static int ett_qsig_pumch_SEQUENCE_OF_Extension;
+static int ett_qsig_pumch_PumiExtension;
+static int ett_qsig_pumch_PumIdentity;
+static int ett_qsig_pumch_T_both;
+static int ett_qsig_pumch_PumoArg;
+static int ett_qsig_pumch_T_pumoaextension;
 
 /* --- Module Single-Step-Call-Transfer-Operations-asn1-97 --- --- ---        */
 
-static gint ett_qsig_ssct_DummyArg = -1;
-static gint ett_qsig_ssct_SEQUENCE_OF_Extension = -1;
-static gint ett_qsig_ssct_DummyRes = -1;
-static gint ett_qsig_ssct_SSCTInitiateArg = -1;
-static gint ett_qsig_ssct_SSCTIargumentExtension = -1;
-static gint ett_qsig_ssct_SSCTSetupArg = -1;
-static gint ett_qsig_ssct_SSCTSargumentExtension = -1;
-static gint ett_qsig_ssct_SSCTDigitInfoArg = -1;
-static gint ett_qsig_ssct_SSCTDargumentExtension = -1;
+static int ett_qsig_ssct_DummyArg;
+static int ett_qsig_ssct_SEQUENCE_OF_Extension;
+static int ett_qsig_ssct_DummyRes;
+static int ett_qsig_ssct_SSCTInitiateArg;
+static int ett_qsig_ssct_SSCTIargumentExtension;
+static int ett_qsig_ssct_SSCTSetupArg;
+static int ett_qsig_ssct_SSCTSargumentExtension;
+static int ett_qsig_ssct_SSCTDigitInfoArg;
+static int ett_qsig_ssct_SSCTDargumentExtension;
 
 /* --- Module WTM-Location-Registration-Operations-asn1-97 --- --- ---        */
 
-static gint ett_qsig_wtmlr_LocUpdArg = -1;
-static gint ett_qsig_wtmlr_DummyRes = -1;
-static gint ett_qsig_wtmlr_SEQUENCE_OF_Extension = -1;
-static gint ett_qsig_wtmlr_LocDelArg = -1;
-static gint ett_qsig_wtmlr_LocDeRegArg = -1;
-static gint ett_qsig_wtmlr_PisnEnqArg = -1;
-static gint ett_qsig_wtmlr_PisnEnqRes = -1;
-static gint ett_qsig_wtmlr_GetRRCInfArg = -1;
-static gint ett_qsig_wtmlr_GetRRCInfRes = -1;
-static gint ett_qsig_wtmlr_LocInfoCheckArg = -1;
-static gint ett_qsig_wtmlr_LocInfoCheckRes = -1;
-static gint ett_qsig_wtmlr_WtmUserId = -1;
-static gint ett_qsig_wtmlr_LrExtension = -1;
+static int ett_qsig_wtmlr_LocUpdArg;
+static int ett_qsig_wtmlr_DummyRes;
+static int ett_qsig_wtmlr_SEQUENCE_OF_Extension;
+static int ett_qsig_wtmlr_LocDelArg;
+static int ett_qsig_wtmlr_LocDeRegArg;
+static int ett_qsig_wtmlr_PisnEnqArg;
+static int ett_qsig_wtmlr_PisnEnqRes;
+static int ett_qsig_wtmlr_GetRRCInfArg;
+static int ett_qsig_wtmlr_GetRRCInfRes;
+static int ett_qsig_wtmlr_LocInfoCheckArg;
+static int ett_qsig_wtmlr_LocInfoCheckRes;
+static int ett_qsig_wtmlr_WtmUserId;
+static int ett_qsig_wtmlr_LrExtension;
 
 /* --- Module Wireless-Terminal-Call-Handling-Operations-asn1-97 --- --- ---  */
 
-static gint ett_qsig_wtmch_EnquiryArg = -1;
-static gint ett_qsig_wtmch_DivertArg = -1;
-static gint ett_qsig_wtmch_InformArg = -1;
-static gint ett_qsig_wtmch_EnquiryRes = -1;
-static gint ett_qsig_wtmch_CurrLocation = -1;
-static gint ett_qsig_wtmch_CfuActivated = -1;
-static gint ett_qsig_wtmch_DummyRes = -1;
-static gint ett_qsig_wtmch_SEQUENCE_OF_Extension = -1;
-static gint ett_qsig_wtmch_WtmiExtension = -1;
-static gint ett_qsig_wtmch_WtmIdentity = -1;
-static gint ett_qsig_wtmch_T_both = -1;
-static gint ett_qsig_wtmch_WtmoArg = -1;
-static gint ett_qsig_wtmch_T_wtmoaextension = -1;
+static int ett_qsig_wtmch_EnquiryArg;
+static int ett_qsig_wtmch_DivertArg;
+static int ett_qsig_wtmch_InformArg;
+static int ett_qsig_wtmch_EnquiryRes;
+static int ett_qsig_wtmch_CurrLocation;
+static int ett_qsig_wtmch_CfuActivated;
+static int ett_qsig_wtmch_DummyRes;
+static int ett_qsig_wtmch_SEQUENCE_OF_Extension;
+static int ett_qsig_wtmch_WtmiExtension;
+static int ett_qsig_wtmch_WtmIdentity;
+static int ett_qsig_wtmch_T_both;
+static int ett_qsig_wtmch_WtmoArg;
+static int ett_qsig_wtmch_T_wtmoaextension;
 
 /* --- Module WTM-Authentication-Operations-asn1-97 --- --- ---               */
 
-static gint ett_qsig_wtmau_AuthWtmArg = -1;
-static gint ett_qsig_wtmau_AuthWtmRes = -1;
-static gint ett_qsig_wtmau_WtatParamArg = -1;
-static gint ett_qsig_wtmau_WtatParamRes = -1;
-static gint ett_qsig_wtmau_WtanParamArg = -1;
-static gint ett_qsig_wtmau_WtmUserId = -1;
-static gint ett_qsig_wtmau_WtanParamRes = -1;
-static gint ett_qsig_wtmau_ARG_transferAuthParam = -1;
-static gint ett_qsig_wtmau_WtatParamInfo = -1;
-static gint ett_qsig_wtmau_T_wtatParamInfoChoice = -1;
-static gint ett_qsig_wtmau_WtanParamInfo = -1;
-static gint ett_qsig_wtmau_AuthSessionKeyInfo = -1;
-static gint ett_qsig_wtmau_CalcWtatInfo = -1;
-static gint ett_qsig_wtmau_CalcWtatInfoUnit = -1;
-static gint ett_qsig_wtmau_CalcWtanInfo = -1;
-static gint ett_qsig_wtmau_DummyExtension = -1;
-static gint ett_qsig_wtmau_SEQUENCE_OF_Extension = -1;
-static gint ett_qsig_wtmau_AuthAlgorithm = -1;
+static int ett_qsig_wtmau_AuthWtmArg;
+static int ett_qsig_wtmau_AuthWtmRes;
+static int ett_qsig_wtmau_WtatParamArg;
+static int ett_qsig_wtmau_WtatParamRes;
+static int ett_qsig_wtmau_WtanParamArg;
+static int ett_qsig_wtmau_WtmUserId;
+static int ett_qsig_wtmau_WtanParamRes;
+static int ett_qsig_wtmau_ARG_transferAuthParam;
+static int ett_qsig_wtmau_WtatParamInfo;
+static int ett_qsig_wtmau_T_wtatParamInfoChoice;
+static int ett_qsig_wtmau_WtanParamInfo;
+static int ett_qsig_wtmau_AuthSessionKeyInfo;
+static int ett_qsig_wtmau_CalcWtatInfo;
+static int ett_qsig_wtmau_CalcWtatInfoUnit;
+static int ett_qsig_wtmau_CalcWtanInfo;
+static int ett_qsig_wtmau_DummyExtension;
+static int ett_qsig_wtmau_SEQUENCE_OF_Extension;
+static int ett_qsig_wtmau_AuthAlgorithm;
 
 /* --- Module SS-SD-Operations-asn1-97 --- --- ---                            */
 
-static gint ett_qsig_sd_DisplayArg = -1;
-static gint ett_qsig_sd_DisplayString = -1;
-static gint ett_qsig_sd_KeypadArg = -1;
-static gint ett_qsig_sd_SDExtension = -1;
-static gint ett_qsig_sd_SEQUENCE_OF_Extension = -1;
+static int ett_qsig_sd_DisplayArg;
+static int ett_qsig_sd_DisplayString;
+static int ett_qsig_sd_KeypadArg;
+static int ett_qsig_sd_SDExtension;
+static int ett_qsig_sd_SEQUENCE_OF_Extension;
 
 /* --- Module Call-Identification-and-Call-Linkage-Operations-asn1-97 --- --- --- */
 
-static gint ett_qsig_cidl_CallIdentificationAssignArg = -1;
-static gint ett_qsig_cidl_CallIdentificationUpdateArg = -1;
-static gint ett_qsig_cidl_CallIdentificationData = -1;
-static gint ett_qsig_cidl_T_linkageID = -1;
-static gint ett_qsig_cidl_ExtensionType = -1;
-static gint ett_qsig_cidl_SEQUENCE_OF_Extension = -1;
+static int ett_qsig_cidl_CallIdentificationAssignArg;
+static int ett_qsig_cidl_CallIdentificationUpdateArg;
+static int ett_qsig_cidl_CallIdentificationData;
+static int ett_qsig_cidl_T_linkageID;
+static int ett_qsig_cidl_ExtensionType;
+static int ett_qsig_cidl_SEQUENCE_OF_Extension;
 
 /* --- Module Short-Message-Service-Operations-asn1-97 --- --- ---            */
 
-static gint ett_qsig_sms_SmsSubmitArg = -1;
-static gint ett_qsig_sms_SmsSubmitRes = -1;
-static gint ett_qsig_sms_SmsDeliverArg = -1;
-static gint ett_qsig_sms_SmsDeliverRes = -1;
-static gint ett_qsig_sms_SmsStatusReportArg = -1;
-static gint ett_qsig_sms_SmsStatusReportRes = -1;
-static gint ett_qsig_sms_SmsCommandArg = -1;
-static gint ett_qsig_sms_SmsCommandRes = -1;
-static gint ett_qsig_sms_ScAlertArg = -1;
-static gint ett_qsig_sms_DummyRes = -1;
-static gint ett_qsig_sms_SmSubmitParameter = -1;
-static gint ett_qsig_sms_SmDeliverParameter = -1;
-static gint ett_qsig_sms_SmsDeliverResChoice = -1;
-static gint ett_qsig_sms_ResChoiceSeq = -1;
-static gint ett_qsig_sms_SmsStatusReportResponseChoice = -1;
-static gint ett_qsig_sms_SmsExtension = -1;
-static gint ett_qsig_sms_SEQUENCE_OF_Extension = -1;
-static gint ett_qsig_sms_ValidityPeriod = -1;
-static gint ett_qsig_sms_ValidityPeriodEnh = -1;
-static gint ett_qsig_sms_EnhancedVP = -1;
-static gint ett_qsig_sms_UserData = -1;
-static gint ett_qsig_sms_ShortMessageText = -1;
-static gint ett_qsig_sms_UserDataHeader = -1;
-static gint ett_qsig_sms_UserDataHeaderChoice = -1;
-static gint ett_qsig_sms_SmscControlParameterHeader = -1;
-static gint ett_qsig_sms_Concatenated8BitSMHeader = -1;
-static gint ett_qsig_sms_Concatenated16BitSMHeader = -1;
-static gint ett_qsig_sms_ApplicationPort8BitHeader = -1;
-static gint ett_qsig_sms_ApplicationPort16BitHeader = -1;
-static gint ett_qsig_sms_GenericUserValue = -1;
-static gint ett_qsig_sms_PAR_smsDeliverError = -1;
-static gint ett_qsig_sms_PAR_smsSubmitError = -1;
-static gint ett_qsig_sms_PAR_smsStatusReportError = -1;
-static gint ett_qsig_sms_PAR_smsCommandError = -1;
+static int ett_qsig_sms_SmsSubmitArg;
+static int ett_qsig_sms_SmsSubmitRes;
+static int ett_qsig_sms_SmsDeliverArg;
+static int ett_qsig_sms_SmsDeliverRes;
+static int ett_qsig_sms_SmsStatusReportArg;
+static int ett_qsig_sms_SmsStatusReportRes;
+static int ett_qsig_sms_SmsCommandArg;
+static int ett_qsig_sms_SmsCommandRes;
+static int ett_qsig_sms_ScAlertArg;
+static int ett_qsig_sms_DummyRes;
+static int ett_qsig_sms_SmSubmitParameter;
+static int ett_qsig_sms_SmDeliverParameter;
+static int ett_qsig_sms_SmsDeliverResChoice;
+static int ett_qsig_sms_ResChoiceSeq;
+static int ett_qsig_sms_SmsStatusReportResponseChoice;
+static int ett_qsig_sms_SmsExtension;
+static int ett_qsig_sms_SEQUENCE_OF_Extension;
+static int ett_qsig_sms_ValidityPeriod;
+static int ett_qsig_sms_ValidityPeriodEnh;
+static int ett_qsig_sms_EnhancedVP;
+static int ett_qsig_sms_UserData;
+static int ett_qsig_sms_ShortMessageText;
+static int ett_qsig_sms_UserDataHeader;
+static int ett_qsig_sms_UserDataHeaderChoice;
+static int ett_qsig_sms_SmscControlParameterHeader;
+static int ett_qsig_sms_Concatenated8BitSMHeader;
+static int ett_qsig_sms_Concatenated16BitSMHeader;
+static int ett_qsig_sms_ApplicationPort8BitHeader;
+static int ett_qsig_sms_ApplicationPort16BitHeader;
+static int ett_qsig_sms_GenericUserValue;
+static int ett_qsig_sms_PAR_smsDeliverError;
+static int ett_qsig_sms_PAR_smsSubmitError;
+static int ett_qsig_sms_PAR_smsStatusReportError;
+static int ett_qsig_sms_PAR_smsCommandError;
 
 /* --- Module SS-MCR-Operations-asn97 --- --- ---                             */
 
-static gint ett_qsig_mcr_MCRequestArg = -1;
-static gint ett_qsig_mcr_MCRequestResult = -1;
-static gint ett_qsig_mcr_MCInformArg = -1;
-static gint ett_qsig_mcr_MCAlertingArg = -1;
-static gint ett_qsig_mcr_CallType = -1;
-static gint ett_qsig_mcr_Correlation = -1;
-static gint ett_qsig_mcr_MCRExtensions = -1;
-static gint ett_qsig_mcr_SEQUENCE_OF_Extension = -1;
+static int ett_qsig_mcr_MCRequestArg;
+static int ett_qsig_mcr_MCRequestResult;
+static int ett_qsig_mcr_MCInformArg;
+static int ett_qsig_mcr_MCAlertingArg;
+static int ett_qsig_mcr_CallType;
+static int ett_qsig_mcr_Correlation;
+static int ett_qsig_mcr_MCRExtensions;
+static int ett_qsig_mcr_SEQUENCE_OF_Extension;
 
 /* --- Module SS-MCM-Operations-asn1-97 --- --- ---                           */
 
-static gint ett_qsig_mcm_MCMailboxFullArg = -1;
-static gint ett_qsig_mcm_MailboxFullFor = -1;
-static gint ett_qsig_mcm_MailboxFullPar = -1;
-static gint ett_qsig_mcm_MCMServiceArg = -1;
-static gint ett_qsig_mcm_MCMChange = -1;
-static gint ett_qsig_mcm_SEQUENCE_OF_MCMServiceInfo = -1;
-static gint ett_qsig_mcm_SEQUENCE_OF_MessageType = -1;
-static gint ett_qsig_mcm_MCMServiceInfo = -1;
-static gint ett_qsig_mcm_MCMInterrogateArg = -1;
-static gint ett_qsig_mcm_MCMInterrogateRes = -1;
-static gint ett_qsig_mcm_MCMNewMsgArg = -1;
-static gint ett_qsig_mcm_MCMNewArgumentExt = -1;
-static gint ett_qsig_mcm_SEQUENCE_OF_Extension = -1;
-static gint ett_qsig_mcm_MCMNoNewMsgArg = -1;
-static gint ett_qsig_mcm_MCMNoNewArgumentExt = -1;
-static gint ett_qsig_mcm_MCMUpdateArg = -1;
-static gint ett_qsig_mcm_MCMUpdateReqArg = -1;
-static gint ett_qsig_mcm_MCMUpdArgArgumentExt = -1;
-static gint ett_qsig_mcm_MCMUpdateReqRes = -1;
-static gint ett_qsig_mcm_MCMUpdateReqResElt = -1;
-static gint ett_qsig_mcm_MCMUpdResArgumentExt = -1;
-static gint ett_qsig_mcm_PartyInfo = -1;
-static gint ett_qsig_mcm_UpdateInfo = -1;
-static gint ett_qsig_mcm_AllMsgInfo = -1;
-static gint ett_qsig_mcm_MessageInfo = -1;
-static gint ett_qsig_mcm_CompleteInfo = -1;
-static gint ett_qsig_mcm_AddressHeader = -1;
-static gint ett_qsig_mcm_CompressedInfo = -1;
-static gint ett_qsig_mcm_MsgCentreId = -1;
-static gint ett_qsig_mcm_MCMExtensions = -1;
+static int ett_qsig_mcm_MCMailboxFullArg;
+static int ett_qsig_mcm_MailboxFullFor;
+static int ett_qsig_mcm_MailboxFullPar;
+static int ett_qsig_mcm_MCMServiceArg;
+static int ett_qsig_mcm_MCMChange;
+static int ett_qsig_mcm_SEQUENCE_OF_MCMServiceInfo;
+static int ett_qsig_mcm_SEQUENCE_OF_MessageType;
+static int ett_qsig_mcm_MCMServiceInfo;
+static int ett_qsig_mcm_MCMInterrogateArg;
+static int ett_qsig_mcm_MCMInterrogateRes;
+static int ett_qsig_mcm_MCMNewMsgArg;
+static int ett_qsig_mcm_MCMNewArgumentExt;
+static int ett_qsig_mcm_SEQUENCE_OF_Extension;
+static int ett_qsig_mcm_MCMNoNewMsgArg;
+static int ett_qsig_mcm_MCMNoNewArgumentExt;
+static int ett_qsig_mcm_MCMUpdateArg;
+static int ett_qsig_mcm_MCMUpdateReqArg;
+static int ett_qsig_mcm_MCMUpdArgArgumentExt;
+static int ett_qsig_mcm_MCMUpdateReqRes;
+static int ett_qsig_mcm_MCMUpdateReqResElt;
+static int ett_qsig_mcm_MCMUpdResArgumentExt;
+static int ett_qsig_mcm_PartyInfo;
+static int ett_qsig_mcm_UpdateInfo;
+static int ett_qsig_mcm_AllMsgInfo;
+static int ett_qsig_mcm_MessageInfo;
+static int ett_qsig_mcm_CompleteInfo;
+static int ett_qsig_mcm_AddressHeader;
+static int ett_qsig_mcm_CompressedInfo;
+static int ett_qsig_mcm_MsgCentreId;
+static int ett_qsig_mcm_MCMExtensions;
 
 /* --- Module SS-MID-Operations-asn1-97 --- --- ---                           */
 
-static gint ett_qsig_mid_MIDMailboxAuthArg = -1;
-static gint ett_qsig_mid_MIDMailboxIDArg = -1;
-static gint ett_qsig_mid_PartyInfo = -1;
-static gint ett_qsig_mid_String = -1;
-static gint ett_qsig_mid_MIDExtensions = -1;
-static gint ett_qsig_mid_SEQUENCE_OF_Extension = -1;
-static gint ett_cnq_PSS1InformationElement = -1;
+static int ett_qsig_mid_MIDMailboxAuthArg;
+static int ett_qsig_mid_MIDMailboxIDArg;
+static int ett_qsig_mid_PartyInfo;
+static int ett_qsig_mid_String;
+static int ett_qsig_mid_MIDExtensions;
+static int ett_qsig_mid_SEQUENCE_OF_Extension;
+static int ett_cnq_PSS1InformationElement;
 
-/* static expert_field ei_qsig_unsupported_arg_type = EI_INIT; */
-static expert_field ei_qsig_unsupported_result_type = EI_INIT;
-static expert_field ei_qsig_unsupported_error_type = EI_INIT;
+/* static expert_field ei_qsig_unsupported_arg_type; */
+static expert_field ei_qsig_unsupported_result_type;
+static expert_field ei_qsig_unsupported_error_type;
 
 /* Preferences */
 
 /* Subdissectors */
-static dissector_handle_t q931_ie_handle = NULL;
+static dissector_handle_t q931_ie_handle;
 
 /* Global variables */
-static const char *extension_oid = NULL;
+static const char *extension_oid;
 
 /* Dissector tables */
 static dissector_table_t extension_dissector_table;
@@ -2035,7 +2035,7 @@ static dissector_table_t extension_dissector_table;
 
 
 static int
-dissect_qsig_T_extensionId(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_T_extensionId(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_object_identifier_str(implicit_tag, actx, tree, tvb, offset, hf_index, &extension_oid);
 
   return offset;
@@ -2044,11 +2044,11 @@ dissect_qsig_T_extensionId(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int off
 
 
 static int
-dissect_qsig_T_extensionArgument(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_T_extensionArgument(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
     tvbuff_t *next_tvb;
 
     next_tvb = tvb_new_subset_remaining(tvb, offset);
-    if (!dissector_try_string_new(extension_dissector_table, extension_oid, next_tvb, actx->pinfo, tree, FALSE, NULL)) {
+    if (!dissector_try_string_new(extension_dissector_table, extension_oid, next_tvb, actx->pinfo, tree, false, NULL)) {
         proto_tree *next_tree;
 
         next_tree=proto_tree_add_subtree_format(tree, next_tvb, 0, -1, ett_qsig_unknown_extension, NULL,
@@ -2070,7 +2070,7 @@ static const ber_sequence_t qsig_Extension_sequence[] = {
 };
 
 int
-dissect_qsig_Extension(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_Extension(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   extension_oid = NULL;
   offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
                                    qsig_Extension_sequence, hf_index, ett_qsig_Extension);
@@ -2081,7 +2081,7 @@ dissect_qsig_Extension(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset 
 
 
 static int
-dissect_qsig_PSS1InformationElement_U(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_PSS1InformationElement_U(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   tvbuff_t *out_tvb = NULL;
   proto_tree *data_tree;
 
@@ -2098,9 +2098,9 @@ dissect_qsig_PSS1InformationElement_U(gboolean implicit_tag _U_, tvbuff_t *tvb _
 
 
 int
-dissect_qsig_PSS1InformationElement(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_PSS1InformationElement(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_tagged_type(implicit_tag, actx, tree, tvb, offset,
-                                      hf_index, BER_CLASS_APP, 0, TRUE, dissect_qsig_PSS1InformationElement_U);
+                                      hf_index, BER_CLASS_APP, 0, true, dissect_qsig_PSS1InformationElement_U);
 
   return offset;
 }
@@ -2108,7 +2108,7 @@ dissect_qsig_PSS1InformationElement(gboolean implicit_tag _U_, tvbuff_t *tvb _U_
 
 
 static int
-dissect_qsig_NumberDigits(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_NumberDigits(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_restricted_string(implicit_tag, BER_UNI_TAG_NumericString,
                                             actx, tree, tvb, offset, hf_index,
                                             NULL);
@@ -2129,7 +2129,7 @@ static const value_string qsig_PublicTypeOfNumber_vals[] = {
 
 
 static int
-dissect_qsig_PublicTypeOfNumber(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_PublicTypeOfNumber(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_integer(implicit_tag, actx, tree, tvb, offset, hf_index,
                                   NULL);
 
@@ -2144,7 +2144,7 @@ static const ber_sequence_t qsig_PublicPartyNumber_sequence[] = {
 };
 
 static int
-dissect_qsig_PublicPartyNumber(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_PublicPartyNumber(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
                                    qsig_PublicPartyNumber_sequence, hf_index, ett_qsig_PublicPartyNumber);
 
@@ -2164,7 +2164,7 @@ static const value_string qsig_PrivateTypeOfNumber_vals[] = {
 
 
 static int
-dissect_qsig_PrivateTypeOfNumber(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_PrivateTypeOfNumber(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_integer(implicit_tag, actx, tree, tvb, offset, hf_index,
                                   NULL);
 
@@ -2179,7 +2179,7 @@ static const ber_sequence_t qsig_PrivatePartyNumber_sequence[] = {
 };
 
 static int
-dissect_qsig_PrivatePartyNumber(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_PrivatePartyNumber(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
                                    qsig_PrivatePartyNumber_sequence, hf_index, ett_qsig_PrivatePartyNumber);
 
@@ -2208,7 +2208,7 @@ static const ber_choice_t qsig_PartyNumber_choice[] = {
 };
 
 static int
-dissect_qsig_PartyNumber(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_PartyNumber(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_choice(actx, tree, tvb, offset,
                                  qsig_PartyNumber_choice, hf_index, ett_qsig_PartyNumber,
                                  NULL);
@@ -2227,7 +2227,7 @@ static const value_string qsig_ScreeningIndicator_vals[] = {
 
 
 static int
-dissect_qsig_ScreeningIndicator(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_ScreeningIndicator(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_integer(implicit_tag, actx, tree, tvb, offset, hf_index,
                                   NULL);
 
@@ -2237,7 +2237,7 @@ dissect_qsig_ScreeningIndicator(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, in
 
 
 static int
-dissect_qsig_SubaddressInformation(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_SubaddressInformation(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_octet_string(implicit_tag, actx, tree, tvb, offset, hf_index,
                                        NULL);
 
@@ -2247,7 +2247,7 @@ dissect_qsig_SubaddressInformation(gboolean implicit_tag _U_, tvbuff_t *tvb _U_,
 
 
 static int
-dissect_qsig_BOOLEAN(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_BOOLEAN(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_boolean(implicit_tag, actx, tree, tvb, offset, hf_index, NULL);
 
   return offset;
@@ -2261,7 +2261,7 @@ static const ber_sequence_t qsig_UserSpecifiedSubaddress_sequence[] = {
 };
 
 static int
-dissect_qsig_UserSpecifiedSubaddress(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_UserSpecifiedSubaddress(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
                                    qsig_UserSpecifiedSubaddress_sequence, hf_index, ett_qsig_UserSpecifiedSubaddress);
 
@@ -2271,7 +2271,7 @@ dissect_qsig_UserSpecifiedSubaddress(gboolean implicit_tag _U_, tvbuff_t *tvb _U
 
 
 static int
-dissect_qsig_NSAPSubaddress(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_NSAPSubaddress(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_octet_string(implicit_tag, actx, tree, tvb, offset, hf_index,
                                        NULL);
 
@@ -2292,7 +2292,7 @@ static const ber_choice_t qsig_PartySubaddress_choice[] = {
 };
 
 static int
-dissect_qsig_PartySubaddress(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_PartySubaddress(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_choice(actx, tree, tvb, offset,
                                  qsig_PartySubaddress_choice, hf_index, ett_qsig_PartySubaddress,
                                  NULL);
@@ -2309,7 +2309,7 @@ static const ber_sequence_t qsig_AddressScreened_sequence[] = {
 };
 
 static int
-dissect_qsig_AddressScreened(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_AddressScreened(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
                                    qsig_AddressScreened_sequence, hf_index, ett_qsig_AddressScreened);
 
@@ -2319,7 +2319,7 @@ dissect_qsig_AddressScreened(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int o
 
 
 static int
-dissect_qsig_NULL(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_NULL(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_null(implicit_tag, actx, tree, tvb, offset, hf_index);
 
   return offset;
@@ -2343,7 +2343,7 @@ static const ber_choice_t qsig_PresentedAddressScreened_choice[] = {
 };
 
 static int
-dissect_qsig_PresentedAddressScreened(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_PresentedAddressScreened(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_choice(actx, tree, tvb, offset,
                                  qsig_PresentedAddressScreened_choice, hf_index, ett_qsig_PresentedAddressScreened,
                                  NULL);
@@ -2359,7 +2359,7 @@ static const ber_sequence_t qsig_Address_sequence[] = {
 };
 
 static int
-dissect_qsig_Address(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_Address(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
                                    qsig_Address_sequence, hf_index, ett_qsig_Address);
 
@@ -2384,7 +2384,7 @@ static const ber_choice_t qsig_PresentedAddressUnscreened_choice[] = {
 };
 
 static int
-dissect_qsig_PresentedAddressUnscreened(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_PresentedAddressUnscreened(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_choice(actx, tree, tvb, offset,
                                  qsig_PresentedAddressUnscreened_choice, hf_index, ett_qsig_PresentedAddressUnscreened,
                                  NULL);
@@ -2400,7 +2400,7 @@ static const ber_sequence_t qsig_NumberScreened_sequence[] = {
 };
 
 static int
-dissect_qsig_NumberScreened(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_NumberScreened(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
                                    qsig_NumberScreened_sequence, hf_index, ett_qsig_NumberScreened);
 
@@ -2425,7 +2425,7 @@ static const ber_choice_t qsig_PresentedNumberScreened_choice[] = {
 };
 
 static int
-dissect_qsig_PresentedNumberScreened(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_PresentedNumberScreened(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_choice(actx, tree, tvb, offset,
                                  qsig_PresentedNumberScreened_choice, hf_index, ett_qsig_PresentedNumberScreened,
                                  NULL);
@@ -2451,7 +2451,7 @@ static const ber_choice_t qsig_PresentedNumberUnscreened_choice[] = {
 };
 
 static int
-dissect_qsig_PresentedNumberUnscreened(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_PresentedNumberUnscreened(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_choice(actx, tree, tvb, offset,
                                  qsig_PresentedNumberUnscreened_choice, hf_index, ett_qsig_PresentedNumberUnscreened,
                                  NULL);
@@ -2462,7 +2462,7 @@ dissect_qsig_PresentedNumberUnscreened(gboolean implicit_tag _U_, tvbuff_t *tvb 
 
 
 static int
-dissect_qsig_PresentationAllowedIndicator(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_PresentationAllowedIndicator(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_boolean(implicit_tag, actx, tree, tvb, offset, hf_index, NULL);
 
   return offset;
@@ -2474,7 +2474,7 @@ dissect_qsig_PresentationAllowedIndicator(gboolean implicit_tag _U_, tvbuff_t *t
 
 
 static int
-dissect_qsig_na_NameData(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_na_NameData(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_octet_string(implicit_tag, actx, tree, tvb, offset, hf_index,
                                        NULL);
 
@@ -2497,7 +2497,7 @@ static const value_string qsig_na_CharacterSet_vals[] = {
 
 
 static int
-dissect_qsig_na_CharacterSet(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_na_CharacterSet(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_integer(implicit_tag, actx, tree, tvb, offset, hf_index,
                                                 NULL);
 
@@ -2512,7 +2512,7 @@ static const ber_sequence_t qsig_na_NameSet_sequence[] = {
 };
 
 static int
-dissect_qsig_na_NameSet(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_na_NameSet(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
                                    qsig_na_NameSet_sequence, hf_index, ett_qsig_na_NameSet);
 
@@ -2533,7 +2533,7 @@ static const ber_choice_t qsig_na_NamePresentationAllowed_choice[] = {
 };
 
 static int
-dissect_qsig_na_NamePresentationAllowed(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_na_NamePresentationAllowed(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_choice(actx, tree, tvb, offset,
                                  qsig_na_NamePresentationAllowed_choice, hf_index, ett_qsig_na_NamePresentationAllowed,
                                  NULL);
@@ -2544,7 +2544,7 @@ dissect_qsig_na_NamePresentationAllowed(gboolean implicit_tag _U_, tvbuff_t *tvb
 
 
 static int
-dissect_qsig_na_NULL(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_na_NULL(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_null(implicit_tag, actx, tree, tvb, offset, hf_index);
 
   return offset;
@@ -2566,7 +2566,7 @@ static const ber_choice_t qsig_na_NamePresentationRestricted_choice[] = {
 };
 
 static int
-dissect_qsig_na_NamePresentationRestricted(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_na_NamePresentationRestricted(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_choice(actx, tree, tvb, offset,
                                  qsig_na_NamePresentationRestricted_choice, hf_index, ett_qsig_na_NamePresentationRestricted,
                                  NULL);
@@ -2577,9 +2577,9 @@ dissect_qsig_na_NamePresentationRestricted(gboolean implicit_tag _U_, tvbuff_t *
 
 
 static int
-dissect_qsig_na_NameNotAvailable(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_na_NameNotAvailable(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_tagged_type(implicit_tag, actx, tree, tvb, offset,
-                                      hf_index, BER_CLASS_CON, 4, TRUE, dissect_qsig_na_NULL);
+                                      hf_index, BER_CLASS_CON, 4, true, dissect_qsig_na_NULL);
 
   return offset;
 }
@@ -2593,7 +2593,7 @@ static const ber_choice_t qsig_na_Name_choice[] = {
 };
 
 int
-dissect_qsig_na_Name(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_na_Name(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_choice(actx, tree, tvb, offset,
                                  qsig_na_Name_choice, hf_index, ett_qsig_na_Name,
                                  NULL);
@@ -2607,7 +2607,7 @@ static const ber_sequence_t qsig_na_SEQUENCE_OF_Extension_sequence_of[1] = {
 };
 
 static int
-dissect_qsig_na_SEQUENCE_OF_Extension(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_na_SEQUENCE_OF_Extension(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_sequence_of(implicit_tag, actx, tree, tvb, offset,
                                       qsig_na_SEQUENCE_OF_Extension_sequence_of, hf_index, ett_qsig_na_SEQUENCE_OF_Extension);
 
@@ -2628,7 +2628,7 @@ static const ber_choice_t qsig_na_NameExtension_choice[] = {
 };
 
 static int
-dissect_qsig_na_NameExtension(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_na_NameExtension(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_choice(actx, tree, tvb, offset,
                                  qsig_na_NameExtension_choice, hf_index, ett_qsig_na_NameExtension,
                                  NULL);
@@ -2644,7 +2644,7 @@ static const ber_sequence_t qsig_na_T_nameSequence_sequence[] = {
 };
 
 static int
-dissect_qsig_na_T_nameSequence(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_na_T_nameSequence(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
                                    qsig_na_T_nameSequence_sequence, hf_index, ett_qsig_na_T_nameSequence);
 
@@ -2665,7 +2665,7 @@ static const ber_choice_t qsig_na_NameArg_choice[] = {
 };
 
 static int
-dissect_qsig_na_NameArg(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_na_NameArg(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_choice(actx, tree, tvb, offset,
                                  qsig_na_NameArg_choice, hf_index, ett_qsig_na_NameArg,
                                  NULL);
@@ -2678,8 +2678,8 @@ dissect_qsig_na_NameArg(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset
 static int dissect_qsig_na_NameArg_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, TRUE, pinfo);
-  offset = dissect_qsig_na_NameArg(FALSE, tvb, offset, &asn1_ctx, tree, hf_qsig_na_qsig_na_NameArg_PDU);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, true, pinfo);
+  offset = dissect_qsig_na_NameArg(false, tvb, offset, &asn1_ctx, tree, hf_qsig_na_qsig_na_NameArg_PDU);
   return offset;
 }
 
@@ -2696,7 +2696,7 @@ static const value_string qsig_cf_Procedure_vals[] = {
 
 
 static int
-dissect_qsig_cf_Procedure(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_cf_Procedure(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_integer(implicit_tag, actx, tree, tvb, offset, hf_index,
                                   NULL);
 
@@ -2719,7 +2719,7 @@ static const value_string qsig_cf_BasicService_vals[] = {
 
 
 static int
-dissect_qsig_cf_BasicService(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_cf_BasicService(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_integer(implicit_tag, actx, tree, tvb, offset, hf_index,
                                   NULL);
 
@@ -2732,7 +2732,7 @@ static const ber_sequence_t qsig_cf_SEQUENCE_OF_Extension_sequence_of[1] = {
 };
 
 static int
-dissect_qsig_cf_SEQUENCE_OF_Extension(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_cf_SEQUENCE_OF_Extension(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_sequence_of(implicit_tag, actx, tree, tvb, offset,
                                       qsig_cf_SEQUENCE_OF_Extension_sequence_of, hf_index, ett_qsig_cf_SEQUENCE_OF_Extension);
 
@@ -2753,7 +2753,7 @@ static const ber_choice_t qsig_cf_ADExtension_choice[] = {
 };
 
 static int
-dissect_qsig_cf_ADExtension(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_cf_ADExtension(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_choice(actx, tree, tvb, offset,
                                  qsig_cf_ADExtension_choice, hf_index, ett_qsig_cf_ADExtension,
                                  NULL);
@@ -2773,7 +2773,7 @@ static const ber_sequence_t qsig_cf_ARG_activateDiversionQ_sequence[] = {
 };
 
 static int
-dissect_qsig_cf_ARG_activateDiversionQ(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_cf_ARG_activateDiversionQ(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
                                    qsig_cf_ARG_activateDiversionQ_sequence, hf_index, ett_qsig_cf_ARG_activateDiversionQ);
 
@@ -2783,7 +2783,7 @@ dissect_qsig_cf_ARG_activateDiversionQ(gboolean implicit_tag _U_, tvbuff_t *tvb 
 
 
 static int
-dissect_qsig_cf_NULL(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_cf_NULL(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_null(implicit_tag, actx, tree, tvb, offset, hf_index);
 
   return offset;
@@ -2805,7 +2805,7 @@ static const ber_choice_t qsig_cf_RES_activateDiversionQ_choice[] = {
 };
 
 static int
-dissect_qsig_cf_RES_activateDiversionQ(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_cf_RES_activateDiversionQ(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_choice(actx, tree, tvb, offset,
                                  qsig_cf_RES_activateDiversionQ_choice, hf_index, ett_qsig_cf_RES_activateDiversionQ,
                                  NULL);
@@ -2827,7 +2827,7 @@ static const ber_choice_t qsig_cf_DDExtension_choice[] = {
 };
 
 static int
-dissect_qsig_cf_DDExtension(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_cf_DDExtension(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_choice(actx, tree, tvb, offset,
                                  qsig_cf_DDExtension_choice, hf_index, ett_qsig_cf_DDExtension,
                                  NULL);
@@ -2846,7 +2846,7 @@ static const ber_sequence_t qsig_cf_ARG_deactivateDiversionQ_sequence[] = {
 };
 
 static int
-dissect_qsig_cf_ARG_deactivateDiversionQ(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_cf_ARG_deactivateDiversionQ(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
                                    qsig_cf_ARG_deactivateDiversionQ_sequence, hf_index, ett_qsig_cf_ARG_deactivateDiversionQ);
 
@@ -2869,7 +2869,7 @@ static const ber_choice_t qsig_cf_RES_deactivateDiversionQ_choice[] = {
 };
 
 static int
-dissect_qsig_cf_RES_deactivateDiversionQ(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_cf_RES_deactivateDiversionQ(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_choice(actx, tree, tvb, offset,
                                  qsig_cf_RES_deactivateDiversionQ_choice, hf_index, ett_qsig_cf_RES_deactivateDiversionQ,
                                  NULL);
@@ -2891,7 +2891,7 @@ static const ber_choice_t qsig_cf_IDExtension_choice[] = {
 };
 
 static int
-dissect_qsig_cf_IDExtension(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_cf_IDExtension(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_choice(actx, tree, tvb, offset,
                                  qsig_cf_IDExtension_choice, hf_index, ett_qsig_cf_IDExtension,
                                  NULL);
@@ -2910,7 +2910,7 @@ static const ber_sequence_t qsig_cf_ARG_interrogateDiversionQ_sequence[] = {
 };
 
 static int
-dissect_qsig_cf_ARG_interrogateDiversionQ(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_cf_ARG_interrogateDiversionQ(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
                                    qsig_cf_ARG_interrogateDiversionQ_sequence, hf_index, ett_qsig_cf_ARG_interrogateDiversionQ);
 
@@ -2931,7 +2931,7 @@ static const ber_choice_t qsig_cf_CHRExtension_choice[] = {
 };
 
 static int
-dissect_qsig_cf_CHRExtension(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_cf_CHRExtension(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_choice(actx, tree, tvb, offset,
                                  qsig_cf_CHRExtension_choice, hf_index, ett_qsig_cf_CHRExtension,
                                  NULL);
@@ -2949,7 +2949,7 @@ static const ber_sequence_t qsig_cf_ARG_checkRestriction_sequence[] = {
 };
 
 static int
-dissect_qsig_cf_ARG_checkRestriction(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_cf_ARG_checkRestriction(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
                                    qsig_cf_ARG_checkRestriction_sequence, hf_index, ett_qsig_cf_ARG_checkRestriction);
 
@@ -2972,7 +2972,7 @@ static const ber_choice_t qsig_cf_RES_checkRestriction_choice[] = {
 };
 
 static int
-dissect_qsig_cf_RES_checkRestriction(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_cf_RES_checkRestriction(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_choice(actx, tree, tvb, offset,
                                  qsig_cf_RES_checkRestriction_choice, hf_index, ett_qsig_cf_RES_checkRestriction,
                                  NULL);
@@ -2991,7 +2991,7 @@ static const value_string qsig_cf_DiversionReason_vals[] = {
 
 
 static int
-dissect_qsig_cf_DiversionReason(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_cf_DiversionReason(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_integer(implicit_tag, actx, tree, tvb, offset, hf_index,
                                   NULL);
 
@@ -3001,7 +3001,7 @@ dissect_qsig_cf_DiversionReason(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, in
 
 
 static int
-dissect_qsig_cf_INTEGER_1_15(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_cf_INTEGER_1_15(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_integer(implicit_tag, actx, tree, tvb, offset, hf_index,
                                                 NULL);
 
@@ -3018,7 +3018,7 @@ static const value_string qsig_cf_SubscriptionOption_vals[] = {
 
 
 static int
-dissect_qsig_cf_SubscriptionOption(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_cf_SubscriptionOption(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_integer(implicit_tag, actx, tree, tvb, offset, hf_index,
                                   NULL);
 
@@ -3039,7 +3039,7 @@ static const ber_choice_t qsig_cf_CRRExtension_choice[] = {
 };
 
 static int
-dissect_qsig_cf_CRRExtension(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_cf_CRRExtension(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_choice(actx, tree, tvb, offset,
                                  qsig_cf_CRRExtension_choice, hf_index, ett_qsig_cf_CRRExtension,
                                  NULL);
@@ -3067,7 +3067,7 @@ static const ber_sequence_t qsig_cf_ARG_callRerouteing_sequence[] = {
 };
 
 static int
-dissect_qsig_cf_ARG_callRerouteing(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_cf_ARG_callRerouteing(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
                                    qsig_cf_ARG_callRerouteing_sequence, hf_index, ett_qsig_cf_ARG_callRerouteing);
 
@@ -3090,7 +3090,7 @@ static const ber_choice_t qsig_cf_RES_callRerouteing_choice[] = {
 };
 
 static int
-dissect_qsig_cf_RES_callRerouteing(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_cf_RES_callRerouteing(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_choice(actx, tree, tvb, offset,
                                  qsig_cf_RES_callRerouteing_choice, hf_index, ett_qsig_cf_RES_callRerouteing,
                                  NULL);
@@ -3112,7 +3112,7 @@ static const ber_choice_t qsig_cf_DLI1Extension_choice[] = {
 };
 
 static int
-dissect_qsig_cf_DLI1Extension(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_cf_DLI1Extension(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_choice(actx, tree, tvb, offset,
                                  qsig_cf_DLI1Extension_choice, hf_index, ett_qsig_cf_DLI1Extension,
                                  NULL);
@@ -3130,7 +3130,7 @@ static const ber_sequence_t qsig_cf_ARG_divertingLegInformation1_sequence[] = {
 };
 
 static int
-dissect_qsig_cf_ARG_divertingLegInformation1(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_cf_ARG_divertingLegInformation1(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
                                    qsig_cf_ARG_divertingLegInformation1_sequence, hf_index, ett_qsig_cf_ARG_divertingLegInformation1);
 
@@ -3151,7 +3151,7 @@ static const ber_choice_t qsig_cf_DLI2Extension_choice[] = {
 };
 
 static int
-dissect_qsig_cf_DLI2Extension(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_cf_DLI2Extension(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_choice(actx, tree, tvb, offset,
                                  qsig_cf_DLI2Extension_choice, hf_index, ett_qsig_cf_DLI2Extension,
                                  NULL);
@@ -3173,7 +3173,7 @@ static const ber_sequence_t qsig_cf_ARG_divertingLegInformation2_sequence[] = {
 };
 
 static int
-dissect_qsig_cf_ARG_divertingLegInformation2(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_cf_ARG_divertingLegInformation2(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
                                    qsig_cf_ARG_divertingLegInformation2_sequence, hf_index, ett_qsig_cf_ARG_divertingLegInformation2);
 
@@ -3194,7 +3194,7 @@ static const ber_choice_t qsig_cf_DLI3Extension_choice[] = {
 };
 
 static int
-dissect_qsig_cf_DLI3Extension(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_cf_DLI3Extension(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_choice(actx, tree, tvb, offset,
                                  qsig_cf_DLI3Extension_choice, hf_index, ett_qsig_cf_DLI3Extension,
                                  NULL);
@@ -3211,7 +3211,7 @@ static const ber_sequence_t qsig_cf_ARG_divertingLegInformation3_sequence[] = {
 };
 
 static int
-dissect_qsig_cf_ARG_divertingLegInformation3(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_cf_ARG_divertingLegInformation3(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
                                    qsig_cf_ARG_divertingLegInformation3_sequence, hf_index, ett_qsig_cf_ARG_divertingLegInformation3);
 
@@ -3234,7 +3234,7 @@ static const ber_choice_t qsig_cf_ARG_cfnrDivertedLegFailed_choice[] = {
 };
 
 static int
-dissect_qsig_cf_ARG_cfnrDivertedLegFailed(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_cf_ARG_cfnrDivertedLegFailed(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_choice(actx, tree, tvb, offset,
                                  qsig_cf_ARG_cfnrDivertedLegFailed_choice, hf_index, ett_qsig_cf_ARG_cfnrDivertedLegFailed,
                                  NULL);
@@ -3245,7 +3245,7 @@ dissect_qsig_cf_ARG_cfnrDivertedLegFailed(gboolean implicit_tag _U_, tvbuff_t *t
 
 
 static int
-dissect_qsig_cf_BOOLEAN(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_cf_BOOLEAN(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_boolean(implicit_tag, actx, tree, tvb, offset, hf_index, NULL);
 
   return offset;
@@ -3265,7 +3265,7 @@ static const ber_choice_t qsig_cf_IRExtension_choice[] = {
 };
 
 static int
-dissect_qsig_cf_IRExtension(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_cf_IRExtension(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_choice(actx, tree, tvb, offset,
                                  qsig_cf_IRExtension_choice, hf_index, ett_qsig_cf_IRExtension,
                                  NULL);
@@ -3285,7 +3285,7 @@ static const ber_sequence_t qsig_cf_IntResult_sequence[] = {
 };
 
 static int
-dissect_qsig_cf_IntResult(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_cf_IntResult(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
                                    qsig_cf_IntResult_sequence, hf_index, ett_qsig_cf_IntResult);
 
@@ -3298,7 +3298,7 @@ static const ber_sequence_t qsig_cf_IntResultList_set_of[1] = {
 };
 
 static int
-dissect_qsig_cf_IntResultList(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_cf_IntResultList(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_set_of(implicit_tag, actx, tree, tvb, offset,
                                  qsig_cf_IntResultList_set_of, hf_index, ett_qsig_cf_IntResultList);
 
@@ -3310,106 +3310,106 @@ dissect_qsig_cf_IntResultList(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int 
 static int dissect_qsig_cf_ARG_activateDiversionQ_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, TRUE, pinfo);
-  offset = dissect_qsig_cf_ARG_activateDiversionQ(FALSE, tvb, offset, &asn1_ctx, tree, hf_qsig_cf_qsig_cf_ARG_activateDiversionQ_PDU);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, true, pinfo);
+  offset = dissect_qsig_cf_ARG_activateDiversionQ(false, tvb, offset, &asn1_ctx, tree, hf_qsig_cf_qsig_cf_ARG_activateDiversionQ_PDU);
   return offset;
 }
 static int dissect_qsig_cf_RES_activateDiversionQ_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, TRUE, pinfo);
-  offset = dissect_qsig_cf_RES_activateDiversionQ(FALSE, tvb, offset, &asn1_ctx, tree, hf_qsig_cf_qsig_cf_RES_activateDiversionQ_PDU);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, true, pinfo);
+  offset = dissect_qsig_cf_RES_activateDiversionQ(false, tvb, offset, &asn1_ctx, tree, hf_qsig_cf_qsig_cf_RES_activateDiversionQ_PDU);
   return offset;
 }
 static int dissect_qsig_cf_ARG_deactivateDiversionQ_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, TRUE, pinfo);
-  offset = dissect_qsig_cf_ARG_deactivateDiversionQ(FALSE, tvb, offset, &asn1_ctx, tree, hf_qsig_cf_qsig_cf_ARG_deactivateDiversionQ_PDU);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, true, pinfo);
+  offset = dissect_qsig_cf_ARG_deactivateDiversionQ(false, tvb, offset, &asn1_ctx, tree, hf_qsig_cf_qsig_cf_ARG_deactivateDiversionQ_PDU);
   return offset;
 }
 static int dissect_qsig_cf_RES_deactivateDiversionQ_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, TRUE, pinfo);
-  offset = dissect_qsig_cf_RES_deactivateDiversionQ(FALSE, tvb, offset, &asn1_ctx, tree, hf_qsig_cf_qsig_cf_RES_deactivateDiversionQ_PDU);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, true, pinfo);
+  offset = dissect_qsig_cf_RES_deactivateDiversionQ(false, tvb, offset, &asn1_ctx, tree, hf_qsig_cf_qsig_cf_RES_deactivateDiversionQ_PDU);
   return offset;
 }
 static int dissect_qsig_cf_ARG_interrogateDiversionQ_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, TRUE, pinfo);
-  offset = dissect_qsig_cf_ARG_interrogateDiversionQ(FALSE, tvb, offset, &asn1_ctx, tree, hf_qsig_cf_qsig_cf_ARG_interrogateDiversionQ_PDU);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, true, pinfo);
+  offset = dissect_qsig_cf_ARG_interrogateDiversionQ(false, tvb, offset, &asn1_ctx, tree, hf_qsig_cf_qsig_cf_ARG_interrogateDiversionQ_PDU);
   return offset;
 }
 static int dissect_qsig_cf_IntResultList_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, TRUE, pinfo);
-  offset = dissect_qsig_cf_IntResultList(FALSE, tvb, offset, &asn1_ctx, tree, hf_qsig_cf_qsig_cf_IntResultList_PDU);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, true, pinfo);
+  offset = dissect_qsig_cf_IntResultList(false, tvb, offset, &asn1_ctx, tree, hf_qsig_cf_qsig_cf_IntResultList_PDU);
   return offset;
 }
 static int dissect_qsig_cf_ARG_checkRestriction_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, TRUE, pinfo);
-  offset = dissect_qsig_cf_ARG_checkRestriction(FALSE, tvb, offset, &asn1_ctx, tree, hf_qsig_cf_qsig_cf_ARG_checkRestriction_PDU);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, true, pinfo);
+  offset = dissect_qsig_cf_ARG_checkRestriction(false, tvb, offset, &asn1_ctx, tree, hf_qsig_cf_qsig_cf_ARG_checkRestriction_PDU);
   return offset;
 }
 static int dissect_qsig_cf_RES_checkRestriction_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, TRUE, pinfo);
-  offset = dissect_qsig_cf_RES_checkRestriction(FALSE, tvb, offset, &asn1_ctx, tree, hf_qsig_cf_qsig_cf_RES_checkRestriction_PDU);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, true, pinfo);
+  offset = dissect_qsig_cf_RES_checkRestriction(false, tvb, offset, &asn1_ctx, tree, hf_qsig_cf_qsig_cf_RES_checkRestriction_PDU);
   return offset;
 }
 static int dissect_qsig_cf_ARG_callRerouteing_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, TRUE, pinfo);
-  offset = dissect_qsig_cf_ARG_callRerouteing(FALSE, tvb, offset, &asn1_ctx, tree, hf_qsig_cf_qsig_cf_ARG_callRerouteing_PDU);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, true, pinfo);
+  offset = dissect_qsig_cf_ARG_callRerouteing(false, tvb, offset, &asn1_ctx, tree, hf_qsig_cf_qsig_cf_ARG_callRerouteing_PDU);
   return offset;
 }
 static int dissect_qsig_cf_RES_callRerouteing_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, TRUE, pinfo);
-  offset = dissect_qsig_cf_RES_callRerouteing(FALSE, tvb, offset, &asn1_ctx, tree, hf_qsig_cf_qsig_cf_RES_callRerouteing_PDU);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, true, pinfo);
+  offset = dissect_qsig_cf_RES_callRerouteing(false, tvb, offset, &asn1_ctx, tree, hf_qsig_cf_qsig_cf_RES_callRerouteing_PDU);
   return offset;
 }
 static int dissect_qsig_cf_ARG_divertingLegInformation1_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, TRUE, pinfo);
-  offset = dissect_qsig_cf_ARG_divertingLegInformation1(FALSE, tvb, offset, &asn1_ctx, tree, hf_qsig_cf_qsig_cf_ARG_divertingLegInformation1_PDU);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, true, pinfo);
+  offset = dissect_qsig_cf_ARG_divertingLegInformation1(false, tvb, offset, &asn1_ctx, tree, hf_qsig_cf_qsig_cf_ARG_divertingLegInformation1_PDU);
   return offset;
 }
 static int dissect_qsig_cf_ARG_divertingLegInformation2_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, TRUE, pinfo);
-  offset = dissect_qsig_cf_ARG_divertingLegInformation2(FALSE, tvb, offset, &asn1_ctx, tree, hf_qsig_cf_qsig_cf_ARG_divertingLegInformation2_PDU);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, true, pinfo);
+  offset = dissect_qsig_cf_ARG_divertingLegInformation2(false, tvb, offset, &asn1_ctx, tree, hf_qsig_cf_qsig_cf_ARG_divertingLegInformation2_PDU);
   return offset;
 }
 static int dissect_qsig_cf_ARG_divertingLegInformation3_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, TRUE, pinfo);
-  offset = dissect_qsig_cf_ARG_divertingLegInformation3(FALSE, tvb, offset, &asn1_ctx, tree, hf_qsig_cf_qsig_cf_ARG_divertingLegInformation3_PDU);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, true, pinfo);
+  offset = dissect_qsig_cf_ARG_divertingLegInformation3(false, tvb, offset, &asn1_ctx, tree, hf_qsig_cf_qsig_cf_ARG_divertingLegInformation3_PDU);
   return offset;
 }
 static int dissect_qsig_cf_ARG_cfnrDivertedLegFailed_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, TRUE, pinfo);
-  offset = dissect_qsig_cf_ARG_cfnrDivertedLegFailed(FALSE, tvb, offset, &asn1_ctx, tree, hf_qsig_cf_qsig_cf_ARG_cfnrDivertedLegFailed_PDU);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, true, pinfo);
+  offset = dissect_qsig_cf_ARG_cfnrDivertedLegFailed(false, tvb, offset, &asn1_ctx, tree, hf_qsig_cf_qsig_cf_ARG_cfnrDivertedLegFailed_PDU);
   return offset;
 }
 static int dissect_qsig_cf_Extension_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, TRUE, pinfo);
-  offset = dissect_qsig_Extension(FALSE, tvb, offset, &asn1_ctx, tree, hf_qsig_cf_qsig_cf_Extension_PDU);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, true, pinfo);
+  offset = dissect_qsig_Extension(false, tvb, offset, &asn1_ctx, tree, hf_qsig_cf_qsig_cf_Extension_PDU);
   return offset;
 }
 
@@ -3419,7 +3419,7 @@ static int dissect_qsig_cf_Extension_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _
 
 
 static int
-dissect_qsig_pr_CallIdentity(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_pr_CallIdentity(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_restricted_string(implicit_tag, BER_UNI_TAG_NumericString,
                                             actx, tree, tvb, offset, hf_index,
                                             NULL);
@@ -3433,7 +3433,7 @@ static const ber_sequence_t qsig_pr_SEQUENCE_OF_Extension_sequence_of[1] = {
 };
 
 static int
-dissect_qsig_pr_SEQUENCE_OF_Extension(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_pr_SEQUENCE_OF_Extension(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_sequence_of(implicit_tag, actx, tree, tvb, offset,
                                       qsig_pr_SEQUENCE_OF_Extension_sequence_of, hf_index, ett_qsig_pr_SEQUENCE_OF_Extension);
 
@@ -3454,7 +3454,7 @@ static const ber_choice_t qsig_pr_PRPExtension_choice[] = {
 };
 
 static int
-dissect_qsig_pr_PRPExtension(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_pr_PRPExtension(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_choice(actx, tree, tvb, offset,
                                  qsig_pr_PRPExtension_choice, hf_index, ett_qsig_pr_PRPExtension,
                                  NULL);
@@ -3471,7 +3471,7 @@ static const ber_sequence_t qsig_pr_PRProposeArg_sequence[] = {
 };
 
 static int
-dissect_qsig_pr_PRProposeArg(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_pr_PRProposeArg(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
                                    qsig_pr_PRProposeArg_sequence, hf_index, ett_qsig_pr_PRProposeArg);
 
@@ -3492,7 +3492,7 @@ static const ber_choice_t qsig_pr_PRSExtension_choice[] = {
 };
 
 static int
-dissect_qsig_pr_PRSExtension(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_pr_PRSExtension(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_choice(actx, tree, tvb, offset,
                                  qsig_pr_PRSExtension_choice, hf_index, ett_qsig_pr_PRSExtension,
                                  NULL);
@@ -3508,7 +3508,7 @@ static const ber_sequence_t qsig_pr_PRSetupArg_sequence[] = {
 };
 
 static int
-dissect_qsig_pr_PRSetupArg(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_pr_PRSetupArg(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
                                    qsig_pr_PRSetupArg_sequence, hf_index, ett_qsig_pr_PRSetupArg);
 
@@ -3529,7 +3529,7 @@ static const ber_choice_t qsig_pr_PRRExtension_choice[] = {
 };
 
 static int
-dissect_qsig_pr_PRRExtension(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_pr_PRRExtension(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_choice(actx, tree, tvb, offset,
                                  qsig_pr_PRRExtension_choice, hf_index, ett_qsig_pr_PRRExtension,
                                  NULL);
@@ -3546,7 +3546,7 @@ static const ber_sequence_t qsig_pr_PRRetainArg_sequence[] = {
 };
 
 static int
-dissect_qsig_pr_PRRetainArg(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_pr_PRRetainArg(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
                                    qsig_pr_PRRetainArg_sequence, hf_index, ett_qsig_pr_PRRetainArg);
 
@@ -3556,7 +3556,7 @@ dissect_qsig_pr_PRRetainArg(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int of
 
 
 static int
-dissect_qsig_pr_NULL(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_pr_NULL(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_null(implicit_tag, actx, tree, tvb, offset, hf_index);
 
   return offset;
@@ -3578,7 +3578,7 @@ static const ber_choice_t qsig_pr_DummyResult_choice[] = {
 };
 
 static int
-dissect_qsig_pr_DummyResult(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_pr_DummyResult(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_choice(actx, tree, tvb, offset,
                                  qsig_pr_DummyResult_choice, hf_index, ett_qsig_pr_DummyResult,
                                  NULL);
@@ -3602,7 +3602,7 @@ static const ber_choice_t qsig_pr_DummyArg_choice[] = {
 };
 
 static int
-dissect_qsig_pr_DummyArg(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_pr_DummyArg(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_choice(actx, tree, tvb, offset,
                                  qsig_pr_DummyArg_choice, hf_index, ett_qsig_pr_DummyArg,
                                  NULL);
@@ -3615,43 +3615,43 @@ dissect_qsig_pr_DummyArg(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offse
 static int dissect_qsig_pr_DummyArg_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, TRUE, pinfo);
-  offset = dissect_qsig_pr_DummyArg(FALSE, tvb, offset, &asn1_ctx, tree, hf_qsig_pr_qsig_pr_DummyArg_PDU);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, true, pinfo);
+  offset = dissect_qsig_pr_DummyArg(false, tvb, offset, &asn1_ctx, tree, hf_qsig_pr_qsig_pr_DummyArg_PDU);
   return offset;
 }
 static int dissect_qsig_pr_PRProposeArg_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, TRUE, pinfo);
-  offset = dissect_qsig_pr_PRProposeArg(FALSE, tvb, offset, &asn1_ctx, tree, hf_qsig_pr_qsig_pr_PRProposeArg_PDU);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, true, pinfo);
+  offset = dissect_qsig_pr_PRProposeArg(false, tvb, offset, &asn1_ctx, tree, hf_qsig_pr_qsig_pr_PRProposeArg_PDU);
   return offset;
 }
 static int dissect_qsig_pr_PRSetupArg_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, TRUE, pinfo);
-  offset = dissect_qsig_pr_PRSetupArg(FALSE, tvb, offset, &asn1_ctx, tree, hf_qsig_pr_qsig_pr_PRSetupArg_PDU);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, true, pinfo);
+  offset = dissect_qsig_pr_PRSetupArg(false, tvb, offset, &asn1_ctx, tree, hf_qsig_pr_qsig_pr_PRSetupArg_PDU);
   return offset;
 }
 static int dissect_qsig_pr_DummyResult_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, TRUE, pinfo);
-  offset = dissect_qsig_pr_DummyResult(FALSE, tvb, offset, &asn1_ctx, tree, hf_qsig_pr_qsig_pr_DummyResult_PDU);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, true, pinfo);
+  offset = dissect_qsig_pr_DummyResult(false, tvb, offset, &asn1_ctx, tree, hf_qsig_pr_qsig_pr_DummyResult_PDU);
   return offset;
 }
 static int dissect_qsig_pr_PRRetainArg_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, TRUE, pinfo);
-  offset = dissect_qsig_pr_PRRetainArg(FALSE, tvb, offset, &asn1_ctx, tree, hf_qsig_pr_qsig_pr_PRRetainArg_PDU);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, true, pinfo);
+  offset = dissect_qsig_pr_PRRetainArg(false, tvb, offset, &asn1_ctx, tree, hf_qsig_pr_qsig_pr_PRRetainArg_PDU);
   return offset;
 }
 static int dissect_qsig_pr_Extension_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, TRUE, pinfo);
-  offset = dissect_qsig_Extension(FALSE, tvb, offset, &asn1_ctx, tree, hf_qsig_pr_qsig_pr_Extension_PDU);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, true, pinfo);
+  offset = dissect_qsig_Extension(false, tvb, offset, &asn1_ctx, tree, hf_qsig_pr_qsig_pr_Extension_PDU);
   return offset;
 }
 
@@ -3661,7 +3661,7 @@ static int dissect_qsig_pr_Extension_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _
 
 
 static int
-dissect_qsig_ct_NULL(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_ct_NULL(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_null(implicit_tag, actx, tree, tvb, offset, hf_index);
 
   return offset;
@@ -3673,7 +3673,7 @@ static const ber_sequence_t qsig_ct_SEQUENCE_OF_Extension_sequence_of[1] = {
 };
 
 static int
-dissect_qsig_ct_SEQUENCE_OF_Extension(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_ct_SEQUENCE_OF_Extension(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_sequence_of(implicit_tag, actx, tree, tvb, offset,
                                       qsig_ct_SEQUENCE_OF_Extension_sequence_of, hf_index, ett_qsig_ct_SEQUENCE_OF_Extension);
 
@@ -3696,7 +3696,7 @@ static const ber_choice_t qsig_ct_DummyArg_choice[] = {
 };
 
 static int
-dissect_qsig_ct_DummyArg(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_ct_DummyArg(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_choice(actx, tree, tvb, offset,
                                  qsig_ct_DummyArg_choice, hf_index, ett_qsig_ct_DummyArg,
                                  NULL);
@@ -3720,7 +3720,7 @@ static const ber_choice_t qsig_ct_DummyRes_choice[] = {
 };
 
 static int
-dissect_qsig_ct_DummyRes(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_ct_DummyRes(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_choice(actx, tree, tvb, offset,
                                  qsig_ct_DummyRes_choice, hf_index, ett_qsig_ct_DummyRes,
                                  NULL);
@@ -3731,7 +3731,7 @@ dissect_qsig_ct_DummyRes(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offse
 
 
 static int
-dissect_qsig_ct_CallIdentity(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_ct_CallIdentity(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_restricted_string(implicit_tag, BER_UNI_TAG_NumericString,
                                             actx, tree, tvb, offset, hf_index,
                                             NULL);
@@ -3753,7 +3753,7 @@ static const ber_choice_t qsig_ct_T_resultExtension_choice[] = {
 };
 
 static int
-dissect_qsig_ct_T_resultExtension(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_ct_T_resultExtension(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_choice(actx, tree, tvb, offset,
                                  qsig_ct_T_resultExtension_choice, hf_index, ett_qsig_ct_T_resultExtension,
                                  NULL);
@@ -3770,7 +3770,7 @@ static const ber_sequence_t qsig_ct_CTIdentifyRes_sequence[] = {
 };
 
 static int
-dissect_qsig_ct_CTIdentifyRes(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_ct_CTIdentifyRes(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
                                    qsig_ct_CTIdentifyRes_sequence, hf_index, ett_qsig_ct_CTIdentifyRes);
 
@@ -3791,7 +3791,7 @@ static const ber_choice_t qsig_ct_CTIargumentExtension_choice[] = {
 };
 
 static int
-dissect_qsig_ct_CTIargumentExtension(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_ct_CTIargumentExtension(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_choice(actx, tree, tvb, offset,
                                  qsig_ct_CTIargumentExtension_choice, hf_index, ett_qsig_ct_CTIargumentExtension,
                                  NULL);
@@ -3808,7 +3808,7 @@ static const ber_sequence_t qsig_ct_CTInitiateArg_sequence[] = {
 };
 
 static int
-dissect_qsig_ct_CTInitiateArg(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_ct_CTInitiateArg(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
                                    qsig_ct_CTInitiateArg_sequence, hf_index, ett_qsig_ct_CTInitiateArg);
 
@@ -3829,7 +3829,7 @@ static const ber_choice_t qsig_ct_CTSargumentExtension_choice[] = {
 };
 
 static int
-dissect_qsig_ct_CTSargumentExtension(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_ct_CTSargumentExtension(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_choice(actx, tree, tvb, offset,
                                  qsig_ct_CTSargumentExtension_choice, hf_index, ett_qsig_ct_CTSargumentExtension,
                                  NULL);
@@ -3845,7 +3845,7 @@ static const ber_sequence_t qsig_ct_CTSetupArg_sequence[] = {
 };
 
 static int
-dissect_qsig_ct_CTSetupArg(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_ct_CTSetupArg(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
                                    qsig_ct_CTSetupArg_sequence, hf_index, ett_qsig_ct_CTSetupArg);
 
@@ -3866,7 +3866,7 @@ static const ber_choice_t qsig_ct_CTAargumentExtension_choice[] = {
 };
 
 static int
-dissect_qsig_ct_CTAargumentExtension(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_ct_CTAargumentExtension(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_choice(actx, tree, tvb, offset,
                                  qsig_ct_CTAargumentExtension_choice, hf_index, ett_qsig_ct_CTAargumentExtension,
                                  NULL);
@@ -3884,7 +3884,7 @@ static const ber_sequence_t qsig_ct_CTActiveArg_sequence[] = {
 };
 
 static int
-dissect_qsig_ct_CTActiveArg(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_ct_CTActiveArg(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
                                    qsig_ct_CTActiveArg_sequence, hf_index, ett_qsig_ct_CTActiveArg);
 
@@ -3900,7 +3900,7 @@ static const value_string qsig_ct_EndDesignation_vals[] = {
 
 
 static int
-dissect_qsig_ct_EndDesignation(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_ct_EndDesignation(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_integer(implicit_tag, actx, tree, tvb, offset, hf_index,
                                   NULL);
 
@@ -3916,7 +3916,7 @@ static const value_string qsig_ct_CallStatus_vals[] = {
 
 
 static int
-dissect_qsig_ct_CallStatus(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_ct_CallStatus(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_integer(implicit_tag, actx, tree, tvb, offset, hf_index,
                                   NULL);
 
@@ -3937,7 +3937,7 @@ static const ber_choice_t qsig_ct_CTCargumentExtension_choice[] = {
 };
 
 static int
-dissect_qsig_ct_CTCargumentExtension(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_ct_CTCargumentExtension(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_choice(actx, tree, tvb, offset,
                                  qsig_ct_CTCargumentExtension_choice, hf_index, ett_qsig_ct_CTCargumentExtension,
                                  NULL);
@@ -3957,7 +3957,7 @@ static const ber_sequence_t qsig_ct_CTCompleteArg_sequence[] = {
 };
 
 static int
-dissect_qsig_ct_CTCompleteArg(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_ct_CTCompleteArg(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
                                    qsig_ct_CTCompleteArg_sequence, hf_index, ett_qsig_ct_CTCompleteArg);
 
@@ -3978,7 +3978,7 @@ static const ber_choice_t qsig_ct_CTUargumentExtension_choice[] = {
 };
 
 static int
-dissect_qsig_ct_CTUargumentExtension(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_ct_CTUargumentExtension(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_choice(actx, tree, tvb, offset,
                                  qsig_ct_CTUargumentExtension_choice, hf_index, ett_qsig_ct_CTUargumentExtension,
                                  NULL);
@@ -3996,7 +3996,7 @@ static const ber_sequence_t qsig_ct_CTUpdateArg_sequence[] = {
 };
 
 static int
-dissect_qsig_ct_CTUpdateArg(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_ct_CTUpdateArg(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
                                    qsig_ct_CTUpdateArg_sequence, hf_index, ett_qsig_ct_CTUpdateArg);
 
@@ -4017,7 +4017,7 @@ static const ber_choice_t qsig_ct_STargumentExtension_choice[] = {
 };
 
 static int
-dissect_qsig_ct_STargumentExtension(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_ct_STargumentExtension(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_choice(actx, tree, tvb, offset,
                                  qsig_ct_STargumentExtension_choice, hf_index, ett_qsig_ct_STargumentExtension,
                                  NULL);
@@ -4033,7 +4033,7 @@ static const ber_sequence_t qsig_ct_SubaddressTransferArg_sequence[] = {
 };
 
 static int
-dissect_qsig_ct_SubaddressTransferArg(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_ct_SubaddressTransferArg(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
                                    qsig_ct_SubaddressTransferArg_sequence, hf_index, ett_qsig_ct_SubaddressTransferArg);
 
@@ -4045,71 +4045,71 @@ dissect_qsig_ct_SubaddressTransferArg(gboolean implicit_tag _U_, tvbuff_t *tvb _
 static int dissect_qsig_ct_DummyArg_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, TRUE, pinfo);
-  offset = dissect_qsig_ct_DummyArg(FALSE, tvb, offset, &asn1_ctx, tree, hf_qsig_ct_qsig_ct_DummyArg_PDU);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, true, pinfo);
+  offset = dissect_qsig_ct_DummyArg(false, tvb, offset, &asn1_ctx, tree, hf_qsig_ct_qsig_ct_DummyArg_PDU);
   return offset;
 }
 static int dissect_qsig_ct_CTIdentifyRes_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, TRUE, pinfo);
-  offset = dissect_qsig_ct_CTIdentifyRes(FALSE, tvb, offset, &asn1_ctx, tree, hf_qsig_ct_qsig_ct_CTIdentifyRes_PDU);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, true, pinfo);
+  offset = dissect_qsig_ct_CTIdentifyRes(false, tvb, offset, &asn1_ctx, tree, hf_qsig_ct_qsig_ct_CTIdentifyRes_PDU);
   return offset;
 }
 static int dissect_qsig_ct_CTInitiateArg_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, TRUE, pinfo);
-  offset = dissect_qsig_ct_CTInitiateArg(FALSE, tvb, offset, &asn1_ctx, tree, hf_qsig_ct_qsig_ct_CTInitiateArg_PDU);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, true, pinfo);
+  offset = dissect_qsig_ct_CTInitiateArg(false, tvb, offset, &asn1_ctx, tree, hf_qsig_ct_qsig_ct_CTInitiateArg_PDU);
   return offset;
 }
 static int dissect_qsig_ct_DummyRes_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, TRUE, pinfo);
-  offset = dissect_qsig_ct_DummyRes(FALSE, tvb, offset, &asn1_ctx, tree, hf_qsig_ct_qsig_ct_DummyRes_PDU);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, true, pinfo);
+  offset = dissect_qsig_ct_DummyRes(false, tvb, offset, &asn1_ctx, tree, hf_qsig_ct_qsig_ct_DummyRes_PDU);
   return offset;
 }
 static int dissect_qsig_ct_CTSetupArg_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, TRUE, pinfo);
-  offset = dissect_qsig_ct_CTSetupArg(FALSE, tvb, offset, &asn1_ctx, tree, hf_qsig_ct_qsig_ct_CTSetupArg_PDU);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, true, pinfo);
+  offset = dissect_qsig_ct_CTSetupArg(false, tvb, offset, &asn1_ctx, tree, hf_qsig_ct_qsig_ct_CTSetupArg_PDU);
   return offset;
 }
 static int dissect_qsig_ct_CTActiveArg_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, TRUE, pinfo);
-  offset = dissect_qsig_ct_CTActiveArg(FALSE, tvb, offset, &asn1_ctx, tree, hf_qsig_ct_qsig_ct_CTActiveArg_PDU);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, true, pinfo);
+  offset = dissect_qsig_ct_CTActiveArg(false, tvb, offset, &asn1_ctx, tree, hf_qsig_ct_qsig_ct_CTActiveArg_PDU);
   return offset;
 }
 static int dissect_qsig_ct_CTCompleteArg_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, TRUE, pinfo);
-  offset = dissect_qsig_ct_CTCompleteArg(FALSE, tvb, offset, &asn1_ctx, tree, hf_qsig_ct_qsig_ct_CTCompleteArg_PDU);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, true, pinfo);
+  offset = dissect_qsig_ct_CTCompleteArg(false, tvb, offset, &asn1_ctx, tree, hf_qsig_ct_qsig_ct_CTCompleteArg_PDU);
   return offset;
 }
 static int dissect_qsig_ct_CTUpdateArg_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, TRUE, pinfo);
-  offset = dissect_qsig_ct_CTUpdateArg(FALSE, tvb, offset, &asn1_ctx, tree, hf_qsig_ct_qsig_ct_CTUpdateArg_PDU);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, true, pinfo);
+  offset = dissect_qsig_ct_CTUpdateArg(false, tvb, offset, &asn1_ctx, tree, hf_qsig_ct_qsig_ct_CTUpdateArg_PDU);
   return offset;
 }
 static int dissect_qsig_ct_SubaddressTransferArg_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, TRUE, pinfo);
-  offset = dissect_qsig_ct_SubaddressTransferArg(FALSE, tvb, offset, &asn1_ctx, tree, hf_qsig_ct_qsig_ct_SubaddressTransferArg_PDU);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, true, pinfo);
+  offset = dissect_qsig_ct_SubaddressTransferArg(false, tvb, offset, &asn1_ctx, tree, hf_qsig_ct_qsig_ct_SubaddressTransferArg_PDU);
   return offset;
 }
 static int dissect_qsig_ct_Extension_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, TRUE, pinfo);
-  offset = dissect_qsig_Extension(FALSE, tvb, offset, &asn1_ctx, tree, hf_qsig_ct_qsig_ct_Extension_PDU);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, true, pinfo);
+  offset = dissect_qsig_Extension(false, tvb, offset, &asn1_ctx, tree, hf_qsig_ct_qsig_ct_Extension_PDU);
   return offset;
 }
 
@@ -4119,7 +4119,7 @@ static int dissect_qsig_ct_Extension_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _
 
 
 static int
-dissect_qsig_cc_BOOLEAN(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_cc_BOOLEAN(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_boolean(implicit_tag, actx, tree, tvb, offset, hf_index, NULL);
 
   return offset;
@@ -4128,7 +4128,7 @@ dissect_qsig_cc_BOOLEAN(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset
 
 
 static int
-dissect_qsig_cc_NULL(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_cc_NULL(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_null(implicit_tag, actx, tree, tvb, offset, hf_index);
 
   return offset;
@@ -4140,7 +4140,7 @@ static const ber_sequence_t qsig_cc_SEQUENCE_OF_Extension_sequence_of[1] = {
 };
 
 static int
-dissect_qsig_cc_SEQUENCE_OF_Extension(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_cc_SEQUENCE_OF_Extension(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_sequence_of(implicit_tag, actx, tree, tvb, offset,
                                       qsig_cc_SEQUENCE_OF_Extension_sequence_of, hf_index, ett_qsig_cc_SEQUENCE_OF_Extension);
 
@@ -4163,7 +4163,7 @@ static const ber_choice_t qsig_cc_CcExtension_choice[] = {
 };
 
 static int
-dissect_qsig_cc_CcExtension(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_cc_CcExtension(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_choice(actx, tree, tvb, offset,
                                  qsig_cc_CcExtension_choice, hf_index, ett_qsig_cc_CcExtension,
                                  NULL);
@@ -4185,7 +4185,7 @@ static const ber_sequence_t qsig_cc_CcRequestArg_sequence[] = {
 };
 
 static int
-dissect_qsig_cc_CcRequestArg(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_cc_CcRequestArg(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
                                    qsig_cc_CcRequestArg_sequence, hf_index, ett_qsig_cc_CcRequestArg);
 
@@ -4201,7 +4201,7 @@ static const ber_sequence_t qsig_cc_CcRequestRes_sequence[] = {
 };
 
 static int
-dissect_qsig_cc_CcRequestRes(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_cc_CcRequestRes(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
                                    qsig_cc_CcRequestRes_sequence, hf_index, ett_qsig_cc_CcRequestRes);
 
@@ -4220,7 +4220,7 @@ static const ber_sequence_t qsig_cc_T_fullArg_sequence[] = {
 };
 
 static int
-dissect_qsig_cc_T_fullArg(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_cc_T_fullArg(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
                                    qsig_cc_T_fullArg_sequence, hf_index, ett_qsig_cc_T_fullArg);
 
@@ -4241,7 +4241,7 @@ static const ber_choice_t qsig_cc_CcOptionalArg_choice[] = {
 };
 
 static int
-dissect_qsig_cc_CcOptionalArg(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_cc_CcOptionalArg(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_choice(actx, tree, tvb, offset,
                                  qsig_cc_CcOptionalArg_choice, hf_index, ett_qsig_cc_CcOptionalArg,
                                  NULL);
@@ -4254,36 +4254,36 @@ dissect_qsig_cc_CcOptionalArg(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int 
 static int dissect_qsig_cc_CcRequestArg_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, TRUE, pinfo);
-  offset = dissect_qsig_cc_CcRequestArg(FALSE, tvb, offset, &asn1_ctx, tree, hf_qsig_cc_qsig_cc_CcRequestArg_PDU);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, true, pinfo);
+  offset = dissect_qsig_cc_CcRequestArg(false, tvb, offset, &asn1_ctx, tree, hf_qsig_cc_qsig_cc_CcRequestArg_PDU);
   return offset;
 }
 static int dissect_qsig_cc_CcRequestRes_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, TRUE, pinfo);
-  offset = dissect_qsig_cc_CcRequestRes(FALSE, tvb, offset, &asn1_ctx, tree, hf_qsig_cc_qsig_cc_CcRequestRes_PDU);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, true, pinfo);
+  offset = dissect_qsig_cc_CcRequestRes(false, tvb, offset, &asn1_ctx, tree, hf_qsig_cc_qsig_cc_CcRequestRes_PDU);
   return offset;
 }
 static int dissect_qsig_cc_CcOptionalArg_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, TRUE, pinfo);
-  offset = dissect_qsig_cc_CcOptionalArg(FALSE, tvb, offset, &asn1_ctx, tree, hf_qsig_cc_qsig_cc_CcOptionalArg_PDU);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, true, pinfo);
+  offset = dissect_qsig_cc_CcOptionalArg(false, tvb, offset, &asn1_ctx, tree, hf_qsig_cc_qsig_cc_CcOptionalArg_PDU);
   return offset;
 }
 static int dissect_qsig_cc_CcExtension_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, TRUE, pinfo);
-  offset = dissect_qsig_cc_CcExtension(FALSE, tvb, offset, &asn1_ctx, tree, hf_qsig_cc_qsig_cc_CcExtension_PDU);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, true, pinfo);
+  offset = dissect_qsig_cc_CcExtension(false, tvb, offset, &asn1_ctx, tree, hf_qsig_cc_qsig_cc_CcExtension_PDU);
   return offset;
 }
 static int dissect_qsig_cc_Extension_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, TRUE, pinfo);
-  offset = dissect_qsig_Extension(FALSE, tvb, offset, &asn1_ctx, tree, hf_qsig_cc_qsig_cc_Extension_PDU);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, true, pinfo);
+  offset = dissect_qsig_Extension(false, tvb, offset, &asn1_ctx, tree, hf_qsig_cc_qsig_cc_Extension_PDU);
   return offset;
 }
 
@@ -4297,7 +4297,7 @@ static int * const qsig_co_ServiceList_bits[] = {
 };
 
 static int
-dissect_qsig_co_ServiceList(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_co_ServiceList(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_bitstring(implicit_tag, actx, tree, tvb, offset,
                                     qsig_co_ServiceList_bits, 1, hf_index, ett_qsig_co_ServiceList,
                                     NULL);
@@ -4313,7 +4313,7 @@ static const ber_sequence_t qsig_co_T_extendedServiceList_sequence[] = {
 };
 
 static int
-dissect_qsig_co_T_extendedServiceList(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_co_T_extendedServiceList(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
                                    qsig_co_T_extendedServiceList_sequence, hf_index, ett_qsig_co_T_extendedServiceList);
 
@@ -4334,7 +4334,7 @@ static const ber_choice_t qsig_co_PathRetainArg_choice[] = {
 };
 
 static int
-dissect_qsig_co_PathRetainArg(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_co_PathRetainArg(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_choice(actx, tree, tvb, offset,
                                  qsig_co_PathRetainArg_choice, hf_index, ett_qsig_co_PathRetainArg,
                                  NULL);
@@ -4350,7 +4350,7 @@ static const ber_sequence_t qsig_co_T_extendedServiceList_01_sequence[] = {
 };
 
 static int
-dissect_qsig_co_T_extendedServiceList_01(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_co_T_extendedServiceList_01(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
                                    qsig_co_T_extendedServiceList_01_sequence, hf_index, ett_qsig_co_T_extendedServiceList_01);
 
@@ -4371,7 +4371,7 @@ static const ber_choice_t qsig_co_ServiceAvailableArg_choice[] = {
 };
 
 static int
-dissect_qsig_co_ServiceAvailableArg(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_co_ServiceAvailableArg(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_choice(actx, tree, tvb, offset,
                                  qsig_co_ServiceAvailableArg_choice, hf_index, ett_qsig_co_ServiceAvailableArg,
                                  NULL);
@@ -4382,7 +4382,7 @@ dissect_qsig_co_ServiceAvailableArg(gboolean implicit_tag _U_, tvbuff_t *tvb _U_
 
 
 static int
-dissect_qsig_co_NULL(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_co_NULL(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_null(implicit_tag, actx, tree, tvb, offset, hf_index);
 
   return offset;
@@ -4394,7 +4394,7 @@ static const ber_sequence_t qsig_co_SEQUENCE_OF_Extension_sequence_of[1] = {
 };
 
 static int
-dissect_qsig_co_SEQUENCE_OF_Extension(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_co_SEQUENCE_OF_Extension(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_sequence_of(implicit_tag, actx, tree, tvb, offset,
                                       qsig_co_SEQUENCE_OF_Extension_sequence_of, hf_index, ett_qsig_co_SEQUENCE_OF_Extension);
 
@@ -4417,7 +4417,7 @@ static const ber_choice_t qsig_co_DummyArg_choice[] = {
 };
 
 static int
-dissect_qsig_co_DummyArg(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_co_DummyArg(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_choice(actx, tree, tvb, offset,
                                  qsig_co_DummyArg_choice, hf_index, ett_qsig_co_DummyArg,
                                  NULL);
@@ -4441,7 +4441,7 @@ static const ber_choice_t qsig_co_DummyRes_choice[] = {
 };
 
 static int
-dissect_qsig_co_DummyRes(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_co_DummyRes(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_choice(actx, tree, tvb, offset,
                                  qsig_co_DummyRes_choice, hf_index, ett_qsig_co_DummyRes,
                                  NULL);
@@ -4454,36 +4454,36 @@ dissect_qsig_co_DummyRes(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offse
 static int dissect_qsig_co_PathRetainArg_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, TRUE, pinfo);
-  offset = dissect_qsig_co_PathRetainArg(FALSE, tvb, offset, &asn1_ctx, tree, hf_qsig_co_qsig_co_PathRetainArg_PDU);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, true, pinfo);
+  offset = dissect_qsig_co_PathRetainArg(false, tvb, offset, &asn1_ctx, tree, hf_qsig_co_qsig_co_PathRetainArg_PDU);
   return offset;
 }
 static int dissect_qsig_co_ServiceAvailableArg_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, TRUE, pinfo);
-  offset = dissect_qsig_co_ServiceAvailableArg(FALSE, tvb, offset, &asn1_ctx, tree, hf_qsig_co_qsig_co_ServiceAvailableArg_PDU);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, true, pinfo);
+  offset = dissect_qsig_co_ServiceAvailableArg(false, tvb, offset, &asn1_ctx, tree, hf_qsig_co_qsig_co_ServiceAvailableArg_PDU);
   return offset;
 }
 static int dissect_qsig_co_DummyArg_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, TRUE, pinfo);
-  offset = dissect_qsig_co_DummyArg(FALSE, tvb, offset, &asn1_ctx, tree, hf_qsig_co_qsig_co_DummyArg_PDU);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, true, pinfo);
+  offset = dissect_qsig_co_DummyArg(false, tvb, offset, &asn1_ctx, tree, hf_qsig_co_qsig_co_DummyArg_PDU);
   return offset;
 }
 static int dissect_qsig_co_DummyRes_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, TRUE, pinfo);
-  offset = dissect_qsig_co_DummyRes(FALSE, tvb, offset, &asn1_ctx, tree, hf_qsig_co_qsig_co_DummyRes_PDU);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, true, pinfo);
+  offset = dissect_qsig_co_DummyRes(false, tvb, offset, &asn1_ctx, tree, hf_qsig_co_qsig_co_DummyRes_PDU);
   return offset;
 }
 static int dissect_qsig_co_Extension_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, TRUE, pinfo);
-  offset = dissect_qsig_Extension(FALSE, tvb, offset, &asn1_ctx, tree, hf_qsig_co_qsig_co_Extension_PDU);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, true, pinfo);
+  offset = dissect_qsig_Extension(false, tvb, offset, &asn1_ctx, tree, hf_qsig_co_qsig_co_Extension_PDU);
   return offset;
 }
 
@@ -4493,7 +4493,7 @@ static int dissect_qsig_co_Extension_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _
 
 
 static int
-dissect_qsig_dnd_NULL(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_dnd_NULL(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_null(implicit_tag, actx, tree, tvb, offset, hf_index);
 
   return offset;
@@ -4505,7 +4505,7 @@ static const ber_sequence_t qsig_dnd_SEQUENCE_OF_Extension_sequence_of[1] = {
 };
 
 static int
-dissect_qsig_dnd_SEQUENCE_OF_Extension(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_dnd_SEQUENCE_OF_Extension(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_sequence_of(implicit_tag, actx, tree, tvb, offset,
                                       qsig_dnd_SEQUENCE_OF_Extension_sequence_of, hf_index, ett_qsig_dnd_SEQUENCE_OF_Extension);
 
@@ -4528,7 +4528,7 @@ static const ber_choice_t qsig_dnd_DummyArg_choice[] = {
 };
 
 static int
-dissect_qsig_dnd_DummyArg(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_dnd_DummyArg(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_choice(actx, tree, tvb, offset,
                                  qsig_dnd_DummyArg_choice, hf_index, ett_qsig_dnd_DummyArg,
                                  NULL);
@@ -4552,7 +4552,7 @@ static const ber_choice_t qsig_dnd_DummyRes_choice[] = {
 };
 
 static int
-dissect_qsig_dnd_DummyRes(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_dnd_DummyRes(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_choice(actx, tree, tvb, offset,
                                  qsig_dnd_DummyRes_choice, hf_index, ett_qsig_dnd_DummyRes,
                                  NULL);
@@ -4574,7 +4574,7 @@ static const ber_choice_t qsig_dnd_DNDAargumentExtension_choice[] = {
 };
 
 static int
-dissect_qsig_dnd_DNDAargumentExtension(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_dnd_DNDAargumentExtension(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_choice(actx, tree, tvb, offset,
                                  qsig_dnd_DNDAargumentExtension_choice, hf_index, ett_qsig_dnd_DNDAargumentExtension,
                                  NULL);
@@ -4591,7 +4591,7 @@ static const ber_sequence_t qsig_dnd_DNDActivateArg_sequence[] = {
 };
 
 static int
-dissect_qsig_dnd_DNDActivateArg(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_dnd_DNDActivateArg(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
                                    qsig_dnd_DNDActivateArg_sequence, hf_index, ett_qsig_dnd_DNDActivateArg);
 
@@ -4609,7 +4609,7 @@ static const value_string qsig_dnd_DNDProtectionLevel_vals[] = {
 
 
 static int
-dissect_qsig_dnd_DNDProtectionLevel(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_dnd_DNDProtectionLevel(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_integer(implicit_tag, actx, tree, tvb, offset, hf_index,
                                   NULL);
 
@@ -4624,7 +4624,7 @@ static const ber_sequence_t qsig_dnd_T_status_item_sequence[] = {
 };
 
 static int
-dissect_qsig_dnd_T_status_item(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_dnd_T_status_item(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
                                    qsig_dnd_T_status_item_sequence, hf_index, ett_qsig_dnd_T_status_item);
 
@@ -4637,7 +4637,7 @@ static const ber_sequence_t qsig_dnd_T_status_set_of[1] = {
 };
 
 static int
-dissect_qsig_dnd_T_status(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_dnd_T_status(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_set_of(implicit_tag, actx, tree, tvb, offset,
                                  qsig_dnd_T_status_set_of, hf_index, ett_qsig_dnd_T_status);
 
@@ -4658,7 +4658,7 @@ static const ber_choice_t qsig_dnd_T_resultExtension_choice[] = {
 };
 
 static int
-dissect_qsig_dnd_T_resultExtension(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_dnd_T_resultExtension(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_choice(actx, tree, tvb, offset,
                                  qsig_dnd_T_resultExtension_choice, hf_index, ett_qsig_dnd_T_resultExtension,
                                  NULL);
@@ -4674,7 +4674,7 @@ static const ber_sequence_t qsig_dnd_DNDActivateRes_sequence[] = {
 };
 
 static int
-dissect_qsig_dnd_DNDActivateRes(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_dnd_DNDActivateRes(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
                                    qsig_dnd_DNDActivateRes_sequence, hf_index, ett_qsig_dnd_DNDActivateRes);
 
@@ -4695,7 +4695,7 @@ static const ber_choice_t qsig_dnd_DNDDargumentExtension_choice[] = {
 };
 
 static int
-dissect_qsig_dnd_DNDDargumentExtension(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_dnd_DNDDargumentExtension(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_choice(actx, tree, tvb, offset,
                                  qsig_dnd_DNDDargumentExtension_choice, hf_index, ett_qsig_dnd_DNDDargumentExtension,
                                  NULL);
@@ -4712,7 +4712,7 @@ static const ber_sequence_t qsig_dnd_DNDDeactivateArg_sequence[] = {
 };
 
 static int
-dissect_qsig_dnd_DNDDeactivateArg(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_dnd_DNDDeactivateArg(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
                                    qsig_dnd_DNDDeactivateArg_sequence, hf_index, ett_qsig_dnd_DNDDeactivateArg);
 
@@ -4733,7 +4733,7 @@ static const ber_choice_t qsig_dnd_DNDIargumentExtension_choice[] = {
 };
 
 static int
-dissect_qsig_dnd_DNDIargumentExtension(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_dnd_DNDIargumentExtension(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_choice(actx, tree, tvb, offset,
                                  qsig_dnd_DNDIargumentExtension_choice, hf_index, ett_qsig_dnd_DNDIargumentExtension,
                                  NULL);
@@ -4749,7 +4749,7 @@ static const ber_sequence_t qsig_dnd_DNDInterrogateArg_sequence[] = {
 };
 
 static int
-dissect_qsig_dnd_DNDInterrogateArg(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_dnd_DNDInterrogateArg(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
                                    qsig_dnd_DNDInterrogateArg_sequence, hf_index, ett_qsig_dnd_DNDInterrogateArg);
 
@@ -4764,7 +4764,7 @@ static const ber_sequence_t qsig_dnd_T_status_item_01_sequence[] = {
 };
 
 static int
-dissect_qsig_dnd_T_status_item_01(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_dnd_T_status_item_01(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
                                    qsig_dnd_T_status_item_01_sequence, hf_index, ett_qsig_dnd_T_status_item_01);
 
@@ -4777,7 +4777,7 @@ static const ber_sequence_t qsig_dnd_T_status_01_set_of[1] = {
 };
 
 static int
-dissect_qsig_dnd_T_status_01(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_dnd_T_status_01(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_set_of(implicit_tag, actx, tree, tvb, offset,
                                  qsig_dnd_T_status_01_set_of, hf_index, ett_qsig_dnd_T_status_01);
 
@@ -4798,7 +4798,7 @@ static const ber_choice_t qsig_dnd_T_resultExtension_01_choice[] = {
 };
 
 static int
-dissect_qsig_dnd_T_resultExtension_01(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_dnd_T_resultExtension_01(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_choice(actx, tree, tvb, offset,
                                  qsig_dnd_T_resultExtension_01_choice, hf_index, ett_qsig_dnd_T_resultExtension_01,
                                  NULL);
@@ -4814,7 +4814,7 @@ static const ber_sequence_t qsig_dnd_DNDInterrogateRes_sequence[] = {
 };
 
 static int
-dissect_qsig_dnd_DNDInterrogateRes(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_dnd_DNDInterrogateRes(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
                                    qsig_dnd_DNDInterrogateRes_sequence, hf_index, ett_qsig_dnd_DNDInterrogateRes);
 
@@ -4831,7 +4831,7 @@ static const value_string qsig_dnd_DNDOCapabilityLevel_vals[] = {
 
 
 static int
-dissect_qsig_dnd_DNDOCapabilityLevel(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_dnd_DNDOCapabilityLevel(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_integer(implicit_tag, actx, tree, tvb, offset, hf_index,
                                   NULL);
 
@@ -4852,7 +4852,7 @@ static const ber_choice_t qsig_dnd_DNDOargumentExtension_choice[] = {
 };
 
 static int
-dissect_qsig_dnd_DNDOargumentExtension(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_dnd_DNDOargumentExtension(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_choice(actx, tree, tvb, offset,
                                  qsig_dnd_DNDOargumentExtension_choice, hf_index, ett_qsig_dnd_DNDOargumentExtension,
                                  NULL);
@@ -4868,7 +4868,7 @@ static const ber_sequence_t qsig_dnd_DNDOverrideArg_sequence[] = {
 };
 
 static int
-dissect_qsig_dnd_DNDOverrideArg(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_dnd_DNDOverrideArg(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
                                    qsig_dnd_DNDOverrideArg_sequence, hf_index, ett_qsig_dnd_DNDOverrideArg);
 
@@ -4885,7 +4885,7 @@ static int * const qsig_dnd_ServiceList_bits[] = {
 };
 
 static int
-dissect_qsig_dnd_ServiceList(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_dnd_ServiceList(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_bitstring(implicit_tag, actx, tree, tvb, offset,
                                     qsig_dnd_ServiceList_bits, 4, hf_index, ett_qsig_dnd_ServiceList,
                                     NULL);
@@ -4901,7 +4901,7 @@ static const ber_sequence_t qsig_dnd_T_extendedServiceList_sequence[] = {
 };
 
 static int
-dissect_qsig_dnd_T_extendedServiceList(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_dnd_T_extendedServiceList(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
                                    qsig_dnd_T_extendedServiceList_sequence, hf_index, ett_qsig_dnd_T_extendedServiceList);
 
@@ -4922,7 +4922,7 @@ static const ber_choice_t qsig_dnd_PathRetainArg_choice[] = {
 };
 
 static int
-dissect_qsig_dnd_PathRetainArg(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_dnd_PathRetainArg(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_choice(actx, tree, tvb, offset,
                                  qsig_dnd_PathRetainArg_choice, hf_index, ett_qsig_dnd_PathRetainArg,
                                  NULL);
@@ -4938,7 +4938,7 @@ static const ber_sequence_t qsig_dnd_T_extendedServiceList_01_sequence[] = {
 };
 
 static int
-dissect_qsig_dnd_T_extendedServiceList_01(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_dnd_T_extendedServiceList_01(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
                                    qsig_dnd_T_extendedServiceList_01_sequence, hf_index, ett_qsig_dnd_T_extendedServiceList_01);
 
@@ -4959,7 +4959,7 @@ static const ber_choice_t qsig_dnd_ServiceAvailableArg_choice[] = {
 };
 
 static int
-dissect_qsig_dnd_ServiceAvailableArg(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_dnd_ServiceAvailableArg(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_choice(actx, tree, tvb, offset,
                                  qsig_dnd_ServiceAvailableArg_choice, hf_index, ett_qsig_dnd_ServiceAvailableArg,
                                  NULL);
@@ -4972,78 +4972,78 @@ dissect_qsig_dnd_ServiceAvailableArg(gboolean implicit_tag _U_, tvbuff_t *tvb _U
 static int dissect_qsig_dnd_DNDActivateArg_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, TRUE, pinfo);
-  offset = dissect_qsig_dnd_DNDActivateArg(FALSE, tvb, offset, &asn1_ctx, tree, hf_qsig_dnd_qsig_dnd_DNDActivateArg_PDU);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, true, pinfo);
+  offset = dissect_qsig_dnd_DNDActivateArg(false, tvb, offset, &asn1_ctx, tree, hf_qsig_dnd_qsig_dnd_DNDActivateArg_PDU);
   return offset;
 }
 static int dissect_qsig_dnd_DNDActivateRes_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, TRUE, pinfo);
-  offset = dissect_qsig_dnd_DNDActivateRes(FALSE, tvb, offset, &asn1_ctx, tree, hf_qsig_dnd_qsig_dnd_DNDActivateRes_PDU);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, true, pinfo);
+  offset = dissect_qsig_dnd_DNDActivateRes(false, tvb, offset, &asn1_ctx, tree, hf_qsig_dnd_qsig_dnd_DNDActivateRes_PDU);
   return offset;
 }
 static int dissect_qsig_dnd_DNDDeactivateArg_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, TRUE, pinfo);
-  offset = dissect_qsig_dnd_DNDDeactivateArg(FALSE, tvb, offset, &asn1_ctx, tree, hf_qsig_dnd_qsig_dnd_DNDDeactivateArg_PDU);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, true, pinfo);
+  offset = dissect_qsig_dnd_DNDDeactivateArg(false, tvb, offset, &asn1_ctx, tree, hf_qsig_dnd_qsig_dnd_DNDDeactivateArg_PDU);
   return offset;
 }
 static int dissect_qsig_dnd_DummyRes_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, TRUE, pinfo);
-  offset = dissect_qsig_dnd_DummyRes(FALSE, tvb, offset, &asn1_ctx, tree, hf_qsig_dnd_qsig_dnd_DummyRes_PDU);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, true, pinfo);
+  offset = dissect_qsig_dnd_DummyRes(false, tvb, offset, &asn1_ctx, tree, hf_qsig_dnd_qsig_dnd_DummyRes_PDU);
   return offset;
 }
 static int dissect_qsig_dnd_DNDInterrogateArg_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, TRUE, pinfo);
-  offset = dissect_qsig_dnd_DNDInterrogateArg(FALSE, tvb, offset, &asn1_ctx, tree, hf_qsig_dnd_qsig_dnd_DNDInterrogateArg_PDU);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, true, pinfo);
+  offset = dissect_qsig_dnd_DNDInterrogateArg(false, tvb, offset, &asn1_ctx, tree, hf_qsig_dnd_qsig_dnd_DNDInterrogateArg_PDU);
   return offset;
 }
 static int dissect_qsig_dnd_DNDInterrogateRes_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, TRUE, pinfo);
-  offset = dissect_qsig_dnd_DNDInterrogateRes(FALSE, tvb, offset, &asn1_ctx, tree, hf_qsig_dnd_qsig_dnd_DNDInterrogateRes_PDU);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, true, pinfo);
+  offset = dissect_qsig_dnd_DNDInterrogateRes(false, tvb, offset, &asn1_ctx, tree, hf_qsig_dnd_qsig_dnd_DNDInterrogateRes_PDU);
   return offset;
 }
 static int dissect_qsig_dnd_DNDOverrideArg_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, TRUE, pinfo);
-  offset = dissect_qsig_dnd_DNDOverrideArg(FALSE, tvb, offset, &asn1_ctx, tree, hf_qsig_dnd_qsig_dnd_DNDOverrideArg_PDU);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, true, pinfo);
+  offset = dissect_qsig_dnd_DNDOverrideArg(false, tvb, offset, &asn1_ctx, tree, hf_qsig_dnd_qsig_dnd_DNDOverrideArg_PDU);
   return offset;
 }
 static int dissect_qsig_dnd_PathRetainArg_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, TRUE, pinfo);
-  offset = dissect_qsig_dnd_PathRetainArg(FALSE, tvb, offset, &asn1_ctx, tree, hf_qsig_dnd_qsig_dnd_PathRetainArg_PDU);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, true, pinfo);
+  offset = dissect_qsig_dnd_PathRetainArg(false, tvb, offset, &asn1_ctx, tree, hf_qsig_dnd_qsig_dnd_PathRetainArg_PDU);
   return offset;
 }
 static int dissect_qsig_dnd_ServiceAvailableArg_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, TRUE, pinfo);
-  offset = dissect_qsig_dnd_ServiceAvailableArg(FALSE, tvb, offset, &asn1_ctx, tree, hf_qsig_dnd_qsig_dnd_ServiceAvailableArg_PDU);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, true, pinfo);
+  offset = dissect_qsig_dnd_ServiceAvailableArg(false, tvb, offset, &asn1_ctx, tree, hf_qsig_dnd_qsig_dnd_ServiceAvailableArg_PDU);
   return offset;
 }
 static int dissect_qsig_dnd_DummyArg_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, TRUE, pinfo);
-  offset = dissect_qsig_dnd_DummyArg(FALSE, tvb, offset, &asn1_ctx, tree, hf_qsig_dnd_qsig_dnd_DummyArg_PDU);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, true, pinfo);
+  offset = dissect_qsig_dnd_DummyArg(false, tvb, offset, &asn1_ctx, tree, hf_qsig_dnd_qsig_dnd_DummyArg_PDU);
   return offset;
 }
 static int dissect_qsig_dnd_Extension_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, TRUE, pinfo);
-  offset = dissect_qsig_Extension(FALSE, tvb, offset, &asn1_ctx, tree, hf_qsig_dnd_qsig_dnd_Extension_PDU);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, true, pinfo);
+  offset = dissect_qsig_Extension(false, tvb, offset, &asn1_ctx, tree, hf_qsig_dnd_qsig_dnd_Extension_PDU);
   return offset;
 }
 
@@ -5063,7 +5063,7 @@ static int * const qsig_ci_ServiceList_bits[] = {
 };
 
 static int
-dissect_qsig_ci_ServiceList(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_ci_ServiceList(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_bitstring(implicit_tag, actx, tree, tvb, offset,
                                     qsig_ci_ServiceList_bits, 7, hf_index, ett_qsig_ci_ServiceList,
                                     NULL);
@@ -5079,7 +5079,7 @@ static const ber_sequence_t qsig_ci_T_extendedServiceList_sequence[] = {
 };
 
 static int
-dissect_qsig_ci_T_extendedServiceList(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_ci_T_extendedServiceList(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
                                    qsig_ci_T_extendedServiceList_sequence, hf_index, ett_qsig_ci_T_extendedServiceList);
 
@@ -5100,7 +5100,7 @@ static const ber_choice_t qsig_ci_PathRetainArg_choice[] = {
 };
 
 static int
-dissect_qsig_ci_PathRetainArg(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_ci_PathRetainArg(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_choice(actx, tree, tvb, offset,
                                  qsig_ci_PathRetainArg_choice, hf_index, ett_qsig_ci_PathRetainArg,
                                  NULL);
@@ -5116,7 +5116,7 @@ static const ber_sequence_t qsig_ci_T_extendedServiceList_01_sequence[] = {
 };
 
 static int
-dissect_qsig_ci_T_extendedServiceList_01(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_ci_T_extendedServiceList_01(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
                                    qsig_ci_T_extendedServiceList_01_sequence, hf_index, ett_qsig_ci_T_extendedServiceList_01);
 
@@ -5137,7 +5137,7 @@ static const ber_choice_t qsig_ci_ServiceAvailableArg_choice[] = {
 };
 
 static int
-dissect_qsig_ci_ServiceAvailableArg(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_ci_ServiceAvailableArg(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_choice(actx, tree, tvb, offset,
                                  qsig_ci_ServiceAvailableArg_choice, hf_index, ett_qsig_ci_ServiceAvailableArg,
                                  NULL);
@@ -5148,7 +5148,7 @@ dissect_qsig_ci_ServiceAvailableArg(gboolean implicit_tag _U_, tvbuff_t *tvb _U_
 
 
 static int
-dissect_qsig_ci_NULL(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_ci_NULL(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_null(implicit_tag, actx, tree, tvb, offset, hf_index);
 
   return offset;
@@ -5160,7 +5160,7 @@ static const ber_sequence_t qsig_ci_SEQUENCE_OF_Extension_sequence_of[1] = {
 };
 
 static int
-dissect_qsig_ci_SEQUENCE_OF_Extension(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_ci_SEQUENCE_OF_Extension(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_sequence_of(implicit_tag, actx, tree, tvb, offset,
                                       qsig_ci_SEQUENCE_OF_Extension_sequence_of, hf_index, ett_qsig_ci_SEQUENCE_OF_Extension);
 
@@ -5183,7 +5183,7 @@ static const ber_choice_t qsig_ci_DummyArg_choice[] = {
 };
 
 static int
-dissect_qsig_ci_DummyArg(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_ci_DummyArg(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_choice(actx, tree, tvb, offset,
                                  qsig_ci_DummyArg_choice, hf_index, ett_qsig_ci_DummyArg,
                                  NULL);
@@ -5207,7 +5207,7 @@ static const ber_choice_t qsig_ci_DummyRes_choice[] = {
 };
 
 static int
-dissect_qsig_ci_DummyRes(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_ci_DummyRes(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_choice(actx, tree, tvb, offset,
                                  qsig_ci_DummyRes_choice, hf_index, ett_qsig_ci_DummyRes,
                                  NULL);
@@ -5225,7 +5225,7 @@ static const value_string qsig_ci_CICapabilityLevel_vals[] = {
 
 
 static int
-dissect_qsig_ci_CICapabilityLevel(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_ci_CICapabilityLevel(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_integer(implicit_tag, actx, tree, tvb, offset, hf_index,
                                   NULL);
 
@@ -5246,7 +5246,7 @@ static const ber_choice_t qsig_ci_T_argumentExtension_choice[] = {
 };
 
 static int
-dissect_qsig_ci_T_argumentExtension(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_ci_T_argumentExtension(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_choice(actx, tree, tvb, offset,
                                  qsig_ci_T_argumentExtension_choice, hf_index, ett_qsig_ci_T_argumentExtension,
                                  NULL);
@@ -5262,7 +5262,7 @@ static const ber_sequence_t qsig_ci_CIRequestArg_sequence[] = {
 };
 
 static int
-dissect_qsig_ci_CIRequestArg(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_ci_CIRequestArg(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
                                    qsig_ci_CIRequestArg_sequence, hf_index, ett_qsig_ci_CIRequestArg);
 
@@ -5278,7 +5278,7 @@ static const value_string qsig_ci_CIUnwantedUserStatus_vals[] = {
 
 
 static int
-dissect_qsig_ci_CIUnwantedUserStatus(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_ci_CIUnwantedUserStatus(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_integer(implicit_tag, actx, tree, tvb, offset, hf_index,
                                   NULL);
 
@@ -5299,7 +5299,7 @@ static const ber_choice_t qsig_ci_T_resultExtension_choice[] = {
 };
 
 static int
-dissect_qsig_ci_T_resultExtension(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_ci_T_resultExtension(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_choice(actx, tree, tvb, offset,
                                  qsig_ci_T_resultExtension_choice, hf_index, ett_qsig_ci_T_resultExtension,
                                  NULL);
@@ -5315,7 +5315,7 @@ static const ber_sequence_t qsig_ci_CIRequestRes_sequence[] = {
 };
 
 static int
-dissect_qsig_ci_CIRequestRes(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_ci_CIRequestRes(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
                                    qsig_ci_CIRequestRes_sequence, hf_index, ett_qsig_ci_CIRequestRes);
 
@@ -5333,7 +5333,7 @@ static const value_string qsig_ci_CIProtectionLevel_vals[] = {
 
 
 static int
-dissect_qsig_ci_CIProtectionLevel(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_ci_CIProtectionLevel(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_integer(implicit_tag, actx, tree, tvb, offset, hf_index,
                                   NULL);
 
@@ -5354,7 +5354,7 @@ static const ber_choice_t qsig_ci_T_resultExtension_01_choice[] = {
 };
 
 static int
-dissect_qsig_ci_T_resultExtension_01(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_ci_T_resultExtension_01(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_choice(actx, tree, tvb, offset,
                                  qsig_ci_T_resultExtension_01_choice, hf_index, ett_qsig_ci_T_resultExtension_01,
                                  NULL);
@@ -5370,7 +5370,7 @@ static const ber_sequence_t qsig_ci_CIGetCIPLRes_sequence[] = {
 };
 
 static int
-dissect_qsig_ci_CIGetCIPLRes(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_ci_CIGetCIPLRes(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
                                    qsig_ci_CIGetCIPLRes_sequence, hf_index, ett_qsig_ci_CIGetCIPLRes);
 
@@ -5382,57 +5382,57 @@ dissect_qsig_ci_CIGetCIPLRes(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int o
 static int dissect_qsig_ci_PathRetainArg_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, TRUE, pinfo);
-  offset = dissect_qsig_ci_PathRetainArg(FALSE, tvb, offset, &asn1_ctx, tree, hf_qsig_ci_qsig_ci_PathRetainArg_PDU);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, true, pinfo);
+  offset = dissect_qsig_ci_PathRetainArg(false, tvb, offset, &asn1_ctx, tree, hf_qsig_ci_qsig_ci_PathRetainArg_PDU);
   return offset;
 }
 static int dissect_qsig_ci_ServiceAvailableArg_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, TRUE, pinfo);
-  offset = dissect_qsig_ci_ServiceAvailableArg(FALSE, tvb, offset, &asn1_ctx, tree, hf_qsig_ci_qsig_ci_ServiceAvailableArg_PDU);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, true, pinfo);
+  offset = dissect_qsig_ci_ServiceAvailableArg(false, tvb, offset, &asn1_ctx, tree, hf_qsig_ci_qsig_ci_ServiceAvailableArg_PDU);
   return offset;
 }
 static int dissect_qsig_ci_CIRequestArg_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, TRUE, pinfo);
-  offset = dissect_qsig_ci_CIRequestArg(FALSE, tvb, offset, &asn1_ctx, tree, hf_qsig_ci_qsig_ci_CIRequestArg_PDU);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, true, pinfo);
+  offset = dissect_qsig_ci_CIRequestArg(false, tvb, offset, &asn1_ctx, tree, hf_qsig_ci_qsig_ci_CIRequestArg_PDU);
   return offset;
 }
 static int dissect_qsig_ci_CIRequestRes_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, TRUE, pinfo);
-  offset = dissect_qsig_ci_CIRequestRes(FALSE, tvb, offset, &asn1_ctx, tree, hf_qsig_ci_qsig_ci_CIRequestRes_PDU);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, true, pinfo);
+  offset = dissect_qsig_ci_CIRequestRes(false, tvb, offset, &asn1_ctx, tree, hf_qsig_ci_qsig_ci_CIRequestRes_PDU);
   return offset;
 }
 static int dissect_qsig_ci_DummyArg_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, TRUE, pinfo);
-  offset = dissect_qsig_ci_DummyArg(FALSE, tvb, offset, &asn1_ctx, tree, hf_qsig_ci_qsig_ci_DummyArg_PDU);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, true, pinfo);
+  offset = dissect_qsig_ci_DummyArg(false, tvb, offset, &asn1_ctx, tree, hf_qsig_ci_qsig_ci_DummyArg_PDU);
   return offset;
 }
 static int dissect_qsig_ci_CIGetCIPLRes_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, TRUE, pinfo);
-  offset = dissect_qsig_ci_CIGetCIPLRes(FALSE, tvb, offset, &asn1_ctx, tree, hf_qsig_ci_qsig_ci_CIGetCIPLRes_PDU);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, true, pinfo);
+  offset = dissect_qsig_ci_CIGetCIPLRes(false, tvb, offset, &asn1_ctx, tree, hf_qsig_ci_qsig_ci_CIGetCIPLRes_PDU);
   return offset;
 }
 static int dissect_qsig_ci_DummyRes_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, TRUE, pinfo);
-  offset = dissect_qsig_ci_DummyRes(FALSE, tvb, offset, &asn1_ctx, tree, hf_qsig_ci_qsig_ci_DummyRes_PDU);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, true, pinfo);
+  offset = dissect_qsig_ci_DummyRes(false, tvb, offset, &asn1_ctx, tree, hf_qsig_ci_qsig_ci_DummyRes_PDU);
   return offset;
 }
 static int dissect_qsig_ci_Extension_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, TRUE, pinfo);
-  offset = dissect_qsig_Extension(FALSE, tvb, offset, &asn1_ctx, tree, hf_qsig_ci_qsig_ci_Extension_PDU);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, true, pinfo);
+  offset = dissect_qsig_Extension(false, tvb, offset, &asn1_ctx, tree, hf_qsig_ci_qsig_ci_Extension_PDU);
   return offset;
 }
 
@@ -5442,7 +5442,7 @@ static int dissect_qsig_ci_Extension_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _
 
 
 static int
-dissect_qsig_aoc_NULL(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_aoc_NULL(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_null(implicit_tag, actx, tree, tvb, offset, hf_index);
 
   return offset;
@@ -5460,7 +5460,7 @@ static const value_string qsig_aoc_ChargedItem_vals[] = {
 
 
 static int
-dissect_qsig_aoc_ChargedItem(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_aoc_ChargedItem(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_integer(implicit_tag, actx, tree, tvb, offset, hf_index,
                                   NULL);
 
@@ -5470,7 +5470,7 @@ dissect_qsig_aoc_ChargedItem(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int o
 
 
 static int
-dissect_qsig_aoc_Currency(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_aoc_Currency(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_restricted_string(implicit_tag, BER_UNI_TAG_IA5String,
                                             actx, tree, tvb, offset, hf_index,
                                             NULL);
@@ -5481,7 +5481,7 @@ dissect_qsig_aoc_Currency(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offs
 
 
 static int
-dissect_qsig_aoc_CurrencyAmount(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_aoc_CurrencyAmount(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_integer(implicit_tag, actx, tree, tvb, offset, hf_index,
                                                 NULL);
 
@@ -5502,7 +5502,7 @@ static const value_string qsig_aoc_Multiplier_vals[] = {
 
 
 static int
-dissect_qsig_aoc_Multiplier(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_aoc_Multiplier(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_integer(implicit_tag, actx, tree, tvb, offset, hf_index,
                                   NULL);
 
@@ -5517,7 +5517,7 @@ static const ber_sequence_t qsig_aoc_Amount_sequence[] = {
 };
 
 static int
-dissect_qsig_aoc_Amount(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_aoc_Amount(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
                                    qsig_aoc_Amount_sequence, hf_index, ett_qsig_aoc_Amount);
 
@@ -5533,7 +5533,7 @@ static const value_string qsig_aoc_ChargingType_vals[] = {
 
 
 static int
-dissect_qsig_aoc_ChargingType(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_aoc_ChargingType(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_integer(implicit_tag, actx, tree, tvb, offset, hf_index,
                                   NULL);
 
@@ -5543,7 +5543,7 @@ dissect_qsig_aoc_ChargingType(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int 
 
 
 static int
-dissect_qsig_aoc_LengthOfTimeUnit(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_aoc_LengthOfTimeUnit(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_integer(implicit_tag, actx, tree, tvb, offset, hf_index,
                                                 NULL);
 
@@ -5564,7 +5564,7 @@ static const value_string qsig_aoc_Scale_vals[] = {
 
 
 static int
-dissect_qsig_aoc_Scale(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_aoc_Scale(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_integer(implicit_tag, actx, tree, tvb, offset, hf_index,
                                   NULL);
 
@@ -5579,7 +5579,7 @@ static const ber_sequence_t qsig_aoc_Time_sequence[] = {
 };
 
 static int
-dissect_qsig_aoc_Time(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_aoc_Time(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
                                    qsig_aoc_Time_sequence, hf_index, ett_qsig_aoc_Time);
 
@@ -5597,7 +5597,7 @@ static const ber_sequence_t qsig_aoc_DurationCurrency_sequence[] = {
 };
 
 static int
-dissect_qsig_aoc_DurationCurrency(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_aoc_DurationCurrency(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
                                    qsig_aoc_DurationCurrency_sequence, hf_index, ett_qsig_aoc_DurationCurrency);
 
@@ -5612,7 +5612,7 @@ static const ber_sequence_t qsig_aoc_FlatRateCurrency_sequence[] = {
 };
 
 static int
-dissect_qsig_aoc_FlatRateCurrency(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_aoc_FlatRateCurrency(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
                                    qsig_aoc_FlatRateCurrency_sequence, hf_index, ett_qsig_aoc_FlatRateCurrency);
 
@@ -5629,7 +5629,7 @@ static const value_string qsig_aoc_VolumeUnit_vals[] = {
 
 
 static int
-dissect_qsig_aoc_VolumeUnit(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_aoc_VolumeUnit(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_integer(implicit_tag, actx, tree, tvb, offset, hf_index,
                                   NULL);
 
@@ -5645,7 +5645,7 @@ static const ber_sequence_t qsig_aoc_VolumeRateCurrency_sequence[] = {
 };
 
 static int
-dissect_qsig_aoc_VolumeRateCurrency(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_aoc_VolumeRateCurrency(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
                                    qsig_aoc_VolumeRateCurrency_sequence, hf_index, ett_qsig_aoc_VolumeRateCurrency);
 
@@ -5655,7 +5655,7 @@ dissect_qsig_aoc_VolumeRateCurrency(gboolean implicit_tag _U_, tvbuff_t *tvb _U_
 
 
 static int
-dissect_qsig_aoc_SpecialChargingCode(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_aoc_SpecialChargingCode(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_integer(implicit_tag, actx, tree, tvb, offset, hf_index,
                                                 NULL);
 
@@ -5686,7 +5686,7 @@ static const ber_choice_t qsig_aoc_T_rateType_choice[] = {
 };
 
 static int
-dissect_qsig_aoc_T_rateType(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_aoc_T_rateType(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_choice(actx, tree, tvb, offset,
                                  qsig_aoc_T_rateType_choice, hf_index, ett_qsig_aoc_T_rateType,
                                  NULL);
@@ -5702,7 +5702,7 @@ static const ber_sequence_t qsig_aoc_AOCSCurrencyInfo_sequence[] = {
 };
 
 static int
-dissect_qsig_aoc_AOCSCurrencyInfo(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_aoc_AOCSCurrencyInfo(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
                                    qsig_aoc_AOCSCurrencyInfo_sequence, hf_index, ett_qsig_aoc_AOCSCurrencyInfo);
 
@@ -5715,7 +5715,7 @@ static const ber_sequence_t qsig_aoc_AOCSCurrencyInfoList_sequence_of[1] = {
 };
 
 static int
-dissect_qsig_aoc_AOCSCurrencyInfoList(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_aoc_AOCSCurrencyInfoList(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_sequence_of(implicit_tag, actx, tree, tvb, offset,
                                       qsig_aoc_AOCSCurrencyInfoList_sequence_of, hf_index, ett_qsig_aoc_AOCSCurrencyInfoList);
 
@@ -5736,7 +5736,7 @@ static const ber_choice_t qsig_aoc_T_aocRate_choice[] = {
 };
 
 static int
-dissect_qsig_aoc_T_aocRate(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_aoc_T_aocRate(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_choice(actx, tree, tvb, offset,
                                  qsig_aoc_T_aocRate_choice, hf_index, ett_qsig_aoc_T_aocRate,
                                  NULL);
@@ -5750,7 +5750,7 @@ static const ber_sequence_t qsig_aoc_SEQUENCE_OF_Extension_sequence_of[1] = {
 };
 
 static int
-dissect_qsig_aoc_SEQUENCE_OF_Extension(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_aoc_SEQUENCE_OF_Extension(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_sequence_of(implicit_tag, actx, tree, tvb, offset,
                                       qsig_aoc_SEQUENCE_OF_Extension_sequence_of, hf_index, ett_qsig_aoc_SEQUENCE_OF_Extension);
 
@@ -5771,7 +5771,7 @@ static const ber_choice_t qsig_aoc_T_rateArgExtension_choice[] = {
 };
 
 static int
-dissect_qsig_aoc_T_rateArgExtension(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_aoc_T_rateArgExtension(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_choice(actx, tree, tvb, offset,
                                  qsig_aoc_T_rateArgExtension_choice, hf_index, ett_qsig_aoc_T_rateArgExtension,
                                  NULL);
@@ -5787,7 +5787,7 @@ static const ber_sequence_t qsig_aoc_AocRateArg_sequence[] = {
 };
 
 static int
-dissect_qsig_aoc_AocRateArg(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_aoc_AocRateArg(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
                                    qsig_aoc_AocRateArg_sequence, hf_index, ett_qsig_aoc_AocRateArg);
 
@@ -5802,7 +5802,7 @@ static const ber_sequence_t qsig_aoc_RecordedCurrency_sequence[] = {
 };
 
 static int
-dissect_qsig_aoc_RecordedCurrency(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_aoc_RecordedCurrency(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
                                    qsig_aoc_RecordedCurrency_sequence, hf_index, ett_qsig_aoc_RecordedCurrency);
 
@@ -5818,7 +5818,7 @@ static const value_string qsig_aoc_InterimBillingId_vals[] = {
 
 
 static int
-dissect_qsig_aoc_InterimBillingId(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_aoc_InterimBillingId(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_integer(implicit_tag, actx, tree, tvb, offset, hf_index,
                                   NULL);
 
@@ -5833,7 +5833,7 @@ static const ber_sequence_t qsig_aoc_T_specificCurrency_sequence[] = {
 };
 
 static int
-dissect_qsig_aoc_T_specificCurrency(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_aoc_T_specificCurrency(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
                                    qsig_aoc_T_specificCurrency_sequence, hf_index, ett_qsig_aoc_T_specificCurrency);
 
@@ -5856,7 +5856,7 @@ static const ber_choice_t qsig_aoc_T_interimCharge_choice[] = {
 };
 
 static int
-dissect_qsig_aoc_T_interimCharge(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_aoc_T_interimCharge(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_choice(actx, tree, tvb, offset,
                                  qsig_aoc_T_interimCharge_choice, hf_index, ett_qsig_aoc_T_interimCharge,
                                  NULL);
@@ -5878,7 +5878,7 @@ static const ber_choice_t qsig_aoc_T_interimArgExtension_choice[] = {
 };
 
 static int
-dissect_qsig_aoc_T_interimArgExtension(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_aoc_T_interimArgExtension(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_choice(actx, tree, tvb, offset,
                                  qsig_aoc_T_interimArgExtension_choice, hf_index, ett_qsig_aoc_T_interimArgExtension,
                                  NULL);
@@ -5894,7 +5894,7 @@ static const ber_sequence_t qsig_aoc_AocInterimArg_sequence[] = {
 };
 
 static int
-dissect_qsig_aoc_AocInterimArg(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_aoc_AocInterimArg(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
                                    qsig_aoc_AocInterimArg_sequence, hf_index, ett_qsig_aoc_AocInterimArg);
 
@@ -5915,7 +5915,7 @@ static const value_string qsig_aoc_FinalBillingId_vals[] = {
 
 
 static int
-dissect_qsig_aoc_FinalBillingId(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_aoc_FinalBillingId(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_integer(implicit_tag, actx, tree, tvb, offset, hf_index,
                                   NULL);
 
@@ -5930,7 +5930,7 @@ static const ber_sequence_t qsig_aoc_T_specificCurrency_01_sequence[] = {
 };
 
 static int
-dissect_qsig_aoc_T_specificCurrency_01(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_aoc_T_specificCurrency_01(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
                                    qsig_aoc_T_specificCurrency_01_sequence, hf_index, ett_qsig_aoc_T_specificCurrency_01);
 
@@ -5953,7 +5953,7 @@ static const ber_choice_t qsig_aoc_T_finalCharge_choice[] = {
 };
 
 static int
-dissect_qsig_aoc_T_finalCharge(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_aoc_T_finalCharge(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_choice(actx, tree, tvb, offset,
                                  qsig_aoc_T_finalCharge_choice, hf_index, ett_qsig_aoc_T_finalCharge,
                                  NULL);
@@ -5964,7 +5964,7 @@ dissect_qsig_aoc_T_finalCharge(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int
 
 
 static int
-dissect_qsig_aoc_ChargeIdentifier(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_aoc_ChargeIdentifier(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_integer(implicit_tag, actx, tree, tvb, offset, hf_index,
                                                 NULL);
 
@@ -5985,7 +5985,7 @@ static const ber_choice_t qsig_aoc_ChargingAssociation_choice[] = {
 };
 
 static int
-dissect_qsig_aoc_ChargingAssociation(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_aoc_ChargingAssociation(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_choice(actx, tree, tvb, offset,
                                  qsig_aoc_ChargingAssociation_choice, hf_index, ett_qsig_aoc_ChargingAssociation,
                                  NULL);
@@ -6007,7 +6007,7 @@ static const ber_choice_t qsig_aoc_T_finalArgExtension_choice[] = {
 };
 
 static int
-dissect_qsig_aoc_T_finalArgExtension(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_aoc_T_finalArgExtension(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_choice(actx, tree, tvb, offset,
                                  qsig_aoc_T_finalArgExtension_choice, hf_index, ett_qsig_aoc_T_finalArgExtension,
                                  NULL);
@@ -6024,7 +6024,7 @@ static const ber_sequence_t qsig_aoc_AocFinalArg_sequence[] = {
 };
 
 static int
-dissect_qsig_aoc_AocFinalArg(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_aoc_AocFinalArg(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
                                    qsig_aoc_AocFinalArg_sequence, hf_index, ett_qsig_aoc_AocFinalArg);
 
@@ -6045,7 +6045,7 @@ static const value_string qsig_aoc_AdviceModeCombination_vals[] = {
 
 
 static int
-dissect_qsig_aoc_AdviceModeCombination(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_aoc_AdviceModeCombination(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_integer(implicit_tag, actx, tree, tvb, offset, hf_index,
                                   NULL);
 
@@ -6058,7 +6058,7 @@ static const ber_sequence_t qsig_aoc_SEQUENCE_SIZE_0_7_OF_AdviceModeCombination_
 };
 
 static int
-dissect_qsig_aoc_SEQUENCE_SIZE_0_7_OF_AdviceModeCombination(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_aoc_SEQUENCE_SIZE_0_7_OF_AdviceModeCombination(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_sequence_of(implicit_tag, actx, tree, tvb, offset,
                                       qsig_aoc_SEQUENCE_SIZE_0_7_OF_AdviceModeCombination_sequence_of, hf_index, ett_qsig_aoc_SEQUENCE_SIZE_0_7_OF_AdviceModeCombination);
 
@@ -6079,7 +6079,7 @@ static const ber_choice_t qsig_aoc_T_chargeReqArgExtension_choice[] = {
 };
 
 static int
-dissect_qsig_aoc_T_chargeReqArgExtension(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_aoc_T_chargeReqArgExtension(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_choice(actx, tree, tvb, offset,
                                  qsig_aoc_T_chargeReqArgExtension_choice, hf_index, ett_qsig_aoc_T_chargeReqArgExtension,
                                  NULL);
@@ -6095,7 +6095,7 @@ static const ber_sequence_t qsig_aoc_ChargeRequestArg_sequence[] = {
 };
 
 static int
-dissect_qsig_aoc_ChargeRequestArg(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_aoc_ChargeRequestArg(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
                                    qsig_aoc_ChargeRequestArg_sequence, hf_index, ett_qsig_aoc_ChargeRequestArg);
 
@@ -6116,7 +6116,7 @@ static const ber_choice_t qsig_aoc_T_chargeReqResExtension_choice[] = {
 };
 
 static int
-dissect_qsig_aoc_T_chargeReqResExtension(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_aoc_T_chargeReqResExtension(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_choice(actx, tree, tvb, offset,
                                  qsig_aoc_T_chargeReqResExtension_choice, hf_index, ett_qsig_aoc_T_chargeReqResExtension,
                                  NULL);
@@ -6132,7 +6132,7 @@ static const ber_sequence_t qsig_aoc_ChargeRequestRes_sequence[] = {
 };
 
 static int
-dissect_qsig_aoc_ChargeRequestRes(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_aoc_ChargeRequestRes(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
                                    qsig_aoc_ChargeRequestRes_sequence, hf_index, ett_qsig_aoc_ChargeRequestRes);
 
@@ -6155,7 +6155,7 @@ static const ber_choice_t qsig_aoc_DummyArg_choice[] = {
 };
 
 static int
-dissect_qsig_aoc_DummyArg(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_aoc_DummyArg(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_choice(actx, tree, tvb, offset,
                                  qsig_aoc_DummyArg_choice, hf_index, ett_qsig_aoc_DummyArg,
                                  NULL);
@@ -6177,7 +6177,7 @@ static const ber_choice_t qsig_aoc_T_completeArgExtension_choice[] = {
 };
 
 static int
-dissect_qsig_aoc_T_completeArgExtension(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_aoc_T_completeArgExtension(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_choice(actx, tree, tvb, offset,
                                  qsig_aoc_T_completeArgExtension_choice, hf_index, ett_qsig_aoc_T_completeArgExtension,
                                  NULL);
@@ -6194,7 +6194,7 @@ static const ber_sequence_t qsig_aoc_AocCompleteArg_sequence[] = {
 };
 
 static int
-dissect_qsig_aoc_AocCompleteArg(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_aoc_AocCompleteArg(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
                                    qsig_aoc_AocCompleteArg_sequence, hf_index, ett_qsig_aoc_AocCompleteArg);
 
@@ -6211,7 +6211,7 @@ static const value_string qsig_aoc_ChargingOption_vals[] = {
 
 
 static int
-dissect_qsig_aoc_ChargingOption(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_aoc_ChargingOption(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_integer(implicit_tag, actx, tree, tvb, offset, hf_index,
                                   NULL);
 
@@ -6232,7 +6232,7 @@ static const ber_choice_t qsig_aoc_T_completeResExtension_choice[] = {
 };
 
 static int
-dissect_qsig_aoc_T_completeResExtension(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_aoc_T_completeResExtension(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_choice(actx, tree, tvb, offset,
                                  qsig_aoc_T_completeResExtension_choice, hf_index, ett_qsig_aoc_T_completeResExtension,
                                  NULL);
@@ -6248,7 +6248,7 @@ static const ber_sequence_t qsig_aoc_AocCompleteRes_sequence[] = {
 };
 
 static int
-dissect_qsig_aoc_AocCompleteRes(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_aoc_AocCompleteRes(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
                                    qsig_aoc_AocCompleteRes_sequence, hf_index, ett_qsig_aoc_AocCompleteRes);
 
@@ -6266,7 +6266,7 @@ static const value_string qsig_aoc_DiversionType_vals[] = {
 
 
 static int
-dissect_qsig_aoc_DiversionType(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_aoc_DiversionType(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_integer(implicit_tag, actx, tree, tvb, offset, hf_index,
                                   NULL);
 
@@ -6287,7 +6287,7 @@ static const ber_choice_t qsig_aoc_T_aocDivChargeReqArgExt_choice[] = {
 };
 
 static int
-dissect_qsig_aoc_T_aocDivChargeReqArgExt(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_aoc_T_aocDivChargeReqArgExt(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_choice(actx, tree, tvb, offset,
                                  qsig_aoc_T_aocDivChargeReqArgExt_choice, hf_index, ett_qsig_aoc_T_aocDivChargeReqArgExt,
                                  NULL);
@@ -6305,7 +6305,7 @@ static const ber_sequence_t qsig_aoc_AocDivChargeReqArg_sequence[] = {
 };
 
 static int
-dissect_qsig_aoc_AocDivChargeReqArg(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_aoc_AocDivChargeReqArg(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
                                    qsig_aoc_AocDivChargeReqArg_sequence, hf_index, ett_qsig_aoc_AocDivChargeReqArg);
 
@@ -6317,71 +6317,71 @@ dissect_qsig_aoc_AocDivChargeReqArg(gboolean implicit_tag _U_, tvbuff_t *tvb _U_
 static int dissect_qsig_aoc_AocRateArg_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, TRUE, pinfo);
-  offset = dissect_qsig_aoc_AocRateArg(FALSE, tvb, offset, &asn1_ctx, tree, hf_qsig_aoc_qsig_aoc_AocRateArg_PDU);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, true, pinfo);
+  offset = dissect_qsig_aoc_AocRateArg(false, tvb, offset, &asn1_ctx, tree, hf_qsig_aoc_qsig_aoc_AocRateArg_PDU);
   return offset;
 }
 static int dissect_qsig_aoc_AocInterimArg_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, TRUE, pinfo);
-  offset = dissect_qsig_aoc_AocInterimArg(FALSE, tvb, offset, &asn1_ctx, tree, hf_qsig_aoc_qsig_aoc_AocInterimArg_PDU);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, true, pinfo);
+  offset = dissect_qsig_aoc_AocInterimArg(false, tvb, offset, &asn1_ctx, tree, hf_qsig_aoc_qsig_aoc_AocInterimArg_PDU);
   return offset;
 }
 static int dissect_qsig_aoc_AocFinalArg_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, TRUE, pinfo);
-  offset = dissect_qsig_aoc_AocFinalArg(FALSE, tvb, offset, &asn1_ctx, tree, hf_qsig_aoc_qsig_aoc_AocFinalArg_PDU);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, true, pinfo);
+  offset = dissect_qsig_aoc_AocFinalArg(false, tvb, offset, &asn1_ctx, tree, hf_qsig_aoc_qsig_aoc_AocFinalArg_PDU);
   return offset;
 }
 static int dissect_qsig_aoc_ChargeRequestArg_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, TRUE, pinfo);
-  offset = dissect_qsig_aoc_ChargeRequestArg(FALSE, tvb, offset, &asn1_ctx, tree, hf_qsig_aoc_qsig_aoc_ChargeRequestArg_PDU);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, true, pinfo);
+  offset = dissect_qsig_aoc_ChargeRequestArg(false, tvb, offset, &asn1_ctx, tree, hf_qsig_aoc_qsig_aoc_ChargeRequestArg_PDU);
   return offset;
 }
 static int dissect_qsig_aoc_ChargeRequestRes_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, TRUE, pinfo);
-  offset = dissect_qsig_aoc_ChargeRequestRes(FALSE, tvb, offset, &asn1_ctx, tree, hf_qsig_aoc_qsig_aoc_ChargeRequestRes_PDU);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, true, pinfo);
+  offset = dissect_qsig_aoc_ChargeRequestRes(false, tvb, offset, &asn1_ctx, tree, hf_qsig_aoc_qsig_aoc_ChargeRequestRes_PDU);
   return offset;
 }
 static int dissect_qsig_aoc_DummyArg_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, TRUE, pinfo);
-  offset = dissect_qsig_aoc_DummyArg(FALSE, tvb, offset, &asn1_ctx, tree, hf_qsig_aoc_qsig_aoc_DummyArg_PDU);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, true, pinfo);
+  offset = dissect_qsig_aoc_DummyArg(false, tvb, offset, &asn1_ctx, tree, hf_qsig_aoc_qsig_aoc_DummyArg_PDU);
   return offset;
 }
 static int dissect_qsig_aoc_AocCompleteArg_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, TRUE, pinfo);
-  offset = dissect_qsig_aoc_AocCompleteArg(FALSE, tvb, offset, &asn1_ctx, tree, hf_qsig_aoc_qsig_aoc_AocCompleteArg_PDU);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, true, pinfo);
+  offset = dissect_qsig_aoc_AocCompleteArg(false, tvb, offset, &asn1_ctx, tree, hf_qsig_aoc_qsig_aoc_AocCompleteArg_PDU);
   return offset;
 }
 static int dissect_qsig_aoc_AocCompleteRes_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, TRUE, pinfo);
-  offset = dissect_qsig_aoc_AocCompleteRes(FALSE, tvb, offset, &asn1_ctx, tree, hf_qsig_aoc_qsig_aoc_AocCompleteRes_PDU);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, true, pinfo);
+  offset = dissect_qsig_aoc_AocCompleteRes(false, tvb, offset, &asn1_ctx, tree, hf_qsig_aoc_qsig_aoc_AocCompleteRes_PDU);
   return offset;
 }
 static int dissect_qsig_aoc_AocDivChargeReqArg_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, TRUE, pinfo);
-  offset = dissect_qsig_aoc_AocDivChargeReqArg(FALSE, tvb, offset, &asn1_ctx, tree, hf_qsig_aoc_qsig_aoc_AocDivChargeReqArg_PDU);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, true, pinfo);
+  offset = dissect_qsig_aoc_AocDivChargeReqArg(false, tvb, offset, &asn1_ctx, tree, hf_qsig_aoc_qsig_aoc_AocDivChargeReqArg_PDU);
   return offset;
 }
 static int dissect_qsig_aoc_Extension_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, TRUE, pinfo);
-  offset = dissect_qsig_Extension(FALSE, tvb, offset, &asn1_ctx, tree, hf_qsig_aoc_qsig_aoc_Extension_PDU);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, true, pinfo);
+  offset = dissect_qsig_Extension(false, tvb, offset, &asn1_ctx, tree, hf_qsig_aoc_qsig_aoc_Extension_PDU);
   return offset;
 }
 
@@ -6394,7 +6394,7 @@ static const ber_sequence_t qsig_re_SEQUENCE_OF_Extension_sequence_of[1] = {
 };
 
 static int
-dissect_qsig_re_SEQUENCE_OF_Extension(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_re_SEQUENCE_OF_Extension(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_sequence_of(implicit_tag, actx, tree, tvb, offset,
                                       qsig_re_SEQUENCE_OF_Extension_sequence_of, hf_index, ett_qsig_re_SEQUENCE_OF_Extension);
 
@@ -6415,7 +6415,7 @@ static const ber_choice_t qsig_re_T_argumentExtension_choice[] = {
 };
 
 static int
-dissect_qsig_re_T_argumentExtension(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_re_T_argumentExtension(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_choice(actx, tree, tvb, offset,
                                  qsig_re_T_argumentExtension_choice, hf_index, ett_qsig_re_T_argumentExtension,
                                  NULL);
@@ -6432,7 +6432,7 @@ static const ber_sequence_t qsig_re_ReAlertingArg_sequence[] = {
 };
 
 static int
-dissect_qsig_re_ReAlertingArg(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_re_ReAlertingArg(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
                                    qsig_re_ReAlertingArg_sequence, hf_index, ett_qsig_re_ReAlertingArg);
 
@@ -6453,7 +6453,7 @@ static const ber_choice_t qsig_re_T_argumentExtension_01_choice[] = {
 };
 
 static int
-dissect_qsig_re_T_argumentExtension_01(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_re_T_argumentExtension_01(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_choice(actx, tree, tvb, offset,
                                  qsig_re_T_argumentExtension_01_choice, hf_index, ett_qsig_re_T_argumentExtension_01,
                                  NULL);
@@ -6471,7 +6471,7 @@ static const ber_sequence_t qsig_re_ReAnswerArg_sequence[] = {
 };
 
 static int
-dissect_qsig_re_ReAnswerArg(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_re_ReAnswerArg(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
                                    qsig_re_ReAnswerArg_sequence, hf_index, ett_qsig_re_ReAnswerArg);
 
@@ -6483,15 +6483,15 @@ dissect_qsig_re_ReAnswerArg(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int of
 static int dissect_qsig_re_ReAlertingArg_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, TRUE, pinfo);
-  offset = dissect_qsig_re_ReAlertingArg(FALSE, tvb, offset, &asn1_ctx, tree, hf_qsig_re_qsig_re_ReAlertingArg_PDU);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, true, pinfo);
+  offset = dissect_qsig_re_ReAlertingArg(false, tvb, offset, &asn1_ctx, tree, hf_qsig_re_qsig_re_ReAlertingArg_PDU);
   return offset;
 }
 static int dissect_qsig_re_ReAnswerArg_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, TRUE, pinfo);
-  offset = dissect_qsig_re_ReAnswerArg(FALSE, tvb, offset, &asn1_ctx, tree, hf_qsig_re_qsig_re_ReAnswerArg_PDU);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, true, pinfo);
+  offset = dissect_qsig_re_ReAnswerArg(false, tvb, offset, &asn1_ctx, tree, hf_qsig_re_qsig_re_ReAnswerArg_PDU);
   return offset;
 }
 
@@ -6507,7 +6507,7 @@ static const value_string qsig_sync_Action_vals[] = {
 
 
 static int
-dissect_qsig_sync_Action(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_sync_Action(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_integer(implicit_tag, actx, tree, tvb, offset, hf_index,
                                                 NULL);
 
@@ -6520,7 +6520,7 @@ static const ber_sequence_t qsig_sync_SEQUENCE_OF_Extension_sequence_of[1] = {
 };
 
 static int
-dissect_qsig_sync_SEQUENCE_OF_Extension(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_sync_SEQUENCE_OF_Extension(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_sequence_of(implicit_tag, actx, tree, tvb, offset,
                                       qsig_sync_SEQUENCE_OF_Extension_sequence_of, hf_index, ett_qsig_sync_SEQUENCE_OF_Extension);
 
@@ -6541,7 +6541,7 @@ static const ber_choice_t qsig_sync_ArgExtension_choice[] = {
 };
 
 static int
-dissect_qsig_sync_ArgExtension(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_sync_ArgExtension(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_choice(actx, tree, tvb, offset,
                                  qsig_sync_ArgExtension_choice, hf_index, ett_qsig_sync_ArgExtension,
                                  NULL);
@@ -6557,7 +6557,7 @@ static const ber_sequence_t qsig_sync_SynchronizationReqArg_sequence[] = {
 };
 
 static int
-dissect_qsig_sync_SynchronizationReqArg(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_sync_SynchronizationReqArg(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
                                    qsig_sync_SynchronizationReqArg_sequence, hf_index, ett_qsig_sync_SynchronizationReqArg);
 
@@ -6567,7 +6567,7 @@ dissect_qsig_sync_SynchronizationReqArg(gboolean implicit_tag _U_, tvbuff_t *tvb
 
 
 static int
-dissect_qsig_sync_BOOLEAN(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_sync_BOOLEAN(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_boolean(implicit_tag, actx, tree, tvb, offset, hf_index, NULL);
 
   return offset;
@@ -6582,7 +6582,7 @@ static const ber_sequence_t qsig_sync_SynchronizationReqRes_sequence[] = {
 };
 
 static int
-dissect_qsig_sync_SynchronizationReqRes(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_sync_SynchronizationReqRes(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
                                    qsig_sync_SynchronizationReqRes_sequence, hf_index, ett_qsig_sync_SynchronizationReqRes);
 
@@ -6598,7 +6598,7 @@ static const value_string qsig_sync_T_stateinfo_vals[] = {
 
 
 static int
-dissect_qsig_sync_T_stateinfo(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_sync_T_stateinfo(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_integer(implicit_tag, actx, tree, tvb, offset, hf_index,
                                                 NULL);
 
@@ -6613,7 +6613,7 @@ static const ber_sequence_t qsig_sync_SynchronizationInfoArg_sequence[] = {
 };
 
 static int
-dissect_qsig_sync_SynchronizationInfoArg(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_sync_SynchronizationInfoArg(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
                                    qsig_sync_SynchronizationInfoArg_sequence, hf_index, ett_qsig_sync_SynchronizationInfoArg);
 
@@ -6625,29 +6625,29 @@ dissect_qsig_sync_SynchronizationInfoArg(gboolean implicit_tag _U_, tvbuff_t *tv
 static int dissect_qsig_sync_SynchronizationReqArg_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, TRUE, pinfo);
-  offset = dissect_qsig_sync_SynchronizationReqArg(FALSE, tvb, offset, &asn1_ctx, tree, hf_qsig_sync_qsig_sync_SynchronizationReqArg_PDU);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, true, pinfo);
+  offset = dissect_qsig_sync_SynchronizationReqArg(false, tvb, offset, &asn1_ctx, tree, hf_qsig_sync_qsig_sync_SynchronizationReqArg_PDU);
   return offset;
 }
 static int dissect_qsig_sync_SynchronizationReqRes_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, TRUE, pinfo);
-  offset = dissect_qsig_sync_SynchronizationReqRes(FALSE, tvb, offset, &asn1_ctx, tree, hf_qsig_sync_qsig_sync_SynchronizationReqRes_PDU);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, true, pinfo);
+  offset = dissect_qsig_sync_SynchronizationReqRes(false, tvb, offset, &asn1_ctx, tree, hf_qsig_sync_qsig_sync_SynchronizationReqRes_PDU);
   return offset;
 }
 static int dissect_qsig_sync_SynchronizationInfoArg_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, TRUE, pinfo);
-  offset = dissect_qsig_sync_SynchronizationInfoArg(FALSE, tvb, offset, &asn1_ctx, tree, hf_qsig_sync_qsig_sync_SynchronizationInfoArg_PDU);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, true, pinfo);
+  offset = dissect_qsig_sync_SynchronizationInfoArg(false, tvb, offset, &asn1_ctx, tree, hf_qsig_sync_qsig_sync_SynchronizationInfoArg_PDU);
   return offset;
 }
 static int dissect_qsig_sync_Extension_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, TRUE, pinfo);
-  offset = dissect_qsig_Extension(FALSE, tvb, offset, &asn1_ctx, tree, hf_qsig_sync_qsig_sync_Extension_PDU);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, true, pinfo);
+  offset = dissect_qsig_Extension(false, tvb, offset, &asn1_ctx, tree, hf_qsig_sync_qsig_sync_Extension_PDU);
   return offset;
 }
 
@@ -6682,7 +6682,7 @@ static const value_string qsig_cint_CintCause_vals[] = {
 
 
 static int
-dissect_qsig_cint_CintCause(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_cint_CintCause(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_integer(implicit_tag, actx, tree, tvb, offset, hf_index,
                                                 NULL);
 
@@ -6692,7 +6692,7 @@ dissect_qsig_cint_CintCause(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int of
 
 
 static int
-dissect_qsig_cint_NULL(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_cint_NULL(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_null(implicit_tag, actx, tree, tvb, offset, hf_index);
 
   return offset;
@@ -6704,7 +6704,7 @@ static const ber_sequence_t qsig_cint_SEQUENCE_OF_Extension_sequence_of[1] = {
 };
 
 static int
-dissect_qsig_cint_SEQUENCE_OF_Extension(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_cint_SEQUENCE_OF_Extension(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_sequence_of(implicit_tag, actx, tree, tvb, offset,
                                       qsig_cint_SEQUENCE_OF_Extension_sequence_of, hf_index, ett_qsig_cint_SEQUENCE_OF_Extension);
 
@@ -6727,7 +6727,7 @@ static const ber_choice_t qsig_cint_CintExtension_choice[] = {
 };
 
 static int
-dissect_qsig_cint_CintExtension(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_cint_CintExtension(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_choice(actx, tree, tvb, offset,
                                  qsig_cint_CintExtension_choice, hf_index, ett_qsig_cint_CintExtension,
                                  NULL);
@@ -6744,7 +6744,7 @@ static const ber_sequence_t qsig_cint_CintInformation1Arg_sequence[] = {
 };
 
 static int
-dissect_qsig_cint_CintInformation1Arg(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_cint_CintInformation1Arg(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
                                    qsig_cint_CintInformation1Arg_sequence, hf_index, ett_qsig_cint_CintInformation1Arg);
 
@@ -6763,7 +6763,7 @@ static const ber_sequence_t qsig_cint_CintInformation2Arg_sequence[] = {
 };
 
 static int
-dissect_qsig_cint_CintInformation2Arg(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_cint_CintInformation2Arg(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
                                    qsig_cint_CintInformation2Arg_sequence, hf_index, ett_qsig_cint_CintInformation2Arg);
 
@@ -6793,7 +6793,7 @@ static const value_string qsig_cint_Condition_vals[] = {
 
 
 static int
-dissect_qsig_cint_Condition(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_cint_Condition(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_integer(implicit_tag, actx, tree, tvb, offset, hf_index,
                                                 NULL);
 
@@ -6811,7 +6811,7 @@ static const ber_sequence_t qsig_cint_CintCondArg_sequence[] = {
 };
 
 static int
-dissect_qsig_cint_CintCondArg(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_cint_CintCondArg(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
                                    qsig_cint_CintCondArg_sequence, hf_index, ett_qsig_cint_CintCondArg);
 
@@ -6823,29 +6823,29 @@ dissect_qsig_cint_CintCondArg(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int 
 static int dissect_qsig_cint_CintInformation1Arg_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, TRUE, pinfo);
-  offset = dissect_qsig_cint_CintInformation1Arg(FALSE, tvb, offset, &asn1_ctx, tree, hf_qsig_cint_qsig_cint_CintInformation1Arg_PDU);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, true, pinfo);
+  offset = dissect_qsig_cint_CintInformation1Arg(false, tvb, offset, &asn1_ctx, tree, hf_qsig_cint_qsig_cint_CintInformation1Arg_PDU);
   return offset;
 }
 static int dissect_qsig_cint_CintInformation2Arg_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, TRUE, pinfo);
-  offset = dissect_qsig_cint_CintInformation2Arg(FALSE, tvb, offset, &asn1_ctx, tree, hf_qsig_cint_qsig_cint_CintInformation2Arg_PDU);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, true, pinfo);
+  offset = dissect_qsig_cint_CintInformation2Arg(false, tvb, offset, &asn1_ctx, tree, hf_qsig_cint_qsig_cint_CintInformation2Arg_PDU);
   return offset;
 }
 static int dissect_qsig_cint_CintCondArg_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, TRUE, pinfo);
-  offset = dissect_qsig_cint_CintCondArg(FALSE, tvb, offset, &asn1_ctx, tree, hf_qsig_cint_qsig_cint_CintCondArg_PDU);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, true, pinfo);
+  offset = dissect_qsig_cint_CintCondArg(false, tvb, offset, &asn1_ctx, tree, hf_qsig_cint_qsig_cint_CintCondArg_PDU);
   return offset;
 }
 static int dissect_qsig_cint_CintExtension_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, TRUE, pinfo);
-  offset = dissect_qsig_cint_CintExtension(FALSE, tvb, offset, &asn1_ctx, tree, hf_qsig_cint_qsig_cint_CintExtension_PDU);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, true, pinfo);
+  offset = dissect_qsig_cint_CintExtension(false, tvb, offset, &asn1_ctx, tree, hf_qsig_cint_qsig_cint_CintExtension_PDU);
   return offset;
 }
 
@@ -6876,7 +6876,7 @@ static int * const qsig_cmn_FeatureIdList_bits[] = {
 };
 
 static int
-dissect_qsig_cmn_FeatureIdList(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_cmn_FeatureIdList(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_bitstring(implicit_tag, actx, tree, tvb, offset,
                                     qsig_cmn_FeatureIdList_bits, 18, hf_index, ett_qsig_cmn_FeatureIdList,
                                     NULL);
@@ -6887,7 +6887,7 @@ dissect_qsig_cmn_FeatureIdList(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int
 
 
 static int
-dissect_qsig_cmn_INTEGER_0_3(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_cmn_INTEGER_0_3(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_integer(implicit_tag, actx, tree, tvb, offset, hf_index,
                                                 NULL);
 
@@ -6897,7 +6897,7 @@ dissect_qsig_cmn_INTEGER_0_3(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int o
 
 
 static int
-dissect_qsig_cmn_IA5String_SIZE_1_10(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_cmn_IA5String_SIZE_1_10(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_restricted_string(implicit_tag, BER_UNI_TAG_IA5String,
                                             actx, tree, tvb, offset, hf_index,
                                             NULL);
@@ -6914,7 +6914,7 @@ static const ber_sequence_t qsig_cmn_EquipmentId_sequence[] = {
 };
 
 static int
-dissect_qsig_cmn_EquipmentId(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_cmn_EquipmentId(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
                                    qsig_cmn_EquipmentId_sequence, hf_index, ett_qsig_cmn_EquipmentId);
 
@@ -6932,7 +6932,7 @@ static const value_string qsig_cmn_PartyCategory_vals[] = {
 
 
 static int
-dissect_qsig_cmn_PartyCategory(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_cmn_PartyCategory(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_integer(implicit_tag, actx, tree, tvb, offset, hf_index,
                                   NULL);
 
@@ -6945,7 +6945,7 @@ static const ber_sequence_t qsig_cmn_SEQUENCE_OF_Extension_sequence_of[1] = {
 };
 
 static int
-dissect_qsig_cmn_SEQUENCE_OF_Extension(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_cmn_SEQUENCE_OF_Extension(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_sequence_of(implicit_tag, actx, tree, tvb, offset,
                                       qsig_cmn_SEQUENCE_OF_Extension_sequence_of, hf_index, ett_qsig_cmn_SEQUENCE_OF_Extension);
 
@@ -6966,7 +6966,7 @@ static const ber_choice_t qsig_cmn_T_extension_choice[] = {
 };
 
 static int
-dissect_qsig_cmn_T_extension(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_cmn_T_extension(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_choice(actx, tree, tvb, offset,
                                  qsig_cmn_T_extension_choice, hf_index, ett_qsig_cmn_T_extension,
                                  NULL);
@@ -6986,7 +6986,7 @@ static const ber_sequence_t qsig_cmn_CmnArg_sequence[] = {
 };
 
 static int
-dissect_qsig_cmn_CmnArg(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_cmn_CmnArg(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
                                    qsig_cmn_CmnArg_sequence, hf_index, ett_qsig_cmn_CmnArg);
 
@@ -6996,7 +6996,7 @@ dissect_qsig_cmn_CmnArg(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset
 
 
 static int
-dissect_qsig_cmn_NULL(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_cmn_NULL(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_null(implicit_tag, actx, tree, tvb, offset, hf_index);
 
   return offset;
@@ -7018,7 +7018,7 @@ static const ber_choice_t qsig_cmn_DummyArg_choice[] = {
 };
 
 static int
-dissect_qsig_cmn_DummyArg(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_cmn_DummyArg(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_choice(actx, tree, tvb, offset,
                                  qsig_cmn_DummyArg_choice, hf_index, ett_qsig_cmn_DummyArg,
                                  NULL);
@@ -7031,15 +7031,15 @@ dissect_qsig_cmn_DummyArg(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offs
 static int dissect_qsig_cmn_DummyArg_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, TRUE, pinfo);
-  offset = dissect_qsig_cmn_DummyArg(FALSE, tvb, offset, &asn1_ctx, tree, hf_qsig_cmn_qsig_cmn_DummyArg_PDU);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, true, pinfo);
+  offset = dissect_qsig_cmn_DummyArg(false, tvb, offset, &asn1_ctx, tree, hf_qsig_cmn_qsig_cmn_DummyArg_PDU);
   return offset;
 }
 static int dissect_qsig_cmn_CmnArg_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, TRUE, pinfo);
-  offset = dissect_qsig_cmn_CmnArg(FALSE, tvb, offset, &asn1_ctx, tree, hf_qsig_cmn_qsig_cmn_CmnArg_PDU);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, true, pinfo);
+  offset = dissect_qsig_cmn_CmnArg(false, tvb, offset, &asn1_ctx, tree, hf_qsig_cmn_qsig_cmn_CmnArg_PDU);
   return offset;
 }
 
@@ -7056,7 +7056,7 @@ static const value_string qsig_cpi_CPICapabilityLevel_vals[] = {
 
 
 static int
-dissect_qsig_cpi_CPICapabilityLevel(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_cpi_CPICapabilityLevel(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_integer(implicit_tag, actx, tree, tvb, offset, hf_index,
                                   NULL);
 
@@ -7069,7 +7069,7 @@ static const ber_sequence_t qsig_cpi_SEQUENCE_OF_Extension_sequence_of[1] = {
 };
 
 static int
-dissect_qsig_cpi_SEQUENCE_OF_Extension(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_cpi_SEQUENCE_OF_Extension(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_sequence_of(implicit_tag, actx, tree, tvb, offset,
                                       qsig_cpi_SEQUENCE_OF_Extension_sequence_of, hf_index, ett_qsig_cpi_SEQUENCE_OF_Extension);
 
@@ -7090,7 +7090,7 @@ static const ber_choice_t qsig_cpi_T_argumentExtension_choice[] = {
 };
 
 static int
-dissect_qsig_cpi_T_argumentExtension(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_cpi_T_argumentExtension(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_choice(actx, tree, tvb, offset,
                                  qsig_cpi_T_argumentExtension_choice, hf_index, ett_qsig_cpi_T_argumentExtension,
                                  NULL);
@@ -7106,7 +7106,7 @@ static const ber_sequence_t qsig_cpi_CPIRequestArg_sequence[] = {
 };
 
 static int
-dissect_qsig_cpi_CPIRequestArg(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_cpi_CPIRequestArg(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
                                    qsig_cpi_CPIRequestArg_sequence, hf_index, ett_qsig_cpi_CPIRequestArg);
 
@@ -7124,7 +7124,7 @@ static const value_string qsig_cpi_CPIProtectionLevel_vals[] = {
 
 
 static int
-dissect_qsig_cpi_CPIProtectionLevel(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_cpi_CPIProtectionLevel(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_integer(implicit_tag, actx, tree, tvb, offset, hf_index,
                                   NULL);
 
@@ -7145,7 +7145,7 @@ static const ber_choice_t qsig_cpi_T_argumentExtension_01_choice[] = {
 };
 
 static int
-dissect_qsig_cpi_T_argumentExtension_01(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_cpi_T_argumentExtension_01(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_choice(actx, tree, tvb, offset,
                                  qsig_cpi_T_argumentExtension_01_choice, hf_index, ett_qsig_cpi_T_argumentExtension_01,
                                  NULL);
@@ -7161,7 +7161,7 @@ static const ber_sequence_t qsig_cpi_CPIPRequestArg_sequence[] = {
 };
 
 static int
-dissect_qsig_cpi_CPIPRequestArg(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_cpi_CPIPRequestArg(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
                                    qsig_cpi_CPIPRequestArg_sequence, hf_index, ett_qsig_cpi_CPIPRequestArg);
 
@@ -7173,15 +7173,15 @@ dissect_qsig_cpi_CPIPRequestArg(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, in
 static int dissect_qsig_cpi_CPIRequestArg_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, TRUE, pinfo);
-  offset = dissect_qsig_cpi_CPIRequestArg(FALSE, tvb, offset, &asn1_ctx, tree, hf_qsig_cpi_qsig_cpi_CPIRequestArg_PDU);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, true, pinfo);
+  offset = dissect_qsig_cpi_CPIRequestArg(false, tvb, offset, &asn1_ctx, tree, hf_qsig_cpi_qsig_cpi_CPIRequestArg_PDU);
   return offset;
 }
 static int dissect_qsig_cpi_CPIPRequestArg_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, TRUE, pinfo);
-  offset = dissect_qsig_cpi_CPIPRequestArg(FALSE, tvb, offset, &asn1_ctx, tree, hf_qsig_cpi_qsig_cpi_CPIPRequestArg_PDU);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, true, pinfo);
+  offset = dissect_qsig_cpi_CPIPRequestArg(false, tvb, offset, &asn1_ctx, tree, hf_qsig_cpi_qsig_cpi_CPIPRequestArg_PDU);
   return offset;
 }
 
@@ -7191,7 +7191,7 @@ static int dissect_qsig_cpi_CPIPRequestArg_PDU(tvbuff_t *tvb _U_, packet_info *p
 
 
 static int
-dissect_qsig_pumr_AlternativeId(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_pumr_AlternativeId(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_octet_string(implicit_tag, actx, tree, tvb, offset, hf_index,
                                        NULL);
 
@@ -7212,7 +7212,7 @@ static const ber_choice_t qsig_pumr_RpumUserId_choice[] = {
 };
 
 static int
-dissect_qsig_pumr_RpumUserId(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_pumr_RpumUserId(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_choice(actx, tree, tvb, offset,
                                  qsig_pumr_RpumUserId_choice, hf_index, ett_qsig_pumr_RpumUserId,
                                  NULL);
@@ -7230,7 +7230,7 @@ static const value_string qsig_pumr_ServiceOption_vals[] = {
 
 
 static int
-dissect_qsig_pumr_ServiceOption(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_pumr_ServiceOption(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_integer(implicit_tag, actx, tree, tvb, offset, hf_index,
                                   NULL);
 
@@ -7240,7 +7240,7 @@ dissect_qsig_pumr_ServiceOption(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, in
 
 
 static int
-dissect_qsig_pumr_INTEGER(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_pumr_INTEGER(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_integer(implicit_tag, actx, tree, tvb, offset, hf_index,
                                                 NULL);
 
@@ -7255,7 +7255,7 @@ static const ber_sequence_t qsig_pumr_SessionParams_sequence[] = {
 };
 
 static int
-dissect_qsig_pumr_SessionParams(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_pumr_SessionParams(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
                                    qsig_pumr_SessionParams_sequence, hf_index, ett_qsig_pumr_SessionParams);
 
@@ -7265,7 +7265,7 @@ dissect_qsig_pumr_SessionParams(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, in
 
 
 static int
-dissect_qsig_pumr_UserPin(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_pumr_UserPin(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_octet_string(implicit_tag, actx, tree, tvb, offset, hf_index,
                                        NULL);
 
@@ -7286,7 +7286,7 @@ static const ber_choice_t qsig_pumr_T_userPin_choice[] = {
 };
 
 static int
-dissect_qsig_pumr_T_userPin(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_pumr_T_userPin(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_choice(actx, tree, tvb, offset,
                                  qsig_pumr_T_userPin_choice, hf_index, ett_qsig_pumr_T_userPin,
                                  NULL);
@@ -7300,7 +7300,7 @@ static const ber_sequence_t qsig_pumr_SEQUENCE_OF_Extension_sequence_of[1] = {
 };
 
 static int
-dissect_qsig_pumr_SEQUENCE_OF_Extension(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_pumr_SEQUENCE_OF_Extension(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_sequence_of(implicit_tag, actx, tree, tvb, offset,
                                       qsig_pumr_SEQUENCE_OF_Extension_sequence_of, hf_index, ett_qsig_pumr_SEQUENCE_OF_Extension);
 
@@ -7321,7 +7321,7 @@ static const ber_choice_t qsig_pumr_PumrExtension_choice[] = {
 };
 
 static int
-dissect_qsig_pumr_PumrExtension(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_pumr_PumrExtension(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_choice(actx, tree, tvb, offset,
                                  qsig_pumr_PumrExtension_choice, hf_index, ett_qsig_pumr_PumrExtension,
                                  NULL);
@@ -7343,7 +7343,7 @@ static const ber_sequence_t qsig_pumr_PumRegistrArg_sequence[] = {
 };
 
 static int
-dissect_qsig_pumr_PumRegistrArg(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_pumr_PumRegistrArg(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
                                    qsig_pumr_PumRegistrArg_sequence, hf_index, ett_qsig_pumr_PumRegistrArg);
 
@@ -7360,7 +7360,7 @@ static const ber_sequence_t qsig_pumr_PumRegistrRes_sequence[] = {
 };
 
 static int
-dissect_qsig_pumr_PumRegistrRes(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_pumr_PumRegistrRes(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
                                    qsig_pumr_PumRegistrRes_sequence, hf_index, ett_qsig_pumr_PumRegistrRes);
 
@@ -7370,7 +7370,7 @@ dissect_qsig_pumr_PumRegistrRes(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, in
 
 
 static int
-dissect_qsig_pumr_NULL(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_pumr_NULL(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_null(implicit_tag, actx, tree, tvb, offset, hf_index);
 
   return offset;
@@ -7392,7 +7392,7 @@ static const ber_choice_t qsig_pumr_DummyRes_choice[] = {
 };
 
 static int
-dissect_qsig_pumr_DummyRes(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_pumr_DummyRes(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_choice(actx, tree, tvb, offset,
                                  qsig_pumr_DummyRes_choice, hf_index, ett_qsig_pumr_DummyRes,
                                  NULL);
@@ -7414,7 +7414,7 @@ static const ber_choice_t qsig_pumr_XpumUserId_choice[] = {
 };
 
 static int
-dissect_qsig_pumr_XpumUserId(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_pumr_XpumUserId(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_choice(actx, tree, tvb, offset,
                                  qsig_pumr_XpumUserId_choice, hf_index, ett_qsig_pumr_XpumUserId,
                                  NULL);
@@ -7433,7 +7433,7 @@ static const ber_sequence_t qsig_pumr_PumDelRegArg_sequence[] = {
 };
 
 static int
-dissect_qsig_pumr_PumDelRegArg(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_pumr_PumDelRegArg(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
                                    qsig_pumr_PumDelRegArg_sequence, hf_index, ett_qsig_pumr_PumDelRegArg);
 
@@ -7454,7 +7454,7 @@ static const ber_choice_t qsig_pumr_DpumUserId_choice[] = {
 };
 
 static int
-dissect_qsig_pumr_DpumUserId(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_pumr_DpumUserId(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_choice(actx, tree, tvb, offset,
                                  qsig_pumr_DpumUserId_choice, hf_index, ett_qsig_pumr_DpumUserId,
                                  NULL);
@@ -7476,7 +7476,7 @@ static const ber_choice_t qsig_pumr_T_userPin_01_choice[] = {
 };
 
 static int
-dissect_qsig_pumr_T_userPin_01(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_pumr_T_userPin_01(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_choice(actx, tree, tvb, offset,
                                  qsig_pumr_T_userPin_01_choice, hf_index, ett_qsig_pumr_T_userPin_01,
                                  NULL);
@@ -7497,7 +7497,7 @@ static const ber_sequence_t qsig_pumr_PumDe_regArg_sequence[] = {
 };
 
 static int
-dissect_qsig_pumr_PumDe_regArg(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_pumr_PumDe_regArg(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
                                    qsig_pumr_PumDe_regArg_sequence, hf_index, ett_qsig_pumr_PumDe_regArg);
 
@@ -7518,7 +7518,7 @@ static const ber_choice_t qsig_pumr_IpumUserId_choice[] = {
 };
 
 static int
-dissect_qsig_pumr_IpumUserId(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_pumr_IpumUserId(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_choice(actx, tree, tvb, offset,
                                  qsig_pumr_IpumUserId_choice, hf_index, ett_qsig_pumr_IpumUserId,
                                  NULL);
@@ -7529,7 +7529,7 @@ dissect_qsig_pumr_IpumUserId(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int o
 
 
 static int
-dissect_qsig_pumr_BOOLEAN(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_pumr_BOOLEAN(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_boolean(implicit_tag, actx, tree, tvb, offset, hf_index, NULL);
 
   return offset;
@@ -7549,7 +7549,7 @@ static const ber_choice_t qsig_pumr_T_userPin_02_choice[] = {
 };
 
 static int
-dissect_qsig_pumr_T_userPin_02(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_pumr_T_userPin_02(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_choice(actx, tree, tvb, offset,
                                  qsig_pumr_T_userPin_02_choice, hf_index, ett_qsig_pumr_T_userPin_02,
                                  NULL);
@@ -7571,7 +7571,7 @@ static const ber_sequence_t qsig_pumr_PumInterrogArg_sequence[] = {
 };
 
 static int
-dissect_qsig_pumr_PumInterrogArg(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_pumr_PumInterrogArg(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
                                    qsig_pumr_PumInterrogArg_sequence, hf_index, ett_qsig_pumr_PumInterrogArg);
 
@@ -7589,7 +7589,7 @@ static const ber_sequence_t qsig_pumr_PumInterrogRes_item_sequence[] = {
 };
 
 static int
-dissect_qsig_pumr_PumInterrogRes_item(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_pumr_PumInterrogRes_item(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
                                    qsig_pumr_PumInterrogRes_item_sequence, hf_index, ett_qsig_pumr_PumInterrogRes_item);
 
@@ -7602,7 +7602,7 @@ static const ber_sequence_t qsig_pumr_PumInterrogRes_set_of[1] = {
 };
 
 static int
-dissect_qsig_pumr_PumInterrogRes(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_pumr_PumInterrogRes(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_set_of(implicit_tag, actx, tree, tvb, offset,
                                  qsig_pumr_PumInterrogRes_set_of, hf_index, ett_qsig_pumr_PumInterrogRes);
 
@@ -7614,57 +7614,57 @@ dissect_qsig_pumr_PumInterrogRes(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, i
 static int dissect_qsig_pumr_PumRegistrArg_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, TRUE, pinfo);
-  offset = dissect_qsig_pumr_PumRegistrArg(FALSE, tvb, offset, &asn1_ctx, tree, hf_qsig_pumr_qsig_pumr_PumRegistrArg_PDU);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, true, pinfo);
+  offset = dissect_qsig_pumr_PumRegistrArg(false, tvb, offset, &asn1_ctx, tree, hf_qsig_pumr_qsig_pumr_PumRegistrArg_PDU);
   return offset;
 }
 static int dissect_qsig_pumr_PumRegistrRes_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, TRUE, pinfo);
-  offset = dissect_qsig_pumr_PumRegistrRes(FALSE, tvb, offset, &asn1_ctx, tree, hf_qsig_pumr_qsig_pumr_PumRegistrRes_PDU);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, true, pinfo);
+  offset = dissect_qsig_pumr_PumRegistrRes(false, tvb, offset, &asn1_ctx, tree, hf_qsig_pumr_qsig_pumr_PumRegistrRes_PDU);
   return offset;
 }
 static int dissect_qsig_pumr_PumDelRegArg_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, TRUE, pinfo);
-  offset = dissect_qsig_pumr_PumDelRegArg(FALSE, tvb, offset, &asn1_ctx, tree, hf_qsig_pumr_qsig_pumr_PumDelRegArg_PDU);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, true, pinfo);
+  offset = dissect_qsig_pumr_PumDelRegArg(false, tvb, offset, &asn1_ctx, tree, hf_qsig_pumr_qsig_pumr_PumDelRegArg_PDU);
   return offset;
 }
 static int dissect_qsig_pumr_DummyRes_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, TRUE, pinfo);
-  offset = dissect_qsig_pumr_DummyRes(FALSE, tvb, offset, &asn1_ctx, tree, hf_qsig_pumr_qsig_pumr_DummyRes_PDU);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, true, pinfo);
+  offset = dissect_qsig_pumr_DummyRes(false, tvb, offset, &asn1_ctx, tree, hf_qsig_pumr_qsig_pumr_DummyRes_PDU);
   return offset;
 }
 static int dissect_qsig_pumr_PumDe_regArg_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, TRUE, pinfo);
-  offset = dissect_qsig_pumr_PumDe_regArg(FALSE, tvb, offset, &asn1_ctx, tree, hf_qsig_pumr_qsig_pumr_PumDe_regArg_PDU);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, true, pinfo);
+  offset = dissect_qsig_pumr_PumDe_regArg(false, tvb, offset, &asn1_ctx, tree, hf_qsig_pumr_qsig_pumr_PumDe_regArg_PDU);
   return offset;
 }
 static int dissect_qsig_pumr_PumInterrogArg_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, TRUE, pinfo);
-  offset = dissect_qsig_pumr_PumInterrogArg(FALSE, tvb, offset, &asn1_ctx, tree, hf_qsig_pumr_qsig_pumr_PumInterrogArg_PDU);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, true, pinfo);
+  offset = dissect_qsig_pumr_PumInterrogArg(false, tvb, offset, &asn1_ctx, tree, hf_qsig_pumr_qsig_pumr_PumInterrogArg_PDU);
   return offset;
 }
 static int dissect_qsig_pumr_PumInterrogRes_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, TRUE, pinfo);
-  offset = dissect_qsig_pumr_PumInterrogRes(FALSE, tvb, offset, &asn1_ctx, tree, hf_qsig_pumr_qsig_pumr_PumInterrogRes_PDU);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, true, pinfo);
+  offset = dissect_qsig_pumr_PumInterrogRes(false, tvb, offset, &asn1_ctx, tree, hf_qsig_pumr_qsig_pumr_PumInterrogRes_PDU);
   return offset;
 }
 static int dissect_qsig_pumr_Extension_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, TRUE, pinfo);
-  offset = dissect_qsig_Extension(FALSE, tvb, offset, &asn1_ctx, tree, hf_qsig_pumr_qsig_pumr_Extension_PDU);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, true, pinfo);
+  offset = dissect_qsig_Extension(false, tvb, offset, &asn1_ctx, tree, hf_qsig_pumr_qsig_pumr_Extension_PDU);
   return offset;
 }
 
@@ -7677,7 +7677,7 @@ static const ber_sequence_t qsig_pumch_SEQUENCE_OF_Extension_sequence_of[1] = {
 };
 
 static int
-dissect_qsig_pumch_SEQUENCE_OF_Extension(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_pumch_SEQUENCE_OF_Extension(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_sequence_of(implicit_tag, actx, tree, tvb, offset,
                                       qsig_pumch_SEQUENCE_OF_Extension_sequence_of, hf_index, ett_qsig_pumch_SEQUENCE_OF_Extension);
 
@@ -7698,7 +7698,7 @@ static const ber_choice_t qsig_pumch_PumiExtension_choice[] = {
 };
 
 static int
-dissect_qsig_pumch_PumiExtension(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_pumch_PumiExtension(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_choice(actx, tree, tvb, offset,
                                  qsig_pumch_PumiExtension_choice, hf_index, ett_qsig_pumch_PumiExtension,
                                  NULL);
@@ -7715,7 +7715,7 @@ static const ber_sequence_t qsig_pumch_EnquiryArg_sequence[] = {
 };
 
 static int
-dissect_qsig_pumch_EnquiryArg(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_pumch_EnquiryArg(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
                                    qsig_pumch_EnquiryArg_sequence, hf_index, ett_qsig_pumch_EnquiryArg);
 
@@ -7725,7 +7725,7 @@ dissect_qsig_pumch_EnquiryArg(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int 
 
 
 static int
-dissect_qsig_pumch_AlternativeId(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_pumch_AlternativeId(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_octet_string(implicit_tag, actx, tree, tvb, offset, hf_index,
                                        NULL);
 
@@ -7740,7 +7740,7 @@ static const ber_sequence_t qsig_pumch_T_both_sequence[] = {
 };
 
 static int
-dissect_qsig_pumch_T_both(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_pumch_T_both(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
                                    qsig_pumch_T_both_sequence, hf_index, ett_qsig_pumch_T_both);
 
@@ -7763,7 +7763,7 @@ static const ber_choice_t qsig_pumch_PumIdentity_choice[] = {
 };
 
 static int
-dissect_qsig_pumch_PumIdentity(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_pumch_PumIdentity(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_choice(actx, tree, tvb, offset,
                                  qsig_pumch_PumIdentity_choice, hf_index, ett_qsig_pumch_PumIdentity,
                                  NULL);
@@ -7785,7 +7785,7 @@ static const ber_sequence_t qsig_pumch_DivertArg_sequence[] = {
 };
 
 static int
-dissect_qsig_pumch_DivertArg(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_pumch_DivertArg(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
                                    qsig_pumch_DivertArg_sequence, hf_index, ett_qsig_pumch_DivertArg);
 
@@ -7800,7 +7800,7 @@ static const ber_sequence_t qsig_pumch_InformArg_sequence[] = {
 };
 
 static int
-dissect_qsig_pumch_InformArg(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_pumch_InformArg(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
                                    qsig_pumch_InformArg_sequence, hf_index, ett_qsig_pumch_InformArg);
 
@@ -7816,7 +7816,7 @@ static const ber_sequence_t qsig_pumch_CurrLocation_sequence[] = {
 };
 
 static int
-dissect_qsig_pumch_CurrLocation(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_pumch_CurrLocation(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
                                    qsig_pumch_CurrLocation_sequence, hf_index, ett_qsig_pumch_CurrLocation);
 
@@ -7833,7 +7833,7 @@ static const value_string qsig_pumch_SubscriptionOption_vals[] = {
 
 
 static int
-dissect_qsig_pumch_SubscriptionOption(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_pumch_SubscriptionOption(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_integer(implicit_tag, actx, tree, tvb, offset, hf_index,
                                   NULL);
 
@@ -7850,7 +7850,7 @@ static const ber_sequence_t qsig_pumch_CfuActivated_sequence[] = {
 };
 
 static int
-dissect_qsig_pumch_CfuActivated(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_pumch_CfuActivated(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
                                    qsig_pumch_CfuActivated_sequence, hf_index, ett_qsig_pumch_CfuActivated);
 
@@ -7871,7 +7871,7 @@ static const ber_choice_t qsig_pumch_EnquiryRes_choice[] = {
 };
 
 static int
-dissect_qsig_pumch_EnquiryRes(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_pumch_EnquiryRes(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_choice(actx, tree, tvb, offset,
                                  qsig_pumch_EnquiryRes_choice, hf_index, ett_qsig_pumch_EnquiryRes,
                                  NULL);
@@ -7882,7 +7882,7 @@ dissect_qsig_pumch_EnquiryRes(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int 
 
 
 static int
-dissect_qsig_pumch_NULL(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_pumch_NULL(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_null(implicit_tag, actx, tree, tvb, offset, hf_index);
 
   return offset;
@@ -7904,7 +7904,7 @@ static const ber_choice_t qsig_pumch_DummyRes_choice[] = {
 };
 
 static int
-dissect_qsig_pumch_DummyRes(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_pumch_DummyRes(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_choice(actx, tree, tvb, offset,
                                  qsig_pumch_DummyRes_choice, hf_index, ett_qsig_pumch_DummyRes,
                                  NULL);
@@ -7926,7 +7926,7 @@ static const ber_choice_t qsig_pumch_T_pumoaextension_choice[] = {
 };
 
 static int
-dissect_qsig_pumch_T_pumoaextension(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_pumch_T_pumoaextension(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_choice(actx, tree, tvb, offset,
                                  qsig_pumch_T_pumoaextension_choice, hf_index, ett_qsig_pumch_T_pumoaextension,
                                  NULL);
@@ -7944,7 +7944,7 @@ static const ber_sequence_t qsig_pumch_PumoArg_sequence[] = {
 };
 
 static int
-dissect_qsig_pumch_PumoArg(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_pumch_PumoArg(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
                                    qsig_pumch_PumoArg_sequence, hf_index, ett_qsig_pumch_PumoArg);
 
@@ -7956,50 +7956,50 @@ dissect_qsig_pumch_PumoArg(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int off
 static int dissect_qsig_pumch_EnquiryArg_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, TRUE, pinfo);
-  offset = dissect_qsig_pumch_EnquiryArg(FALSE, tvb, offset, &asn1_ctx, tree, hf_qsig_pumch_qsig_pumch_EnquiryArg_PDU);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, true, pinfo);
+  offset = dissect_qsig_pumch_EnquiryArg(false, tvb, offset, &asn1_ctx, tree, hf_qsig_pumch_qsig_pumch_EnquiryArg_PDU);
   return offset;
 }
 static int dissect_qsig_pumch_EnquiryRes_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, TRUE, pinfo);
-  offset = dissect_qsig_pumch_EnquiryRes(FALSE, tvb, offset, &asn1_ctx, tree, hf_qsig_pumch_qsig_pumch_EnquiryRes_PDU);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, true, pinfo);
+  offset = dissect_qsig_pumch_EnquiryRes(false, tvb, offset, &asn1_ctx, tree, hf_qsig_pumch_qsig_pumch_EnquiryRes_PDU);
   return offset;
 }
 static int dissect_qsig_pumch_DivertArg_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, TRUE, pinfo);
-  offset = dissect_qsig_pumch_DivertArg(FALSE, tvb, offset, &asn1_ctx, tree, hf_qsig_pumch_qsig_pumch_DivertArg_PDU);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, true, pinfo);
+  offset = dissect_qsig_pumch_DivertArg(false, tvb, offset, &asn1_ctx, tree, hf_qsig_pumch_qsig_pumch_DivertArg_PDU);
   return offset;
 }
 static int dissect_qsig_pumch_DummyRes_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, TRUE, pinfo);
-  offset = dissect_qsig_pumch_DummyRes(FALSE, tvb, offset, &asn1_ctx, tree, hf_qsig_pumch_qsig_pumch_DummyRes_PDU);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, true, pinfo);
+  offset = dissect_qsig_pumch_DummyRes(false, tvb, offset, &asn1_ctx, tree, hf_qsig_pumch_qsig_pumch_DummyRes_PDU);
   return offset;
 }
 static int dissect_qsig_pumch_InformArg_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, TRUE, pinfo);
-  offset = dissect_qsig_pumch_InformArg(FALSE, tvb, offset, &asn1_ctx, tree, hf_qsig_pumch_qsig_pumch_InformArg_PDU);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, true, pinfo);
+  offset = dissect_qsig_pumch_InformArg(false, tvb, offset, &asn1_ctx, tree, hf_qsig_pumch_qsig_pumch_InformArg_PDU);
   return offset;
 }
 static int dissect_qsig_pumch_PumoArg_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, TRUE, pinfo);
-  offset = dissect_qsig_pumch_PumoArg(FALSE, tvb, offset, &asn1_ctx, tree, hf_qsig_pumch_qsig_pumch_PumoArg_PDU);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, true, pinfo);
+  offset = dissect_qsig_pumch_PumoArg(false, tvb, offset, &asn1_ctx, tree, hf_qsig_pumch_qsig_pumch_PumoArg_PDU);
   return offset;
 }
 static int dissect_qsig_pumch_Extension_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, TRUE, pinfo);
-  offset = dissect_qsig_Extension(FALSE, tvb, offset, &asn1_ctx, tree, hf_qsig_pumch_qsig_pumch_Extension_PDU);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, true, pinfo);
+  offset = dissect_qsig_Extension(false, tvb, offset, &asn1_ctx, tree, hf_qsig_pumch_qsig_pumch_Extension_PDU);
   return offset;
 }
 
@@ -8009,7 +8009,7 @@ static int dissect_qsig_pumch_Extension_PDU(tvbuff_t *tvb _U_, packet_info *pinf
 
 
 static int
-dissect_qsig_ssct_NULL(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_ssct_NULL(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_null(implicit_tag, actx, tree, tvb, offset, hf_index);
 
   return offset;
@@ -8021,7 +8021,7 @@ static const ber_sequence_t qsig_ssct_SEQUENCE_OF_Extension_sequence_of[1] = {
 };
 
 static int
-dissect_qsig_ssct_SEQUENCE_OF_Extension(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_ssct_SEQUENCE_OF_Extension(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_sequence_of(implicit_tag, actx, tree, tvb, offset,
                                       qsig_ssct_SEQUENCE_OF_Extension_sequence_of, hf_index, ett_qsig_ssct_SEQUENCE_OF_Extension);
 
@@ -8044,7 +8044,7 @@ static const ber_choice_t qsig_ssct_DummyArg_choice[] = {
 };
 
 static int
-dissect_qsig_ssct_DummyArg(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_ssct_DummyArg(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_choice(actx, tree, tvb, offset,
                                  qsig_ssct_DummyArg_choice, hf_index, ett_qsig_ssct_DummyArg,
                                  NULL);
@@ -8068,7 +8068,7 @@ static const ber_choice_t qsig_ssct_DummyRes_choice[] = {
 };
 
 static int
-dissect_qsig_ssct_DummyRes(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_ssct_DummyRes(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_choice(actx, tree, tvb, offset,
                                  qsig_ssct_DummyRes_choice, hf_index, ett_qsig_ssct_DummyRes,
                                  NULL);
@@ -8079,7 +8079,7 @@ dissect_qsig_ssct_DummyRes(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int off
 
 
 static int
-dissect_qsig_ssct_AwaitConnect(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_ssct_AwaitConnect(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_boolean(implicit_tag, actx, tree, tvb, offset, hf_index, NULL);
 
   return offset;
@@ -8099,7 +8099,7 @@ static const ber_choice_t qsig_ssct_SSCTIargumentExtension_choice[] = {
 };
 
 static int
-dissect_qsig_ssct_SSCTIargumentExtension(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_ssct_SSCTIargumentExtension(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_choice(actx, tree, tvb, offset,
                                  qsig_ssct_SSCTIargumentExtension_choice, hf_index, ett_qsig_ssct_SSCTIargumentExtension,
                                  NULL);
@@ -8120,7 +8120,7 @@ static const ber_sequence_t qsig_ssct_SSCTInitiateArg_sequence[] = {
 };
 
 static int
-dissect_qsig_ssct_SSCTInitiateArg(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_ssct_SSCTInitiateArg(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
                                    qsig_ssct_SSCTInitiateArg_sequence, hf_index, ett_qsig_ssct_SSCTInitiateArg);
 
@@ -8141,7 +8141,7 @@ static const ber_choice_t qsig_ssct_SSCTSargumentExtension_choice[] = {
 };
 
 static int
-dissect_qsig_ssct_SSCTSargumentExtension(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_ssct_SSCTSargumentExtension(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_choice(actx, tree, tvb, offset,
                                  qsig_ssct_SSCTSargumentExtension_choice, hf_index, ett_qsig_ssct_SSCTSargumentExtension,
                                  NULL);
@@ -8158,7 +8158,7 @@ static const ber_sequence_t qsig_ssct_SSCTSetupArg_sequence[] = {
 };
 
 static int
-dissect_qsig_ssct_SSCTSetupArg(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_ssct_SSCTSetupArg(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
                                    qsig_ssct_SSCTSetupArg_sequence, hf_index, ett_qsig_ssct_SSCTSetupArg);
 
@@ -8179,7 +8179,7 @@ static const ber_choice_t qsig_ssct_SSCTDargumentExtension_choice[] = {
 };
 
 static int
-dissect_qsig_ssct_SSCTDargumentExtension(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_ssct_SSCTDargumentExtension(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_choice(actx, tree, tvb, offset,
                                  qsig_ssct_SSCTDargumentExtension_choice, hf_index, ett_qsig_ssct_SSCTDargumentExtension,
                                  NULL);
@@ -8196,7 +8196,7 @@ static const ber_sequence_t qsig_ssct_SSCTDigitInfoArg_sequence[] = {
 };
 
 static int
-dissect_qsig_ssct_SSCTDigitInfoArg(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_ssct_SSCTDigitInfoArg(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
                                    qsig_ssct_SSCTDigitInfoArg_sequence, hf_index, ett_qsig_ssct_SSCTDigitInfoArg);
 
@@ -8208,43 +8208,43 @@ dissect_qsig_ssct_SSCTDigitInfoArg(gboolean implicit_tag _U_, tvbuff_t *tvb _U_,
 static int dissect_qsig_ssct_SSCTInitiateArg_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, TRUE, pinfo);
-  offset = dissect_qsig_ssct_SSCTInitiateArg(FALSE, tvb, offset, &asn1_ctx, tree, hf_qsig_ssct_qsig_ssct_SSCTInitiateArg_PDU);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, true, pinfo);
+  offset = dissect_qsig_ssct_SSCTInitiateArg(false, tvb, offset, &asn1_ctx, tree, hf_qsig_ssct_qsig_ssct_SSCTInitiateArg_PDU);
   return offset;
 }
 static int dissect_qsig_ssct_DummyRes_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, TRUE, pinfo);
-  offset = dissect_qsig_ssct_DummyRes(FALSE, tvb, offset, &asn1_ctx, tree, hf_qsig_ssct_qsig_ssct_DummyRes_PDU);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, true, pinfo);
+  offset = dissect_qsig_ssct_DummyRes(false, tvb, offset, &asn1_ctx, tree, hf_qsig_ssct_qsig_ssct_DummyRes_PDU);
   return offset;
 }
 static int dissect_qsig_ssct_SSCTSetupArg_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, TRUE, pinfo);
-  offset = dissect_qsig_ssct_SSCTSetupArg(FALSE, tvb, offset, &asn1_ctx, tree, hf_qsig_ssct_qsig_ssct_SSCTSetupArg_PDU);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, true, pinfo);
+  offset = dissect_qsig_ssct_SSCTSetupArg(false, tvb, offset, &asn1_ctx, tree, hf_qsig_ssct_qsig_ssct_SSCTSetupArg_PDU);
   return offset;
 }
 static int dissect_qsig_ssct_DummyArg_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, TRUE, pinfo);
-  offset = dissect_qsig_ssct_DummyArg(FALSE, tvb, offset, &asn1_ctx, tree, hf_qsig_ssct_qsig_ssct_DummyArg_PDU);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, true, pinfo);
+  offset = dissect_qsig_ssct_DummyArg(false, tvb, offset, &asn1_ctx, tree, hf_qsig_ssct_qsig_ssct_DummyArg_PDU);
   return offset;
 }
 static int dissect_qsig_ssct_SSCTDigitInfoArg_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, TRUE, pinfo);
-  offset = dissect_qsig_ssct_SSCTDigitInfoArg(FALSE, tvb, offset, &asn1_ctx, tree, hf_qsig_ssct_qsig_ssct_SSCTDigitInfoArg_PDU);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, true, pinfo);
+  offset = dissect_qsig_ssct_SSCTDigitInfoArg(false, tvb, offset, &asn1_ctx, tree, hf_qsig_ssct_qsig_ssct_SSCTDigitInfoArg_PDU);
   return offset;
 }
 static int dissect_qsig_ssct_Extension_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, TRUE, pinfo);
-  offset = dissect_qsig_Extension(FALSE, tvb, offset, &asn1_ctx, tree, hf_qsig_ssct_qsig_ssct_Extension_PDU);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, true, pinfo);
+  offset = dissect_qsig_Extension(false, tvb, offset, &asn1_ctx, tree, hf_qsig_ssct_qsig_ssct_Extension_PDU);
   return offset;
 }
 
@@ -8254,7 +8254,7 @@ static int dissect_qsig_ssct_Extension_PDU(tvbuff_t *tvb _U_, packet_info *pinfo
 
 
 static int
-dissect_qsig_wtmlr_AlternativeId(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_wtmlr_AlternativeId(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_octet_string(implicit_tag, actx, tree, tvb, offset, hf_index,
                                        NULL);
 
@@ -8275,7 +8275,7 @@ static const ber_choice_t qsig_wtmlr_WtmUserId_choice[] = {
 };
 
 static int
-dissect_qsig_wtmlr_WtmUserId(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_wtmlr_WtmUserId(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_choice(actx, tree, tvb, offset,
                                  qsig_wtmlr_WtmUserId_choice, hf_index, ett_qsig_wtmlr_WtmUserId,
                                  NULL);
@@ -8289,7 +8289,7 @@ static const ber_sequence_t qsig_wtmlr_SEQUENCE_OF_Extension_sequence_of[1] = {
 };
 
 static int
-dissect_qsig_wtmlr_SEQUENCE_OF_Extension(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_wtmlr_SEQUENCE_OF_Extension(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_sequence_of(implicit_tag, actx, tree, tvb, offset,
                                       qsig_wtmlr_SEQUENCE_OF_Extension_sequence_of, hf_index, ett_qsig_wtmlr_SEQUENCE_OF_Extension);
 
@@ -8310,7 +8310,7 @@ static const ber_choice_t qsig_wtmlr_LrExtension_choice[] = {
 };
 
 static int
-dissect_qsig_wtmlr_LrExtension(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_wtmlr_LrExtension(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_choice(actx, tree, tvb, offset,
                                  qsig_wtmlr_LrExtension_choice, hf_index, ett_qsig_wtmlr_LrExtension,
                                  NULL);
@@ -8328,7 +8328,7 @@ static const ber_sequence_t qsig_wtmlr_LocUpdArg_sequence[] = {
 };
 
 static int
-dissect_qsig_wtmlr_LocUpdArg(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_wtmlr_LocUpdArg(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
                                    qsig_wtmlr_LocUpdArg_sequence, hf_index, ett_qsig_wtmlr_LocUpdArg);
 
@@ -8338,7 +8338,7 @@ dissect_qsig_wtmlr_LocUpdArg(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int o
 
 
 static int
-dissect_qsig_wtmlr_NULL(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_wtmlr_NULL(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_null(implicit_tag, actx, tree, tvb, offset, hf_index);
 
   return offset;
@@ -8360,7 +8360,7 @@ static const ber_choice_t qsig_wtmlr_DummyRes_choice[] = {
 };
 
 static int
-dissect_qsig_wtmlr_DummyRes(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_wtmlr_DummyRes(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_choice(actx, tree, tvb, offset,
                                  qsig_wtmlr_DummyRes_choice, hf_index, ett_qsig_wtmlr_DummyRes,
                                  NULL);
@@ -8377,7 +8377,7 @@ static const ber_sequence_t qsig_wtmlr_LocDelArg_sequence[] = {
 };
 
 static int
-dissect_qsig_wtmlr_LocDelArg(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_wtmlr_LocDelArg(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
                                    qsig_wtmlr_LocDelArg_sequence, hf_index, ett_qsig_wtmlr_LocDelArg);
 
@@ -8393,7 +8393,7 @@ static const ber_sequence_t qsig_wtmlr_LocDeRegArg_sequence[] = {
 };
 
 static int
-dissect_qsig_wtmlr_LocDeRegArg(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_wtmlr_LocDeRegArg(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
                                    qsig_wtmlr_LocDeRegArg_sequence, hf_index, ett_qsig_wtmlr_LocDeRegArg);
 
@@ -8408,7 +8408,7 @@ static const ber_sequence_t qsig_wtmlr_PisnEnqArg_sequence[] = {
 };
 
 static int
-dissect_qsig_wtmlr_PisnEnqArg(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_wtmlr_PisnEnqArg(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
                                    qsig_wtmlr_PisnEnqArg_sequence, hf_index, ett_qsig_wtmlr_PisnEnqArg);
 
@@ -8423,7 +8423,7 @@ static const ber_sequence_t qsig_wtmlr_PisnEnqRes_sequence[] = {
 };
 
 static int
-dissect_qsig_wtmlr_PisnEnqRes(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_wtmlr_PisnEnqRes(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
                                    qsig_wtmlr_PisnEnqRes_sequence, hf_index, ett_qsig_wtmlr_PisnEnqRes);
 
@@ -8439,7 +8439,7 @@ static const ber_sequence_t qsig_wtmlr_GetRRCInfArg_sequence[] = {
 };
 
 static int
-dissect_qsig_wtmlr_GetRRCInfArg(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_wtmlr_GetRRCInfArg(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
                                    qsig_wtmlr_GetRRCInfArg_sequence, hf_index, ett_qsig_wtmlr_GetRRCInfArg);
 
@@ -8449,7 +8449,7 @@ dissect_qsig_wtmlr_GetRRCInfArg(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, in
 
 
 static int
-dissect_qsig_wtmlr_RRClass(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_wtmlr_RRClass(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_integer(implicit_tag, actx, tree, tvb, offset, hf_index,
                                                 NULL);
 
@@ -8465,7 +8465,7 @@ static const ber_sequence_t qsig_wtmlr_GetRRCInfRes_sequence[] = {
 };
 
 static int
-dissect_qsig_wtmlr_GetRRCInfRes(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_wtmlr_GetRRCInfRes(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
                                    qsig_wtmlr_GetRRCInfRes_sequence, hf_index, ett_qsig_wtmlr_GetRRCInfRes);
 
@@ -8482,7 +8482,7 @@ static const ber_sequence_t qsig_wtmlr_LocInfoCheckArg_sequence[] = {
 };
 
 static int
-dissect_qsig_wtmlr_LocInfoCheckArg(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_wtmlr_LocInfoCheckArg(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
                                    qsig_wtmlr_LocInfoCheckArg_sequence, hf_index, ett_qsig_wtmlr_LocInfoCheckArg);
 
@@ -8498,7 +8498,7 @@ static const value_string qsig_wtmlr_CheckResult_vals[] = {
 
 
 static int
-dissect_qsig_wtmlr_CheckResult(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_wtmlr_CheckResult(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_integer(implicit_tag, actx, tree, tvb, offset, hf_index,
                                   NULL);
 
@@ -8513,7 +8513,7 @@ static const ber_sequence_t qsig_wtmlr_LocInfoCheckRes_sequence[] = {
 };
 
 static int
-dissect_qsig_wtmlr_LocInfoCheckRes(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_wtmlr_LocInfoCheckRes(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
                                    qsig_wtmlr_LocInfoCheckRes_sequence, hf_index, ett_qsig_wtmlr_LocInfoCheckRes);
 
@@ -8525,78 +8525,78 @@ dissect_qsig_wtmlr_LocInfoCheckRes(gboolean implicit_tag _U_, tvbuff_t *tvb _U_,
 static int dissect_qsig_wtmlr_LocUpdArg_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, TRUE, pinfo);
-  offset = dissect_qsig_wtmlr_LocUpdArg(FALSE, tvb, offset, &asn1_ctx, tree, hf_qsig_wtmlr_qsig_wtmlr_LocUpdArg_PDU);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, true, pinfo);
+  offset = dissect_qsig_wtmlr_LocUpdArg(false, tvb, offset, &asn1_ctx, tree, hf_qsig_wtmlr_qsig_wtmlr_LocUpdArg_PDU);
   return offset;
 }
 static int dissect_qsig_wtmlr_DummyRes_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, TRUE, pinfo);
-  offset = dissect_qsig_wtmlr_DummyRes(FALSE, tvb, offset, &asn1_ctx, tree, hf_qsig_wtmlr_qsig_wtmlr_DummyRes_PDU);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, true, pinfo);
+  offset = dissect_qsig_wtmlr_DummyRes(false, tvb, offset, &asn1_ctx, tree, hf_qsig_wtmlr_qsig_wtmlr_DummyRes_PDU);
   return offset;
 }
 static int dissect_qsig_wtmlr_LocDelArg_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, TRUE, pinfo);
-  offset = dissect_qsig_wtmlr_LocDelArg(FALSE, tvb, offset, &asn1_ctx, tree, hf_qsig_wtmlr_qsig_wtmlr_LocDelArg_PDU);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, true, pinfo);
+  offset = dissect_qsig_wtmlr_LocDelArg(false, tvb, offset, &asn1_ctx, tree, hf_qsig_wtmlr_qsig_wtmlr_LocDelArg_PDU);
   return offset;
 }
 static int dissect_qsig_wtmlr_LocDeRegArg_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, TRUE, pinfo);
-  offset = dissect_qsig_wtmlr_LocDeRegArg(FALSE, tvb, offset, &asn1_ctx, tree, hf_qsig_wtmlr_qsig_wtmlr_LocDeRegArg_PDU);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, true, pinfo);
+  offset = dissect_qsig_wtmlr_LocDeRegArg(false, tvb, offset, &asn1_ctx, tree, hf_qsig_wtmlr_qsig_wtmlr_LocDeRegArg_PDU);
   return offset;
 }
 static int dissect_qsig_wtmlr_PisnEnqArg_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, TRUE, pinfo);
-  offset = dissect_qsig_wtmlr_PisnEnqArg(FALSE, tvb, offset, &asn1_ctx, tree, hf_qsig_wtmlr_qsig_wtmlr_PisnEnqArg_PDU);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, true, pinfo);
+  offset = dissect_qsig_wtmlr_PisnEnqArg(false, tvb, offset, &asn1_ctx, tree, hf_qsig_wtmlr_qsig_wtmlr_PisnEnqArg_PDU);
   return offset;
 }
 static int dissect_qsig_wtmlr_PisnEnqRes_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, TRUE, pinfo);
-  offset = dissect_qsig_wtmlr_PisnEnqRes(FALSE, tvb, offset, &asn1_ctx, tree, hf_qsig_wtmlr_qsig_wtmlr_PisnEnqRes_PDU);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, true, pinfo);
+  offset = dissect_qsig_wtmlr_PisnEnqRes(false, tvb, offset, &asn1_ctx, tree, hf_qsig_wtmlr_qsig_wtmlr_PisnEnqRes_PDU);
   return offset;
 }
 static int dissect_qsig_wtmlr_GetRRCInfArg_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, TRUE, pinfo);
-  offset = dissect_qsig_wtmlr_GetRRCInfArg(FALSE, tvb, offset, &asn1_ctx, tree, hf_qsig_wtmlr_qsig_wtmlr_GetRRCInfArg_PDU);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, true, pinfo);
+  offset = dissect_qsig_wtmlr_GetRRCInfArg(false, tvb, offset, &asn1_ctx, tree, hf_qsig_wtmlr_qsig_wtmlr_GetRRCInfArg_PDU);
   return offset;
 }
 static int dissect_qsig_wtmlr_GetRRCInfRes_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, TRUE, pinfo);
-  offset = dissect_qsig_wtmlr_GetRRCInfRes(FALSE, tvb, offset, &asn1_ctx, tree, hf_qsig_wtmlr_qsig_wtmlr_GetRRCInfRes_PDU);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, true, pinfo);
+  offset = dissect_qsig_wtmlr_GetRRCInfRes(false, tvb, offset, &asn1_ctx, tree, hf_qsig_wtmlr_qsig_wtmlr_GetRRCInfRes_PDU);
   return offset;
 }
 static int dissect_qsig_wtmlr_LocInfoCheckArg_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, TRUE, pinfo);
-  offset = dissect_qsig_wtmlr_LocInfoCheckArg(FALSE, tvb, offset, &asn1_ctx, tree, hf_qsig_wtmlr_qsig_wtmlr_LocInfoCheckArg_PDU);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, true, pinfo);
+  offset = dissect_qsig_wtmlr_LocInfoCheckArg(false, tvb, offset, &asn1_ctx, tree, hf_qsig_wtmlr_qsig_wtmlr_LocInfoCheckArg_PDU);
   return offset;
 }
 static int dissect_qsig_wtmlr_LocInfoCheckRes_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, TRUE, pinfo);
-  offset = dissect_qsig_wtmlr_LocInfoCheckRes(FALSE, tvb, offset, &asn1_ctx, tree, hf_qsig_wtmlr_qsig_wtmlr_LocInfoCheckRes_PDU);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, true, pinfo);
+  offset = dissect_qsig_wtmlr_LocInfoCheckRes(false, tvb, offset, &asn1_ctx, tree, hf_qsig_wtmlr_qsig_wtmlr_LocInfoCheckRes_PDU);
   return offset;
 }
 static int dissect_qsig_wtmlr_Extension_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, TRUE, pinfo);
-  offset = dissect_qsig_Extension(FALSE, tvb, offset, &asn1_ctx, tree, hf_qsig_wtmlr_qsig_wtmlr_Extension_PDU);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, true, pinfo);
+  offset = dissect_qsig_Extension(false, tvb, offset, &asn1_ctx, tree, hf_qsig_wtmlr_qsig_wtmlr_Extension_PDU);
   return offset;
 }
 
@@ -8609,7 +8609,7 @@ static const ber_sequence_t qsig_wtmch_SEQUENCE_OF_Extension_sequence_of[1] = {
 };
 
 static int
-dissect_qsig_wtmch_SEQUENCE_OF_Extension(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_wtmch_SEQUENCE_OF_Extension(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_sequence_of(implicit_tag, actx, tree, tvb, offset,
                                       qsig_wtmch_SEQUENCE_OF_Extension_sequence_of, hf_index, ett_qsig_wtmch_SEQUENCE_OF_Extension);
 
@@ -8630,7 +8630,7 @@ static const ber_choice_t qsig_wtmch_WtmiExtension_choice[] = {
 };
 
 static int
-dissect_qsig_wtmch_WtmiExtension(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_wtmch_WtmiExtension(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_choice(actx, tree, tvb, offset,
                                  qsig_wtmch_WtmiExtension_choice, hf_index, ett_qsig_wtmch_WtmiExtension,
                                  NULL);
@@ -8647,7 +8647,7 @@ static const ber_sequence_t qsig_wtmch_EnquiryArg_sequence[] = {
 };
 
 static int
-dissect_qsig_wtmch_EnquiryArg(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_wtmch_EnquiryArg(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
                                    qsig_wtmch_EnquiryArg_sequence, hf_index, ett_qsig_wtmch_EnquiryArg);
 
@@ -8657,7 +8657,7 @@ dissect_qsig_wtmch_EnquiryArg(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int 
 
 
 static int
-dissect_qsig_wtmch_AlternativeId(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_wtmch_AlternativeId(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_octet_string(implicit_tag, actx, tree, tvb, offset, hf_index,
                                        NULL);
 
@@ -8672,7 +8672,7 @@ static const ber_sequence_t qsig_wtmch_T_both_sequence[] = {
 };
 
 static int
-dissect_qsig_wtmch_T_both(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_wtmch_T_both(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
                                    qsig_wtmch_T_both_sequence, hf_index, ett_qsig_wtmch_T_both);
 
@@ -8695,7 +8695,7 @@ static const ber_choice_t qsig_wtmch_WtmIdentity_choice[] = {
 };
 
 static int
-dissect_qsig_wtmch_WtmIdentity(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_wtmch_WtmIdentity(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_choice(actx, tree, tvb, offset,
                                  qsig_wtmch_WtmIdentity_choice, hf_index, ett_qsig_wtmch_WtmIdentity,
                                  NULL);
@@ -8717,7 +8717,7 @@ static const ber_sequence_t qsig_wtmch_DivertArg_sequence[] = {
 };
 
 static int
-dissect_qsig_wtmch_DivertArg(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_wtmch_DivertArg(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
                                    qsig_wtmch_DivertArg_sequence, hf_index, ett_qsig_wtmch_DivertArg);
 
@@ -8732,7 +8732,7 @@ static const ber_sequence_t qsig_wtmch_InformArg_sequence[] = {
 };
 
 static int
-dissect_qsig_wtmch_InformArg(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_wtmch_InformArg(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
                                    qsig_wtmch_InformArg_sequence, hf_index, ett_qsig_wtmch_InformArg);
 
@@ -8748,7 +8748,7 @@ static const ber_sequence_t qsig_wtmch_CurrLocation_sequence[] = {
 };
 
 static int
-dissect_qsig_wtmch_CurrLocation(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_wtmch_CurrLocation(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
                                    qsig_wtmch_CurrLocation_sequence, hf_index, ett_qsig_wtmch_CurrLocation);
 
@@ -8765,7 +8765,7 @@ static const value_string qsig_wtmch_SubscriptionOption_vals[] = {
 
 
 static int
-dissect_qsig_wtmch_SubscriptionOption(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_wtmch_SubscriptionOption(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_integer(implicit_tag, actx, tree, tvb, offset, hf_index,
                                   NULL);
 
@@ -8782,7 +8782,7 @@ static const ber_sequence_t qsig_wtmch_CfuActivated_sequence[] = {
 };
 
 static int
-dissect_qsig_wtmch_CfuActivated(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_wtmch_CfuActivated(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
                                    qsig_wtmch_CfuActivated_sequence, hf_index, ett_qsig_wtmch_CfuActivated);
 
@@ -8803,7 +8803,7 @@ static const ber_choice_t qsig_wtmch_EnquiryRes_choice[] = {
 };
 
 static int
-dissect_qsig_wtmch_EnquiryRes(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_wtmch_EnquiryRes(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_choice(actx, tree, tvb, offset,
                                  qsig_wtmch_EnquiryRes_choice, hf_index, ett_qsig_wtmch_EnquiryRes,
                                  NULL);
@@ -8814,7 +8814,7 @@ dissect_qsig_wtmch_EnquiryRes(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int 
 
 
 static int
-dissect_qsig_wtmch_NULL(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_wtmch_NULL(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_null(implicit_tag, actx, tree, tvb, offset, hf_index);
 
   return offset;
@@ -8836,7 +8836,7 @@ static const ber_choice_t qsig_wtmch_DummyRes_choice[] = {
 };
 
 static int
-dissect_qsig_wtmch_DummyRes(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_wtmch_DummyRes(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_choice(actx, tree, tvb, offset,
                                  qsig_wtmch_DummyRes_choice, hf_index, ett_qsig_wtmch_DummyRes,
                                  NULL);
@@ -8858,7 +8858,7 @@ static const ber_choice_t qsig_wtmch_T_wtmoaextension_choice[] = {
 };
 
 static int
-dissect_qsig_wtmch_T_wtmoaextension(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_wtmch_T_wtmoaextension(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_choice(actx, tree, tvb, offset,
                                  qsig_wtmch_T_wtmoaextension_choice, hf_index, ett_qsig_wtmch_T_wtmoaextension,
                                  NULL);
@@ -8875,7 +8875,7 @@ static const ber_sequence_t qsig_wtmch_WtmoArg_sequence[] = {
 };
 
 static int
-dissect_qsig_wtmch_WtmoArg(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_wtmch_WtmoArg(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
                                    qsig_wtmch_WtmoArg_sequence, hf_index, ett_qsig_wtmch_WtmoArg);
 
@@ -8887,50 +8887,50 @@ dissect_qsig_wtmch_WtmoArg(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int off
 static int dissect_qsig_wtmch_EnquiryArg_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, TRUE, pinfo);
-  offset = dissect_qsig_wtmch_EnquiryArg(FALSE, tvb, offset, &asn1_ctx, tree, hf_qsig_wtmch_qsig_wtmch_EnquiryArg_PDU);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, true, pinfo);
+  offset = dissect_qsig_wtmch_EnquiryArg(false, tvb, offset, &asn1_ctx, tree, hf_qsig_wtmch_qsig_wtmch_EnquiryArg_PDU);
   return offset;
 }
 static int dissect_qsig_wtmch_EnquiryRes_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, TRUE, pinfo);
-  offset = dissect_qsig_wtmch_EnquiryRes(FALSE, tvb, offset, &asn1_ctx, tree, hf_qsig_wtmch_qsig_wtmch_EnquiryRes_PDU);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, true, pinfo);
+  offset = dissect_qsig_wtmch_EnquiryRes(false, tvb, offset, &asn1_ctx, tree, hf_qsig_wtmch_qsig_wtmch_EnquiryRes_PDU);
   return offset;
 }
 static int dissect_qsig_wtmch_DivertArg_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, TRUE, pinfo);
-  offset = dissect_qsig_wtmch_DivertArg(FALSE, tvb, offset, &asn1_ctx, tree, hf_qsig_wtmch_qsig_wtmch_DivertArg_PDU);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, true, pinfo);
+  offset = dissect_qsig_wtmch_DivertArg(false, tvb, offset, &asn1_ctx, tree, hf_qsig_wtmch_qsig_wtmch_DivertArg_PDU);
   return offset;
 }
 static int dissect_qsig_wtmch_DummyRes_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, TRUE, pinfo);
-  offset = dissect_qsig_wtmch_DummyRes(FALSE, tvb, offset, &asn1_ctx, tree, hf_qsig_wtmch_qsig_wtmch_DummyRes_PDU);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, true, pinfo);
+  offset = dissect_qsig_wtmch_DummyRes(false, tvb, offset, &asn1_ctx, tree, hf_qsig_wtmch_qsig_wtmch_DummyRes_PDU);
   return offset;
 }
 static int dissect_qsig_wtmch_InformArg_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, TRUE, pinfo);
-  offset = dissect_qsig_wtmch_InformArg(FALSE, tvb, offset, &asn1_ctx, tree, hf_qsig_wtmch_qsig_wtmch_InformArg_PDU);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, true, pinfo);
+  offset = dissect_qsig_wtmch_InformArg(false, tvb, offset, &asn1_ctx, tree, hf_qsig_wtmch_qsig_wtmch_InformArg_PDU);
   return offset;
 }
 static int dissect_qsig_wtmch_WtmoArg_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, TRUE, pinfo);
-  offset = dissect_qsig_wtmch_WtmoArg(FALSE, tvb, offset, &asn1_ctx, tree, hf_qsig_wtmch_qsig_wtmch_WtmoArg_PDU);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, true, pinfo);
+  offset = dissect_qsig_wtmch_WtmoArg(false, tvb, offset, &asn1_ctx, tree, hf_qsig_wtmch_qsig_wtmch_WtmoArg_PDU);
   return offset;
 }
 static int dissect_qsig_wtmch_Extension_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, TRUE, pinfo);
-  offset = dissect_qsig_Extension(FALSE, tvb, offset, &asn1_ctx, tree, hf_qsig_wtmch_qsig_wtmch_Extension_PDU);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, true, pinfo);
+  offset = dissect_qsig_Extension(false, tvb, offset, &asn1_ctx, tree, hf_qsig_wtmch_qsig_wtmch_Extension_PDU);
   return offset;
 }
 
@@ -8940,7 +8940,7 @@ static int dissect_qsig_wtmch_Extension_PDU(tvbuff_t *tvb _U_, packet_info *pinf
 
 
 static int
-dissect_qsig_wtmau_AlternativeId(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_wtmau_AlternativeId(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_octet_string(implicit_tag, actx, tree, tvb, offset, hf_index,
                                        NULL);
 
@@ -8961,7 +8961,7 @@ static const ber_choice_t qsig_wtmau_WtmUserId_choice[] = {
 };
 
 static int
-dissect_qsig_wtmau_WtmUserId(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_wtmau_WtmUserId(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_choice(actx, tree, tvb, offset,
                                  qsig_wtmau_WtmUserId_choice, hf_index, ett_qsig_wtmau_WtmUserId,
                                  NULL);
@@ -8972,7 +8972,7 @@ dissect_qsig_wtmau_WtmUserId(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int o
 
 
 static int
-dissect_qsig_wtmau_AuthChallenge(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_wtmau_AuthChallenge(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_octet_string(implicit_tag, actx, tree, tvb, offset, hf_index,
                                        NULL);
 
@@ -8982,7 +8982,7 @@ dissect_qsig_wtmau_AuthChallenge(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, i
 
 
 static int
-dissect_qsig_wtmau_AuthResponse(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_wtmau_AuthResponse(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_octet_string(implicit_tag, actx, tree, tvb, offset, hf_index,
                                        NULL);
 
@@ -8992,7 +8992,7 @@ dissect_qsig_wtmau_AuthResponse(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, in
 
 
 static int
-dissect_qsig_wtmau_DerivedCipherKey(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_wtmau_DerivedCipherKey(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_octet_string(implicit_tag, actx, tree, tvb, offset, hf_index,
                                        NULL);
 
@@ -9002,7 +9002,7 @@ dissect_qsig_wtmau_DerivedCipherKey(gboolean implicit_tag _U_, tvbuff_t *tvb _U_
 
 
 static int
-dissect_qsig_wtmau_CalculationParam(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_wtmau_CalculationParam(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_octet_string(implicit_tag, actx, tree, tvb, offset, hf_index,
                                        NULL);
 
@@ -9019,7 +9019,7 @@ static const ber_sequence_t qsig_wtmau_CalcWtatInfoUnit_sequence[] = {
 };
 
 static int
-dissect_qsig_wtmau_CalcWtatInfoUnit(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_wtmau_CalcWtatInfoUnit(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
                                    qsig_wtmau_CalcWtatInfoUnit_sequence, hf_index, ett_qsig_wtmau_CalcWtatInfoUnit);
 
@@ -9032,7 +9032,7 @@ static const ber_sequence_t qsig_wtmau_CalcWtatInfo_sequence_of[1] = {
 };
 
 static int
-dissect_qsig_wtmau_CalcWtatInfo(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_wtmau_CalcWtatInfo(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_sequence_of(implicit_tag, actx, tree, tvb, offset,
                                       qsig_wtmau_CalcWtatInfo_sequence_of, hf_index, ett_qsig_wtmau_CalcWtatInfo);
 
@@ -9045,7 +9045,7 @@ static const ber_sequence_t qsig_wtmau_SEQUENCE_OF_Extension_sequence_of[1] = {
 };
 
 static int
-dissect_qsig_wtmau_SEQUENCE_OF_Extension(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_wtmau_SEQUENCE_OF_Extension(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_sequence_of(implicit_tag, actx, tree, tvb, offset,
                                       qsig_wtmau_SEQUENCE_OF_Extension_sequence_of, hf_index, ett_qsig_wtmau_SEQUENCE_OF_Extension);
 
@@ -9066,7 +9066,7 @@ static const ber_choice_t qsig_wtmau_DummyExtension_choice[] = {
 };
 
 static int
-dissect_qsig_wtmau_DummyExtension(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_wtmau_DummyExtension(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_choice(actx, tree, tvb, offset,
                                  qsig_wtmau_DummyExtension_choice, hf_index, ett_qsig_wtmau_DummyExtension,
                                  NULL);
@@ -9083,7 +9083,7 @@ static const ber_sequence_t qsig_wtmau_AuthWtmArg_sequence[] = {
 };
 
 static int
-dissect_qsig_wtmau_AuthWtmArg(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_wtmau_AuthWtmArg(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
                                    qsig_wtmau_AuthWtmArg_sequence, hf_index, ett_qsig_wtmau_AuthWtmArg);
 
@@ -9099,7 +9099,7 @@ static const value_string qsig_wtmau_T_autWtmResValue_vals[] = {
 
 
 static int
-dissect_qsig_wtmau_T_autWtmResValue(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_wtmau_T_autWtmResValue(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_integer(implicit_tag, actx, tree, tvb, offset, hf_index,
                                   NULL);
 
@@ -9114,7 +9114,7 @@ static const ber_sequence_t qsig_wtmau_AuthWtmRes_sequence[] = {
 };
 
 static int
-dissect_qsig_wtmau_AuthWtmRes(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_wtmau_AuthWtmRes(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
                                    qsig_wtmau_AuthWtmRes_sequence, hf_index, ett_qsig_wtmau_AuthWtmRes);
 
@@ -9124,7 +9124,7 @@ dissect_qsig_wtmau_AuthWtmRes(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int 
 
 
 static int
-dissect_qsig_wtmau_CanCompute(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_wtmau_CanCompute(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_null(implicit_tag, actx, tree, tvb, offset, hf_index);
 
   return offset;
@@ -9140,7 +9140,7 @@ static const ber_sequence_t qsig_wtmau_WtatParamArg_sequence[] = {
 };
 
 static int
-dissect_qsig_wtmau_WtatParamArg(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_wtmau_WtatParamArg(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
                                    qsig_wtmau_WtatParamArg_sequence, hf_index, ett_qsig_wtmau_WtatParamArg);
 
@@ -9162,7 +9162,7 @@ static const value_string qsig_wtmau_DefinedIDs_vals[] = {
 
 
 static int
-dissect_qsig_wtmau_DefinedIDs(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_wtmau_DefinedIDs(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_integer(implicit_tag, actx, tree, tvb, offset, hf_index,
                                                 NULL);
 
@@ -9172,7 +9172,7 @@ dissect_qsig_wtmau_DefinedIDs(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int 
 
 
 static int
-dissect_qsig_wtmau_T_param(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_wtmau_T_param(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
 
 
   return offset;
@@ -9186,7 +9186,7 @@ static const ber_sequence_t qsig_wtmau_AuthAlgorithm_sequence[] = {
 };
 
 static int
-dissect_qsig_wtmau_AuthAlgorithm(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_wtmau_AuthAlgorithm(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
                                    qsig_wtmau_AuthAlgorithm_sequence, hf_index, ett_qsig_wtmau_AuthAlgorithm);
 
@@ -9196,7 +9196,7 @@ dissect_qsig_wtmau_AuthAlgorithm(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, i
 
 
 static int
-dissect_qsig_wtmau_AuthSessionKey(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_wtmau_AuthSessionKey(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_octet_string(implicit_tag, actx, tree, tvb, offset, hf_index,
                                        NULL);
 
@@ -9211,7 +9211,7 @@ static const ber_sequence_t qsig_wtmau_AuthSessionKeyInfo_sequence[] = {
 };
 
 static int
-dissect_qsig_wtmau_AuthSessionKeyInfo(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_wtmau_AuthSessionKeyInfo(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
                                    qsig_wtmau_AuthSessionKeyInfo_sequence, hf_index, ett_qsig_wtmau_AuthSessionKeyInfo);
 
@@ -9221,7 +9221,7 @@ dissect_qsig_wtmau_AuthSessionKeyInfo(gboolean implicit_tag _U_, tvbuff_t *tvb _
 
 
 static int
-dissect_qsig_wtmau_AuthKey(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_wtmau_AuthKey(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_octet_string(implicit_tag, actx, tree, tvb, offset, hf_index,
                                        NULL);
 
@@ -9231,7 +9231,7 @@ dissect_qsig_wtmau_AuthKey(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int off
 
 
 static int
-dissect_qsig_wtmau_INTEGER_1_8(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_wtmau_INTEGER_1_8(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_integer(implicit_tag, actx, tree, tvb, offset, hf_index,
                                                 NULL);
 
@@ -9256,7 +9256,7 @@ static const ber_choice_t qsig_wtmau_T_wtatParamInfoChoice_choice[] = {
 };
 
 static int
-dissect_qsig_wtmau_T_wtatParamInfoChoice(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_wtmau_T_wtatParamInfoChoice(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_choice(actx, tree, tvb, offset,
                                  qsig_wtmau_T_wtatParamInfoChoice_choice, hf_index, ett_qsig_wtmau_T_wtatParamInfoChoice,
                                  NULL);
@@ -9272,7 +9272,7 @@ static const ber_sequence_t qsig_wtmau_WtatParamInfo_sequence[] = {
 };
 
 static int
-dissect_qsig_wtmau_WtatParamInfo(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_wtmau_WtatParamInfo(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
                                    qsig_wtmau_WtatParamInfo_sequence, hf_index, ett_qsig_wtmau_WtatParamInfo);
 
@@ -9287,7 +9287,7 @@ static const ber_sequence_t qsig_wtmau_WtatParamRes_sequence[] = {
 };
 
 static int
-dissect_qsig_wtmau_WtatParamRes(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_wtmau_WtatParamRes(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
                                    qsig_wtmau_WtatParamRes_sequence, hf_index, ett_qsig_wtmau_WtatParamRes);
 
@@ -9305,7 +9305,7 @@ static const ber_sequence_t qsig_wtmau_WtanParamArg_sequence[] = {
 };
 
 static int
-dissect_qsig_wtmau_WtanParamArg(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_wtmau_WtanParamArg(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
                                    qsig_wtmau_WtanParamArg_sequence, hf_index, ett_qsig_wtmau_WtanParamArg);
 
@@ -9320,7 +9320,7 @@ static const ber_sequence_t qsig_wtmau_CalcWtanInfo_sequence[] = {
 };
 
 static int
-dissect_qsig_wtmau_CalcWtanInfo(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_wtmau_CalcWtanInfo(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
                                    qsig_wtmau_CalcWtanInfo_sequence, hf_index, ett_qsig_wtmau_CalcWtanInfo);
 
@@ -9341,7 +9341,7 @@ static const ber_choice_t qsig_wtmau_WtanParamInfo_choice[] = {
 };
 
 static int
-dissect_qsig_wtmau_WtanParamInfo(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_wtmau_WtanParamInfo(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_choice(actx, tree, tvb, offset,
                                  qsig_wtmau_WtanParamInfo_choice, hf_index, ett_qsig_wtmau_WtanParamInfo,
                                  NULL);
@@ -9357,7 +9357,7 @@ static const ber_sequence_t qsig_wtmau_WtanParamRes_sequence[] = {
 };
 
 static int
-dissect_qsig_wtmau_WtanParamRes(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_wtmau_WtanParamRes(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
                                    qsig_wtmau_WtanParamRes_sequence, hf_index, ett_qsig_wtmau_WtanParamRes);
 
@@ -9372,7 +9372,7 @@ static const ber_sequence_t qsig_wtmau_ARG_transferAuthParam_sequence[] = {
 };
 
 static int
-dissect_qsig_wtmau_ARG_transferAuthParam(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_wtmau_ARG_transferAuthParam(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
                                    qsig_wtmau_ARG_transferAuthParam_sequence, hf_index, ett_qsig_wtmau_ARG_transferAuthParam);
 
@@ -9384,57 +9384,57 @@ dissect_qsig_wtmau_ARG_transferAuthParam(gboolean implicit_tag _U_, tvbuff_t *tv
 static int dissect_qsig_wtmau_AuthWtmArg_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, TRUE, pinfo);
-  offset = dissect_qsig_wtmau_AuthWtmArg(FALSE, tvb, offset, &asn1_ctx, tree, hf_qsig_wtmau_qsig_wtmau_AuthWtmArg_PDU);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, true, pinfo);
+  offset = dissect_qsig_wtmau_AuthWtmArg(false, tvb, offset, &asn1_ctx, tree, hf_qsig_wtmau_qsig_wtmau_AuthWtmArg_PDU);
   return offset;
 }
 static int dissect_qsig_wtmau_AuthWtmRes_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, TRUE, pinfo);
-  offset = dissect_qsig_wtmau_AuthWtmRes(FALSE, tvb, offset, &asn1_ctx, tree, hf_qsig_wtmau_qsig_wtmau_AuthWtmRes_PDU);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, true, pinfo);
+  offset = dissect_qsig_wtmau_AuthWtmRes(false, tvb, offset, &asn1_ctx, tree, hf_qsig_wtmau_qsig_wtmau_AuthWtmRes_PDU);
   return offset;
 }
 static int dissect_qsig_wtmau_WtatParamArg_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, TRUE, pinfo);
-  offset = dissect_qsig_wtmau_WtatParamArg(FALSE, tvb, offset, &asn1_ctx, tree, hf_qsig_wtmau_qsig_wtmau_WtatParamArg_PDU);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, true, pinfo);
+  offset = dissect_qsig_wtmau_WtatParamArg(false, tvb, offset, &asn1_ctx, tree, hf_qsig_wtmau_qsig_wtmau_WtatParamArg_PDU);
   return offset;
 }
 static int dissect_qsig_wtmau_WtatParamRes_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, TRUE, pinfo);
-  offset = dissect_qsig_wtmau_WtatParamRes(FALSE, tvb, offset, &asn1_ctx, tree, hf_qsig_wtmau_qsig_wtmau_WtatParamRes_PDU);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, true, pinfo);
+  offset = dissect_qsig_wtmau_WtatParamRes(false, tvb, offset, &asn1_ctx, tree, hf_qsig_wtmau_qsig_wtmau_WtatParamRes_PDU);
   return offset;
 }
 static int dissect_qsig_wtmau_WtanParamArg_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, TRUE, pinfo);
-  offset = dissect_qsig_wtmau_WtanParamArg(FALSE, tvb, offset, &asn1_ctx, tree, hf_qsig_wtmau_qsig_wtmau_WtanParamArg_PDU);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, true, pinfo);
+  offset = dissect_qsig_wtmau_WtanParamArg(false, tvb, offset, &asn1_ctx, tree, hf_qsig_wtmau_qsig_wtmau_WtanParamArg_PDU);
   return offset;
 }
 static int dissect_qsig_wtmau_WtanParamRes_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, TRUE, pinfo);
-  offset = dissect_qsig_wtmau_WtanParamRes(FALSE, tvb, offset, &asn1_ctx, tree, hf_qsig_wtmau_qsig_wtmau_WtanParamRes_PDU);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, true, pinfo);
+  offset = dissect_qsig_wtmau_WtanParamRes(false, tvb, offset, &asn1_ctx, tree, hf_qsig_wtmau_qsig_wtmau_WtanParamRes_PDU);
   return offset;
 }
 static int dissect_qsig_wtmau_ARG_transferAuthParam_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, TRUE, pinfo);
-  offset = dissect_qsig_wtmau_ARG_transferAuthParam(FALSE, tvb, offset, &asn1_ctx, tree, hf_qsig_wtmau_qsig_wtmau_ARG_transferAuthParam_PDU);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, true, pinfo);
+  offset = dissect_qsig_wtmau_ARG_transferAuthParam(false, tvb, offset, &asn1_ctx, tree, hf_qsig_wtmau_qsig_wtmau_ARG_transferAuthParam_PDU);
   return offset;
 }
 static int dissect_qsig_wtmau_Extension_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, TRUE, pinfo);
-  offset = dissect_qsig_Extension(FALSE, tvb, offset, &asn1_ctx, tree, hf_qsig_wtmau_qsig_wtmau_Extension_PDU);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, true, pinfo);
+  offset = dissect_qsig_Extension(false, tvb, offset, &asn1_ctx, tree, hf_qsig_wtmau_qsig_wtmau_Extension_PDU);
   return offset;
 }
 
@@ -9444,7 +9444,7 @@ static int dissect_qsig_wtmau_Extension_PDU(tvbuff_t *tvb _U_, packet_info *pinf
 
 
 static int
-dissect_qsig_sd_BMPStringNormal(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_sd_BMPStringNormal(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_octet_string(implicit_tag, actx, tree, tvb, offset, hf_index,
                                        NULL);
 
@@ -9454,7 +9454,7 @@ dissect_qsig_sd_BMPStringNormal(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, in
 
 
 static int
-dissect_qsig_sd_BMPStringExtended(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_sd_BMPStringExtended(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_octet_string(implicit_tag, actx, tree, tvb, offset, hf_index,
                                        NULL);
 
@@ -9475,7 +9475,7 @@ static const ber_choice_t qsig_sd_DisplayString_choice[] = {
 };
 
 static int
-dissect_qsig_sd_DisplayString(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_sd_DisplayString(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_choice(actx, tree, tvb, offset,
                                  qsig_sd_DisplayString_choice, hf_index, ett_qsig_sd_DisplayString,
                                  NULL);
@@ -9489,7 +9489,7 @@ static const ber_sequence_t qsig_sd_SEQUENCE_OF_Extension_sequence_of[1] = {
 };
 
 static int
-dissect_qsig_sd_SEQUENCE_OF_Extension(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_sd_SEQUENCE_OF_Extension(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_sequence_of(implicit_tag, actx, tree, tvb, offset,
                                       qsig_sd_SEQUENCE_OF_Extension_sequence_of, hf_index, ett_qsig_sd_SEQUENCE_OF_Extension);
 
@@ -9510,7 +9510,7 @@ static const ber_choice_t qsig_sd_SDExtension_choice[] = {
 };
 
 static int
-dissect_qsig_sd_SDExtension(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_sd_SDExtension(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_choice(actx, tree, tvb, offset,
                                  qsig_sd_SDExtension_choice, hf_index, ett_qsig_sd_SDExtension,
                                  NULL);
@@ -9526,7 +9526,7 @@ static const ber_sequence_t qsig_sd_DisplayArg_sequence[] = {
 };
 
 static int
-dissect_qsig_sd_DisplayArg(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_sd_DisplayArg(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
                                    qsig_sd_DisplayArg_sequence, hf_index, ett_qsig_sd_DisplayArg);
 
@@ -9541,7 +9541,7 @@ static const ber_sequence_t qsig_sd_KeypadArg_sequence[] = {
 };
 
 static int
-dissect_qsig_sd_KeypadArg(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_sd_KeypadArg(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
                                    qsig_sd_KeypadArg_sequence, hf_index, ett_qsig_sd_KeypadArg);
 
@@ -9553,22 +9553,22 @@ dissect_qsig_sd_KeypadArg(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offs
 static int dissect_qsig_sd_DisplayArg_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, TRUE, pinfo);
-  offset = dissect_qsig_sd_DisplayArg(FALSE, tvb, offset, &asn1_ctx, tree, hf_qsig_sd_qsig_sd_DisplayArg_PDU);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, true, pinfo);
+  offset = dissect_qsig_sd_DisplayArg(false, tvb, offset, &asn1_ctx, tree, hf_qsig_sd_qsig_sd_DisplayArg_PDU);
   return offset;
 }
 static int dissect_qsig_sd_KeypadArg_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, TRUE, pinfo);
-  offset = dissect_qsig_sd_KeypadArg(FALSE, tvb, offset, &asn1_ctx, tree, hf_qsig_sd_qsig_sd_KeypadArg_PDU);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, true, pinfo);
+  offset = dissect_qsig_sd_KeypadArg(false, tvb, offset, &asn1_ctx, tree, hf_qsig_sd_qsig_sd_KeypadArg_PDU);
   return offset;
 }
 static int dissect_qsig_sd_Extension_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, TRUE, pinfo);
-  offset = dissect_qsig_Extension(FALSE, tvb, offset, &asn1_ctx, tree, hf_qsig_sd_qsig_sd_Extension_PDU);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, true, pinfo);
+  offset = dissect_qsig_Extension(false, tvb, offset, &asn1_ctx, tree, hf_qsig_sd_qsig_sd_Extension_PDU);
   return offset;
 }
 
@@ -9578,7 +9578,7 @@ static int dissect_qsig_sd_Extension_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _
 
 
 static int
-dissect_qsig_cidl_SwitchingSubDomainName(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_cidl_SwitchingSubDomainName(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_restricted_string(implicit_tag, BER_UNI_TAG_IA5String,
                                             actx, tree, tvb, offset, hf_index,
                                             NULL);
@@ -9589,7 +9589,7 @@ dissect_qsig_cidl_SwitchingSubDomainName(gboolean implicit_tag _U_, tvbuff_t *tv
 
 
 static int
-dissect_qsig_cidl_SubDomainID(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_cidl_SubDomainID(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_octet_string(implicit_tag, actx, tree, tvb, offset, hf_index,
                                        NULL);
 
@@ -9599,7 +9599,7 @@ dissect_qsig_cidl_SubDomainID(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int 
 
 
 static int
-dissect_qsig_cidl_GloballyUniqueID(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_cidl_GloballyUniqueID(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_octet_string(implicit_tag, actx, tree, tvb, offset, hf_index,
                                        NULL);
 
@@ -9620,7 +9620,7 @@ static const ber_choice_t qsig_cidl_T_linkageID_choice[] = {
 };
 
 static int
-dissect_qsig_cidl_T_linkageID(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_cidl_T_linkageID(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_choice(actx, tree, tvb, offset,
                                  qsig_cidl_T_linkageID_choice, hf_index, ett_qsig_cidl_T_linkageID,
                                  NULL);
@@ -9631,7 +9631,7 @@ dissect_qsig_cidl_T_linkageID(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int 
 
 
 static int
-dissect_qsig_cidl_TimeStamp(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_cidl_TimeStamp(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_GeneralizedTime(implicit_tag, actx, tree, tvb, offset, hf_index);
 
   return offset;
@@ -9646,7 +9646,7 @@ static const ber_sequence_t qsig_cidl_CallIdentificationData_sequence[] = {
 };
 
 static int
-dissect_qsig_cidl_CallIdentificationData(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_cidl_CallIdentificationData(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
                                    qsig_cidl_CallIdentificationData_sequence, hf_index, ett_qsig_cidl_CallIdentificationData);
 
@@ -9659,7 +9659,7 @@ static const ber_sequence_t qsig_cidl_SEQUENCE_OF_Extension_sequence_of[1] = {
 };
 
 static int
-dissect_qsig_cidl_SEQUENCE_OF_Extension(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_cidl_SEQUENCE_OF_Extension(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_sequence_of(implicit_tag, actx, tree, tvb, offset,
                                       qsig_cidl_SEQUENCE_OF_Extension_sequence_of, hf_index, ett_qsig_cidl_SEQUENCE_OF_Extension);
 
@@ -9680,7 +9680,7 @@ static const ber_choice_t qsig_cidl_ExtensionType_choice[] = {
 };
 
 static int
-dissect_qsig_cidl_ExtensionType(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_cidl_ExtensionType(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_choice(actx, tree, tvb, offset,
                                  qsig_cidl_ExtensionType_choice, hf_index, ett_qsig_cidl_ExtensionType,
                                  NULL);
@@ -9698,7 +9698,7 @@ static const ber_sequence_t qsig_cidl_CallIdentificationAssignArg_sequence[] = {
 };
 
 static int
-dissect_qsig_cidl_CallIdentificationAssignArg(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_cidl_CallIdentificationAssignArg(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
                                    qsig_cidl_CallIdentificationAssignArg_sequence, hf_index, ett_qsig_cidl_CallIdentificationAssignArg);
 
@@ -9715,7 +9715,7 @@ static const ber_sequence_t qsig_cidl_CallIdentificationUpdateArg_sequence[] = {
 };
 
 static int
-dissect_qsig_cidl_CallIdentificationUpdateArg(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_cidl_CallIdentificationUpdateArg(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
                                    qsig_cidl_CallIdentificationUpdateArg_sequence, hf_index, ett_qsig_cidl_CallIdentificationUpdateArg);
 
@@ -9727,15 +9727,15 @@ dissect_qsig_cidl_CallIdentificationUpdateArg(gboolean implicit_tag _U_, tvbuff_
 static int dissect_qsig_cidl_CallIdentificationAssignArg_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, TRUE, pinfo);
-  offset = dissect_qsig_cidl_CallIdentificationAssignArg(FALSE, tvb, offset, &asn1_ctx, tree, hf_qsig_cidl_qsig_cidl_CallIdentificationAssignArg_PDU);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, true, pinfo);
+  offset = dissect_qsig_cidl_CallIdentificationAssignArg(false, tvb, offset, &asn1_ctx, tree, hf_qsig_cidl_qsig_cidl_CallIdentificationAssignArg_PDU);
   return offset;
 }
 static int dissect_qsig_cidl_CallIdentificationUpdateArg_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, TRUE, pinfo);
-  offset = dissect_qsig_cidl_CallIdentificationUpdateArg(FALSE, tvb, offset, &asn1_ctx, tree, hf_qsig_cidl_qsig_cidl_CallIdentificationUpdateArg_PDU);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, true, pinfo);
+  offset = dissect_qsig_cidl_CallIdentificationUpdateArg(false, tvb, offset, &asn1_ctx, tree, hf_qsig_cidl_qsig_cidl_CallIdentificationUpdateArg_PDU);
   return offset;
 }
 
@@ -9745,7 +9745,7 @@ static int dissect_qsig_cidl_CallIdentificationUpdateArg_PDU(tvbuff_t *tvb _U_, 
 
 
 static int
-dissect_qsig_sms_MessageReference(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_sms_MessageReference(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_integer(implicit_tag, actx, tree, tvb, offset, hf_index,
                                                 NULL);
 
@@ -9755,7 +9755,7 @@ dissect_qsig_sms_MessageReference(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, 
 
 
 static int
-dissect_qsig_sms_ProtocolIdentifier(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_sms_ProtocolIdentifier(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_integer(implicit_tag, actx, tree, tvb, offset, hf_index,
                                                 NULL);
 
@@ -9765,7 +9765,7 @@ dissect_qsig_sms_ProtocolIdentifier(gboolean implicit_tag _U_, tvbuff_t *tvb _U_
 
 
 static int
-dissect_qsig_sms_ValidityPeriodRel(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_sms_ValidityPeriodRel(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_integer(implicit_tag, actx, tree, tvb, offset, hf_index,
                                                 NULL);
 
@@ -9775,7 +9775,7 @@ dissect_qsig_sms_ValidityPeriodRel(gboolean implicit_tag _U_, tvbuff_t *tvb _U_,
 
 
 static int
-dissect_qsig_sms_ValidityPeriodAbs(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_sms_ValidityPeriodAbs(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_GeneralizedTime(implicit_tag, actx, tree, tvb, offset, hf_index);
 
   return offset;
@@ -9784,7 +9784,7 @@ dissect_qsig_sms_ValidityPeriodAbs(gboolean implicit_tag _U_, tvbuff_t *tvb _U_,
 
 
 static int
-dissect_qsig_sms_BOOLEAN(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_sms_BOOLEAN(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_boolean(implicit_tag, actx, tree, tvb, offset, hf_index, NULL);
 
   return offset;
@@ -9793,7 +9793,7 @@ dissect_qsig_sms_BOOLEAN(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offse
 
 
 static int
-dissect_qsig_sms_INTEGER_0_255(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_sms_INTEGER_0_255(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_integer(implicit_tag, actx, tree, tvb, offset, hf_index,
                                                 NULL);
 
@@ -9803,7 +9803,7 @@ dissect_qsig_sms_INTEGER_0_255(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int
 
 
 static int
-dissect_qsig_sms_ValidityPeriodSemi(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_sms_ValidityPeriodSemi(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_octet_string(implicit_tag, actx, tree, tvb, offset, hf_index,
                                        NULL);
 
@@ -9826,7 +9826,7 @@ static const ber_choice_t qsig_sms_EnhancedVP_choice[] = {
 };
 
 static int
-dissect_qsig_sms_EnhancedVP(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_sms_EnhancedVP(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_choice(actx, tree, tvb, offset,
                                  qsig_sms_EnhancedVP_choice, hf_index, ett_qsig_sms_EnhancedVP,
                                  NULL);
@@ -9842,7 +9842,7 @@ static const ber_sequence_t qsig_sms_ValidityPeriodEnh_sequence[] = {
 };
 
 static int
-dissect_qsig_sms_ValidityPeriodEnh(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_sms_ValidityPeriodEnh(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
                                    qsig_sms_ValidityPeriodEnh_sequence, hf_index, ett_qsig_sms_ValidityPeriodEnh);
 
@@ -9865,7 +9865,7 @@ static const ber_choice_t qsig_sms_ValidityPeriod_choice[] = {
 };
 
 static int
-dissect_qsig_sms_ValidityPeriod(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_sms_ValidityPeriod(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_choice(actx, tree, tvb, offset,
                                  qsig_sms_ValidityPeriod_choice, hf_index, ett_qsig_sms_ValidityPeriod,
                                  NULL);
@@ -9884,7 +9884,7 @@ static const ber_sequence_t qsig_sms_SmSubmitParameter_sequence[] = {
 };
 
 static int
-dissect_qsig_sms_SmSubmitParameter(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_sms_SmSubmitParameter(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
                                    qsig_sms_SmSubmitParameter_sequence, hf_index, ett_qsig_sms_SmSubmitParameter);
 
@@ -9905,7 +9905,7 @@ static int * const qsig_sms_SmscControlParameterHeader_bits[] = {
 };
 
 static int
-dissect_qsig_sms_SmscControlParameterHeader(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_sms_SmscControlParameterHeader(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_bitstring(implicit_tag, actx, tree, tvb, offset,
                                     qsig_sms_SmscControlParameterHeader_bits, 8, hf_index, ett_qsig_sms_SmscControlParameterHeader,
                                     NULL);
@@ -9922,7 +9922,7 @@ static const ber_sequence_t qsig_sms_Concatenated8BitSMHeader_sequence[] = {
 };
 
 static int
-dissect_qsig_sms_Concatenated8BitSMHeader(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_sms_Concatenated8BitSMHeader(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
                                    qsig_sms_Concatenated8BitSMHeader_sequence, hf_index, ett_qsig_sms_Concatenated8BitSMHeader);
 
@@ -9932,7 +9932,7 @@ dissect_qsig_sms_Concatenated8BitSMHeader(gboolean implicit_tag _U_, tvbuff_t *t
 
 
 static int
-dissect_qsig_sms_INTEGER_0_65536(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_sms_INTEGER_0_65536(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_integer(implicit_tag, actx, tree, tvb, offset, hf_index,
                                                 NULL);
 
@@ -9948,7 +9948,7 @@ static const ber_sequence_t qsig_sms_Concatenated16BitSMHeader_sequence[] = {
 };
 
 static int
-dissect_qsig_sms_Concatenated16BitSMHeader(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_sms_Concatenated16BitSMHeader(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
                                    qsig_sms_Concatenated16BitSMHeader_sequence, hf_index, ett_qsig_sms_Concatenated16BitSMHeader);
 
@@ -9963,7 +9963,7 @@ static const ber_sequence_t qsig_sms_ApplicationPort8BitHeader_sequence[] = {
 };
 
 static int
-dissect_qsig_sms_ApplicationPort8BitHeader(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_sms_ApplicationPort8BitHeader(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
                                    qsig_sms_ApplicationPort8BitHeader_sequence, hf_index, ett_qsig_sms_ApplicationPort8BitHeader);
 
@@ -9978,7 +9978,7 @@ static const ber_sequence_t qsig_sms_ApplicationPort16BitHeader_sequence[] = {
 };
 
 static int
-dissect_qsig_sms_ApplicationPort16BitHeader(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_sms_ApplicationPort16BitHeader(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
                                    qsig_sms_ApplicationPort16BitHeader_sequence, hf_index, ett_qsig_sms_ApplicationPort16BitHeader);
 
@@ -9995,7 +9995,7 @@ static const value_string qsig_sms_DataHeaderSourceIndicator_vals[] = {
 
 
 static int
-dissect_qsig_sms_DataHeaderSourceIndicator(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_sms_DataHeaderSourceIndicator(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_integer(implicit_tag, actx, tree, tvb, offset, hf_index,
                                                 NULL);
 
@@ -10005,7 +10005,7 @@ dissect_qsig_sms_DataHeaderSourceIndicator(gboolean implicit_tag _U_, tvbuff_t *
 
 
 static int
-dissect_qsig_sms_WirelessControlHeader(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_sms_WirelessControlHeader(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_octet_string(implicit_tag, actx, tree, tvb, offset, hf_index,
                                        NULL);
 
@@ -10015,7 +10015,7 @@ dissect_qsig_sms_WirelessControlHeader(gboolean implicit_tag _U_, tvbuff_t *tvb 
 
 
 static int
-dissect_qsig_sms_OCTET_STRING(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_sms_OCTET_STRING(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_octet_string(implicit_tag, actx, tree, tvb, offset, hf_index,
                                        NULL);
 
@@ -10030,7 +10030,7 @@ static const ber_sequence_t qsig_sms_GenericUserValue_sequence[] = {
 };
 
 static int
-dissect_qsig_sms_GenericUserValue(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_sms_GenericUserValue(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
                                    qsig_sms_GenericUserValue_sequence, hf_index, ett_qsig_sms_GenericUserValue);
 
@@ -10063,7 +10063,7 @@ static const ber_choice_t qsig_sms_UserDataHeaderChoice_choice[] = {
 };
 
 static int
-dissect_qsig_sms_UserDataHeaderChoice(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_sms_UserDataHeaderChoice(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_choice(actx, tree, tvb, offset,
                                  qsig_sms_UserDataHeaderChoice_choice, hf_index, ett_qsig_sms_UserDataHeaderChoice,
                                  NULL);
@@ -10077,7 +10077,7 @@ static const ber_sequence_t qsig_sms_UserDataHeader_sequence_of[1] = {
 };
 
 static int
-dissect_qsig_sms_UserDataHeader(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_sms_UserDataHeader(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_sequence_of(implicit_tag, actx, tree, tvb, offset,
                                       qsig_sms_UserDataHeader_sequence_of, hf_index, ett_qsig_sms_UserDataHeader);
 
@@ -10087,7 +10087,7 @@ dissect_qsig_sms_UserDataHeader(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, in
 
 
 static int
-dissect_qsig_sms_INTEGER_0_3(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_sms_INTEGER_0_3(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_integer(implicit_tag, actx, tree, tvb, offset, hf_index,
                                                 NULL);
 
@@ -10105,7 +10105,7 @@ static const value_string qsig_sms_ShortMessageTextType_vals[] = {
 
 
 static int
-dissect_qsig_sms_ShortMessageTextType(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_sms_ShortMessageTextType(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_integer(implicit_tag, actx, tree, tvb, offset, hf_index,
                                                 NULL);
 
@@ -10115,7 +10115,7 @@ dissect_qsig_sms_ShortMessageTextType(gboolean implicit_tag _U_, tvbuff_t *tvb _
 
 
 static int
-dissect_qsig_sms_ShortMessageTextData(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_sms_ShortMessageTextData(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_octet_string(implicit_tag, actx, tree, tvb, offset, hf_index,
                                        NULL);
 
@@ -10130,7 +10130,7 @@ static const ber_sequence_t qsig_sms_ShortMessageText_sequence[] = {
 };
 
 static int
-dissect_qsig_sms_ShortMessageText(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_sms_ShortMessageText(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
                                    qsig_sms_ShortMessageText_sequence, hf_index, ett_qsig_sms_ShortMessageText);
 
@@ -10147,7 +10147,7 @@ static const ber_sequence_t qsig_sms_UserData_sequence[] = {
 };
 
 static int
-dissect_qsig_sms_UserData(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_sms_UserData(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
                                    qsig_sms_UserData_sequence, hf_index, ett_qsig_sms_UserData);
 
@@ -10160,7 +10160,7 @@ static const ber_sequence_t qsig_sms_SEQUENCE_OF_Extension_sequence_of[1] = {
 };
 
 static int
-dissect_qsig_sms_SEQUENCE_OF_Extension(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_sms_SEQUENCE_OF_Extension(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_sequence_of(implicit_tag, actx, tree, tvb, offset,
                                       qsig_sms_SEQUENCE_OF_Extension_sequence_of, hf_index, ett_qsig_sms_SEQUENCE_OF_Extension);
 
@@ -10181,7 +10181,7 @@ static const ber_choice_t qsig_sms_SmsExtension_choice[] = {
 };
 
 static int
-dissect_qsig_sms_SmsExtension(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_sms_SmsExtension(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_choice(actx, tree, tvb, offset,
                                  qsig_sms_SmsExtension_choice, hf_index, ett_qsig_sms_SmsExtension,
                                  NULL);
@@ -10201,7 +10201,7 @@ static const ber_sequence_t qsig_sms_SmsSubmitArg_sequence[] = {
 };
 
 static int
-dissect_qsig_sms_SmsSubmitArg(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_sms_SmsSubmitArg(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
                                    qsig_sms_SmsSubmitArg_sequence, hf_index, ett_qsig_sms_SmsSubmitArg);
 
@@ -10211,7 +10211,7 @@ dissect_qsig_sms_SmsSubmitArg(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int 
 
 
 static int
-dissect_qsig_sms_ServiceCentreTimeStamp(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_sms_ServiceCentreTimeStamp(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_GeneralizedTime(implicit_tag, actx, tree, tvb, offset, hf_index);
 
   return offset;
@@ -10227,7 +10227,7 @@ static const ber_sequence_t qsig_sms_SmsSubmitRes_sequence[] = {
 };
 
 static int
-dissect_qsig_sms_SmsSubmitRes(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_sms_SmsSubmitRes(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
                                    qsig_sms_SmsSubmitRes_sequence, hf_index, ett_qsig_sms_SmsSubmitRes);
 
@@ -10246,7 +10246,7 @@ static const ber_sequence_t qsig_sms_SmDeliverParameter_sequence[] = {
 };
 
 static int
-dissect_qsig_sms_SmDeliverParameter(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_sms_SmDeliverParameter(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
                                    qsig_sms_SmDeliverParameter_sequence, hf_index, ett_qsig_sms_SmDeliverParameter);
 
@@ -10265,7 +10265,7 @@ static const ber_sequence_t qsig_sms_SmsDeliverArg_sequence[] = {
 };
 
 static int
-dissect_qsig_sms_SmsDeliverArg(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_sms_SmsDeliverArg(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
                                    qsig_sms_SmsDeliverArg_sequence, hf_index, ett_qsig_sms_SmsDeliverArg);
 
@@ -10275,7 +10275,7 @@ dissect_qsig_sms_SmsDeliverArg(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int
 
 
 static int
-dissect_qsig_sms_NULL(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_sms_NULL(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_null(implicit_tag, actx, tree, tvb, offset, hf_index);
 
   return offset;
@@ -10289,7 +10289,7 @@ static const ber_sequence_t qsig_sms_ResChoiceSeq_sequence[] = {
 };
 
 static int
-dissect_qsig_sms_ResChoiceSeq(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_sms_ResChoiceSeq(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
                                    qsig_sms_ResChoiceSeq_sequence, hf_index, ett_qsig_sms_ResChoiceSeq);
 
@@ -10314,7 +10314,7 @@ static const ber_choice_t qsig_sms_SmsDeliverResChoice_choice[] = {
 };
 
 static int
-dissect_qsig_sms_SmsDeliverResChoice(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_sms_SmsDeliverResChoice(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_choice(actx, tree, tvb, offset,
                                  qsig_sms_SmsDeliverResChoice_choice, hf_index, ett_qsig_sms_SmsDeliverResChoice,
                                  NULL);
@@ -10330,7 +10330,7 @@ static const ber_sequence_t qsig_sms_SmsDeliverRes_sequence[] = {
 };
 
 static int
-dissect_qsig_sms_SmsDeliverRes(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_sms_SmsDeliverRes(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
                                    qsig_sms_SmsDeliverRes_sequence, hf_index, ett_qsig_sms_SmsDeliverRes);
 
@@ -10340,7 +10340,7 @@ dissect_qsig_sms_SmsDeliverRes(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int
 
 
 static int
-dissect_qsig_sms_DischargeTime(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_sms_DischargeTime(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_GeneralizedTime(implicit_tag, actx, tree, tvb, offset, hf_index);
 
   return offset;
@@ -10349,7 +10349,7 @@ dissect_qsig_sms_DischargeTime(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int
 
 
 static int
-dissect_qsig_sms_Status(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_sms_Status(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_integer(implicit_tag, actx, tree, tvb, offset, hf_index,
                                                 NULL);
 
@@ -10375,7 +10375,7 @@ static const ber_sequence_t qsig_sms_SmsStatusReportArg_sequence[] = {
 };
 
 static int
-dissect_qsig_sms_SmsStatusReportArg(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_sms_SmsStatusReportArg(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
                                    qsig_sms_SmsStatusReportArg_sequence, hf_index, ett_qsig_sms_SmsStatusReportArg);
 
@@ -10400,7 +10400,7 @@ static const ber_choice_t qsig_sms_SmsStatusReportResponseChoice_choice[] = {
 };
 
 static int
-dissect_qsig_sms_SmsStatusReportResponseChoice(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_sms_SmsStatusReportResponseChoice(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_choice(actx, tree, tvb, offset,
                                  qsig_sms_SmsStatusReportResponseChoice_choice, hf_index, ett_qsig_sms_SmsStatusReportResponseChoice,
                                  NULL);
@@ -10416,7 +10416,7 @@ static const ber_sequence_t qsig_sms_SmsStatusReportRes_sequence[] = {
 };
 
 static int
-dissect_qsig_sms_SmsStatusReportRes(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_sms_SmsStatusReportRes(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
                                    qsig_sms_SmsStatusReportRes_sequence, hf_index, ett_qsig_sms_SmsStatusReportRes);
 
@@ -10434,7 +10434,7 @@ static const value_string qsig_sms_CommandType_vals[] = {
 
 
 static int
-dissect_qsig_sms_CommandType(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_sms_CommandType(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_integer(implicit_tag, actx, tree, tvb, offset, hf_index,
                                                 NULL);
 
@@ -10444,7 +10444,7 @@ dissect_qsig_sms_CommandType(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int o
 
 
 static int
-dissect_qsig_sms_CommandData(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_sms_CommandData(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_octet_string(implicit_tag, actx, tree, tvb, offset, hf_index,
                                        NULL);
 
@@ -10465,7 +10465,7 @@ static const ber_sequence_t qsig_sms_SmsCommandArg_sequence[] = {
 };
 
 static int
-dissect_qsig_sms_SmsCommandArg(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_sms_SmsCommandArg(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
                                    qsig_sms_SmsCommandArg_sequence, hf_index, ett_qsig_sms_SmsCommandArg);
 
@@ -10482,7 +10482,7 @@ static const ber_sequence_t qsig_sms_SmsCommandRes_sequence[] = {
 };
 
 static int
-dissect_qsig_sms_SmsCommandRes(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_sms_SmsCommandRes(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
                                    qsig_sms_SmsCommandRes_sequence, hf_index, ett_qsig_sms_SmsCommandRes);
 
@@ -10497,7 +10497,7 @@ static const ber_sequence_t qsig_sms_ScAlertArg_sequence[] = {
 };
 
 static int
-dissect_qsig_sms_ScAlertArg(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_sms_ScAlertArg(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
                                    qsig_sms_ScAlertArg_sequence, hf_index, ett_qsig_sms_ScAlertArg);
 
@@ -10518,7 +10518,7 @@ static const ber_choice_t qsig_sms_DummyRes_choice[] = {
 };
 
 static int
-dissect_qsig_sms_DummyRes(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_sms_DummyRes(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_choice(actx, tree, tvb, offset,
                                  qsig_sms_DummyRes_choice, hf_index, ett_qsig_sms_DummyRes,
                                  NULL);
@@ -10529,7 +10529,7 @@ dissect_qsig_sms_DummyRes(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offs
 
 
 static int
-dissect_qsig_sms_FailureCause(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_sms_FailureCause(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_integer(implicit_tag, actx, tree, tvb, offset, hf_index,
                                                 NULL);
 
@@ -10546,7 +10546,7 @@ static const ber_sequence_t qsig_sms_PAR_smsDeliverError_sequence[] = {
 };
 
 static int
-dissect_qsig_sms_PAR_smsDeliverError(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_sms_PAR_smsDeliverError(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
                                    qsig_sms_PAR_smsDeliverError_sequence, hf_index, ett_qsig_sms_PAR_smsDeliverError);
 
@@ -10563,7 +10563,7 @@ static const ber_sequence_t qsig_sms_PAR_smsSubmitError_sequence[] = {
 };
 
 static int
-dissect_qsig_sms_PAR_smsSubmitError(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_sms_PAR_smsSubmitError(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
                                    qsig_sms_PAR_smsSubmitError_sequence, hf_index, ett_qsig_sms_PAR_smsSubmitError);
 
@@ -10580,7 +10580,7 @@ static const ber_sequence_t qsig_sms_PAR_smsStatusReportError_sequence[] = {
 };
 
 static int
-dissect_qsig_sms_PAR_smsStatusReportError(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_sms_PAR_smsStatusReportError(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
                                    qsig_sms_PAR_smsStatusReportError_sequence, hf_index, ett_qsig_sms_PAR_smsStatusReportError);
 
@@ -10597,7 +10597,7 @@ static const ber_sequence_t qsig_sms_PAR_smsCommandError_sequence[] = {
 };
 
 static int
-dissect_qsig_sms_PAR_smsCommandError(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_sms_PAR_smsCommandError(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
                                    qsig_sms_PAR_smsCommandError_sequence, hf_index, ett_qsig_sms_PAR_smsCommandError);
 
@@ -10609,106 +10609,106 @@ dissect_qsig_sms_PAR_smsCommandError(gboolean implicit_tag _U_, tvbuff_t *tvb _U
 static int dissect_qsig_sms_SmsSubmitArg_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, TRUE, pinfo);
-  offset = dissect_qsig_sms_SmsSubmitArg(FALSE, tvb, offset, &asn1_ctx, tree, hf_qsig_sms_qsig_sms_SmsSubmitArg_PDU);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, true, pinfo);
+  offset = dissect_qsig_sms_SmsSubmitArg(false, tvb, offset, &asn1_ctx, tree, hf_qsig_sms_qsig_sms_SmsSubmitArg_PDU);
   return offset;
 }
 static int dissect_qsig_sms_SmsSubmitRes_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, TRUE, pinfo);
-  offset = dissect_qsig_sms_SmsSubmitRes(FALSE, tvb, offset, &asn1_ctx, tree, hf_qsig_sms_qsig_sms_SmsSubmitRes_PDU);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, true, pinfo);
+  offset = dissect_qsig_sms_SmsSubmitRes(false, tvb, offset, &asn1_ctx, tree, hf_qsig_sms_qsig_sms_SmsSubmitRes_PDU);
   return offset;
 }
 static int dissect_qsig_sms_SmsDeliverArg_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, TRUE, pinfo);
-  offset = dissect_qsig_sms_SmsDeliverArg(FALSE, tvb, offset, &asn1_ctx, tree, hf_qsig_sms_qsig_sms_SmsDeliverArg_PDU);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, true, pinfo);
+  offset = dissect_qsig_sms_SmsDeliverArg(false, tvb, offset, &asn1_ctx, tree, hf_qsig_sms_qsig_sms_SmsDeliverArg_PDU);
   return offset;
 }
 static int dissect_qsig_sms_SmsDeliverRes_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, TRUE, pinfo);
-  offset = dissect_qsig_sms_SmsDeliverRes(FALSE, tvb, offset, &asn1_ctx, tree, hf_qsig_sms_qsig_sms_SmsDeliverRes_PDU);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, true, pinfo);
+  offset = dissect_qsig_sms_SmsDeliverRes(false, tvb, offset, &asn1_ctx, tree, hf_qsig_sms_qsig_sms_SmsDeliverRes_PDU);
   return offset;
 }
 static int dissect_qsig_sms_SmsStatusReportArg_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, TRUE, pinfo);
-  offset = dissect_qsig_sms_SmsStatusReportArg(FALSE, tvb, offset, &asn1_ctx, tree, hf_qsig_sms_qsig_sms_SmsStatusReportArg_PDU);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, true, pinfo);
+  offset = dissect_qsig_sms_SmsStatusReportArg(false, tvb, offset, &asn1_ctx, tree, hf_qsig_sms_qsig_sms_SmsStatusReportArg_PDU);
   return offset;
 }
 static int dissect_qsig_sms_SmsStatusReportRes_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, TRUE, pinfo);
-  offset = dissect_qsig_sms_SmsStatusReportRes(FALSE, tvb, offset, &asn1_ctx, tree, hf_qsig_sms_qsig_sms_SmsStatusReportRes_PDU);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, true, pinfo);
+  offset = dissect_qsig_sms_SmsStatusReportRes(false, tvb, offset, &asn1_ctx, tree, hf_qsig_sms_qsig_sms_SmsStatusReportRes_PDU);
   return offset;
 }
 static int dissect_qsig_sms_SmsCommandArg_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, TRUE, pinfo);
-  offset = dissect_qsig_sms_SmsCommandArg(FALSE, tvb, offset, &asn1_ctx, tree, hf_qsig_sms_qsig_sms_SmsCommandArg_PDU);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, true, pinfo);
+  offset = dissect_qsig_sms_SmsCommandArg(false, tvb, offset, &asn1_ctx, tree, hf_qsig_sms_qsig_sms_SmsCommandArg_PDU);
   return offset;
 }
 static int dissect_qsig_sms_SmsCommandRes_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, TRUE, pinfo);
-  offset = dissect_qsig_sms_SmsCommandRes(FALSE, tvb, offset, &asn1_ctx, tree, hf_qsig_sms_qsig_sms_SmsCommandRes_PDU);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, true, pinfo);
+  offset = dissect_qsig_sms_SmsCommandRes(false, tvb, offset, &asn1_ctx, tree, hf_qsig_sms_qsig_sms_SmsCommandRes_PDU);
   return offset;
 }
 static int dissect_qsig_sms_ScAlertArg_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, TRUE, pinfo);
-  offset = dissect_qsig_sms_ScAlertArg(FALSE, tvb, offset, &asn1_ctx, tree, hf_qsig_sms_qsig_sms_ScAlertArg_PDU);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, true, pinfo);
+  offset = dissect_qsig_sms_ScAlertArg(false, tvb, offset, &asn1_ctx, tree, hf_qsig_sms_qsig_sms_ScAlertArg_PDU);
   return offset;
 }
 static int dissect_qsig_sms_DummyRes_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, TRUE, pinfo);
-  offset = dissect_qsig_sms_DummyRes(FALSE, tvb, offset, &asn1_ctx, tree, hf_qsig_sms_qsig_sms_DummyRes_PDU);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, true, pinfo);
+  offset = dissect_qsig_sms_DummyRes(false, tvb, offset, &asn1_ctx, tree, hf_qsig_sms_qsig_sms_DummyRes_PDU);
   return offset;
 }
 static int dissect_qsig_sms_PAR_smsDeliverError_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, TRUE, pinfo);
-  offset = dissect_qsig_sms_PAR_smsDeliverError(FALSE, tvb, offset, &asn1_ctx, tree, hf_qsig_sms_qsig_sms_PAR_smsDeliverError_PDU);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, true, pinfo);
+  offset = dissect_qsig_sms_PAR_smsDeliverError(false, tvb, offset, &asn1_ctx, tree, hf_qsig_sms_qsig_sms_PAR_smsDeliverError_PDU);
   return offset;
 }
 static int dissect_qsig_sms_PAR_smsSubmitError_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, TRUE, pinfo);
-  offset = dissect_qsig_sms_PAR_smsSubmitError(FALSE, tvb, offset, &asn1_ctx, tree, hf_qsig_sms_qsig_sms_PAR_smsSubmitError_PDU);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, true, pinfo);
+  offset = dissect_qsig_sms_PAR_smsSubmitError(false, tvb, offset, &asn1_ctx, tree, hf_qsig_sms_qsig_sms_PAR_smsSubmitError_PDU);
   return offset;
 }
 static int dissect_qsig_sms_PAR_smsStatusReportError_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, TRUE, pinfo);
-  offset = dissect_qsig_sms_PAR_smsStatusReportError(FALSE, tvb, offset, &asn1_ctx, tree, hf_qsig_sms_qsig_sms_PAR_smsStatusReportError_PDU);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, true, pinfo);
+  offset = dissect_qsig_sms_PAR_smsStatusReportError(false, tvb, offset, &asn1_ctx, tree, hf_qsig_sms_qsig_sms_PAR_smsStatusReportError_PDU);
   return offset;
 }
 static int dissect_qsig_sms_PAR_smsCommandError_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, TRUE, pinfo);
-  offset = dissect_qsig_sms_PAR_smsCommandError(FALSE, tvb, offset, &asn1_ctx, tree, hf_qsig_sms_qsig_sms_PAR_smsCommandError_PDU);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, true, pinfo);
+  offset = dissect_qsig_sms_PAR_smsCommandError(false, tvb, offset, &asn1_ctx, tree, hf_qsig_sms_qsig_sms_PAR_smsCommandError_PDU);
   return offset;
 }
 static int dissect_qsig_sms_SmsExtension_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, TRUE, pinfo);
-  offset = dissect_qsig_sms_SmsExtension(FALSE, tvb, offset, &asn1_ctx, tree, hf_qsig_sms_qsig_sms_SmsExtension_PDU);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, true, pinfo);
+  offset = dissect_qsig_sms_SmsExtension(false, tvb, offset, &asn1_ctx, tree, hf_qsig_sms_qsig_sms_SmsExtension_PDU);
   return offset;
 }
 
@@ -10718,7 +10718,7 @@ static int dissect_qsig_sms_SmsExtension_PDU(tvbuff_t *tvb _U_, packet_info *pin
 
 
 static int
-dissect_qsig_mcr_NULL(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_mcr_NULL(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_null(implicit_tag, actx, tree, tvb, offset, hf_index);
 
   return offset;
@@ -10738,7 +10738,7 @@ static const ber_choice_t qsig_mcr_CallType_choice[] = {
 };
 
 static int
-dissect_qsig_mcr_CallType(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_mcr_CallType(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_choice(actx, tree, tvb, offset,
                                  qsig_mcr_CallType_choice, hf_index, ett_qsig_mcr_CallType,
                                  NULL);
@@ -10749,7 +10749,7 @@ dissect_qsig_mcr_CallType(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offs
 
 
 static int
-dissect_qsig_mcr_BOOLEAN(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_mcr_BOOLEAN(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_boolean(implicit_tag, actx, tree, tvb, offset, hf_index, NULL);
 
   return offset;
@@ -10765,7 +10765,7 @@ static const value_string qsig_mcr_CorrelationReason_vals[] = {
 
 
 static int
-dissect_qsig_mcr_CorrelationReason(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_mcr_CorrelationReason(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_integer(implicit_tag, actx, tree, tvb, offset, hf_index,
                                                 NULL);
 
@@ -10780,7 +10780,7 @@ static const ber_sequence_t qsig_mcr_Correlation_sequence[] = {
 };
 
 static int
-dissect_qsig_mcr_Correlation(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_mcr_Correlation(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
                                    qsig_mcr_Correlation_sequence, hf_index, ett_qsig_mcr_Correlation);
 
@@ -10793,7 +10793,7 @@ static const ber_sequence_t qsig_mcr_SEQUENCE_OF_Extension_sequence_of[1] = {
 };
 
 static int
-dissect_qsig_mcr_SEQUENCE_OF_Extension(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_mcr_SEQUENCE_OF_Extension(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_sequence_of(implicit_tag, actx, tree, tvb, offset,
                                       qsig_mcr_SEQUENCE_OF_Extension_sequence_of, hf_index, ett_qsig_mcr_SEQUENCE_OF_Extension);
 
@@ -10816,7 +10816,7 @@ static const ber_choice_t qsig_mcr_MCRExtensions_choice[] = {
 };
 
 static int
-dissect_qsig_mcr_MCRExtensions(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_mcr_MCRExtensions(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_choice(actx, tree, tvb, offset,
                                  qsig_mcr_MCRExtensions_choice, hf_index, ett_qsig_mcr_MCRExtensions,
                                  NULL);
@@ -10837,7 +10837,7 @@ static const ber_sequence_t qsig_mcr_MCRequestArg_sequence[] = {
 };
 
 static int
-dissect_qsig_mcr_MCRequestArg(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_mcr_MCRequestArg(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
                                    qsig_mcr_MCRequestArg_sequence, hf_index, ett_qsig_mcr_MCRequestArg);
 
@@ -10851,7 +10851,7 @@ static const ber_sequence_t qsig_mcr_MCRequestResult_sequence[] = {
 };
 
 static int
-dissect_qsig_mcr_MCRequestResult(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_mcr_MCRequestResult(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
                                    qsig_mcr_MCRequestResult_sequence, hf_index, ett_qsig_mcr_MCRequestResult);
 
@@ -10868,7 +10868,7 @@ static const ber_sequence_t qsig_mcr_MCInformArg_sequence[] = {
 };
 
 static int
-dissect_qsig_mcr_MCInformArg(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_mcr_MCInformArg(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
                                    qsig_mcr_MCInformArg_sequence, hf_index, ett_qsig_mcr_MCInformArg);
 
@@ -10883,7 +10883,7 @@ static const ber_sequence_t qsig_mcr_MCAlertingArg_sequence[] = {
 };
 
 static int
-dissect_qsig_mcr_MCAlertingArg(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_mcr_MCAlertingArg(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
                                    qsig_mcr_MCAlertingArg_sequence, hf_index, ett_qsig_mcr_MCAlertingArg);
 
@@ -10895,36 +10895,36 @@ dissect_qsig_mcr_MCAlertingArg(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int
 static int dissect_qsig_mcr_MCRequestArg_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, TRUE, pinfo);
-  offset = dissect_qsig_mcr_MCRequestArg(FALSE, tvb, offset, &asn1_ctx, tree, hf_qsig_mcr_qsig_mcr_MCRequestArg_PDU);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, true, pinfo);
+  offset = dissect_qsig_mcr_MCRequestArg(false, tvb, offset, &asn1_ctx, tree, hf_qsig_mcr_qsig_mcr_MCRequestArg_PDU);
   return offset;
 }
 static int dissect_qsig_mcr_MCRequestResult_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, TRUE, pinfo);
-  offset = dissect_qsig_mcr_MCRequestResult(FALSE, tvb, offset, &asn1_ctx, tree, hf_qsig_mcr_qsig_mcr_MCRequestResult_PDU);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, true, pinfo);
+  offset = dissect_qsig_mcr_MCRequestResult(false, tvb, offset, &asn1_ctx, tree, hf_qsig_mcr_qsig_mcr_MCRequestResult_PDU);
   return offset;
 }
 static int dissect_qsig_mcr_MCInformArg_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, TRUE, pinfo);
-  offset = dissect_qsig_mcr_MCInformArg(FALSE, tvb, offset, &asn1_ctx, tree, hf_qsig_mcr_qsig_mcr_MCInformArg_PDU);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, true, pinfo);
+  offset = dissect_qsig_mcr_MCInformArg(false, tvb, offset, &asn1_ctx, tree, hf_qsig_mcr_qsig_mcr_MCInformArg_PDU);
   return offset;
 }
 static int dissect_qsig_mcr_MCAlertingArg_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, TRUE, pinfo);
-  offset = dissect_qsig_mcr_MCAlertingArg(FALSE, tvb, offset, &asn1_ctx, tree, hf_qsig_mcr_qsig_mcr_MCAlertingArg_PDU);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, true, pinfo);
+  offset = dissect_qsig_mcr_MCAlertingArg(false, tvb, offset, &asn1_ctx, tree, hf_qsig_mcr_qsig_mcr_MCAlertingArg_PDU);
   return offset;
 }
 static int dissect_qsig_mcr_Extension_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, TRUE, pinfo);
-  offset = dissect_qsig_Extension(FALSE, tvb, offset, &asn1_ctx, tree, hf_qsig_mcr_qsig_mcr_Extension_PDU);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, true, pinfo);
+  offset = dissect_qsig_Extension(false, tvb, offset, &asn1_ctx, tree, hf_qsig_mcr_qsig_mcr_Extension_PDU);
   return offset;
 }
 
@@ -10934,7 +10934,7 @@ static int dissect_qsig_mcr_Extension_PDU(tvbuff_t *tvb _U_, packet_info *pinfo 
 
 
 static int
-dissect_qsig_mcm_INTEGER_0_65535(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_mcm_INTEGER_0_65535(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_integer(implicit_tag, actx, tree, tvb, offset, hf_index,
                                                 NULL);
 
@@ -10944,7 +10944,7 @@ dissect_qsig_mcm_INTEGER_0_65535(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, i
 
 
 static int
-dissect_qsig_mcm_NumericString_SIZE_1_10(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_mcm_NumericString_SIZE_1_10(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_restricted_string(implicit_tag, BER_UNI_TAG_NumericString,
                                             actx, tree, tvb, offset, hf_index,
                                             NULL);
@@ -10968,7 +10968,7 @@ static const ber_choice_t qsig_mcm_MsgCentreId_choice[] = {
 };
 
 static int
-dissect_qsig_mcm_MsgCentreId(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_mcm_MsgCentreId(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_choice(actx, tree, tvb, offset,
                                  qsig_mcm_MsgCentreId_choice, hf_index, ett_qsig_mcm_MsgCentreId,
                                  NULL);
@@ -10984,7 +10984,7 @@ static const ber_sequence_t qsig_mcm_PartyInfo_sequence[] = {
 };
 
 static int
-dissect_qsig_mcm_PartyInfo(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_mcm_PartyInfo(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
                                    qsig_mcm_PartyInfo_sequence, hf_index, ett_qsig_mcm_PartyInfo);
 
@@ -11038,7 +11038,7 @@ static const value_string qsig_mcm_MessageType_vals[] = {
 
 
 static int
-dissect_qsig_mcm_MessageType(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_mcm_MessageType(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_integer(implicit_tag, actx, tree, tvb, offset, hf_index,
                                   NULL);
 
@@ -11048,7 +11048,7 @@ dissect_qsig_mcm_MessageType(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int o
 
 
 static int
-dissect_qsig_mcm_INTEGER_0_100(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_mcm_INTEGER_0_100(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_integer(implicit_tag, actx, tree, tvb, offset, hf_index,
                                                 NULL);
 
@@ -11063,7 +11063,7 @@ static const ber_sequence_t qsig_mcm_MailboxFullPar_sequence[] = {
 };
 
 static int
-dissect_qsig_mcm_MailboxFullPar(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_mcm_MailboxFullPar(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
                                    qsig_mcm_MailboxFullPar_sequence, hf_index, ett_qsig_mcm_MailboxFullPar);
 
@@ -11076,7 +11076,7 @@ static const ber_sequence_t qsig_mcm_MailboxFullFor_sequence_of[1] = {
 };
 
 static int
-dissect_qsig_mcm_MailboxFullFor(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_mcm_MailboxFullFor(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_sequence_of(implicit_tag, actx, tree, tvb, offset,
                                       qsig_mcm_MailboxFullFor_sequence_of, hf_index, ett_qsig_mcm_MailboxFullFor);
 
@@ -11086,7 +11086,7 @@ dissect_qsig_mcm_MailboxFullFor(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, in
 
 
 static int
-dissect_qsig_mcm_NULL(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_mcm_NULL(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_null(implicit_tag, actx, tree, tvb, offset, hf_index);
 
   return offset;
@@ -11098,7 +11098,7 @@ static const ber_sequence_t qsig_mcm_SEQUENCE_OF_Extension_sequence_of[1] = {
 };
 
 static int
-dissect_qsig_mcm_SEQUENCE_OF_Extension(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_mcm_SEQUENCE_OF_Extension(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_sequence_of(implicit_tag, actx, tree, tvb, offset,
                                       qsig_mcm_SEQUENCE_OF_Extension_sequence_of, hf_index, ett_qsig_mcm_SEQUENCE_OF_Extension);
 
@@ -11121,7 +11121,7 @@ static const ber_choice_t qsig_mcm_MCMExtensions_choice[] = {
 };
 
 static int
-dissect_qsig_mcm_MCMExtensions(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_mcm_MCMExtensions(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_choice(actx, tree, tvb, offset,
                                  qsig_mcm_MCMExtensions_choice, hf_index, ett_qsig_mcm_MCMExtensions,
                                  NULL);
@@ -11138,7 +11138,7 @@ static const ber_sequence_t qsig_mcm_MCMailboxFullArg_sequence[] = {
 };
 
 static int
-dissect_qsig_mcm_MCMailboxFullArg(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_mcm_MCMailboxFullArg(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
                                    qsig_mcm_MCMailboxFullArg_sequence, hf_index, ett_qsig_mcm_MCMailboxFullArg);
 
@@ -11154,7 +11154,7 @@ static const value_string qsig_mcm_MCMMode_vals[] = {
 
 
 static int
-dissect_qsig_mcm_MCMMode(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_mcm_MCMMode(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_integer(implicit_tag, actx, tree, tvb, offset, hf_index,
                                                 NULL);
 
@@ -11170,7 +11170,7 @@ static const ber_sequence_t qsig_mcm_MCMServiceInfo_sequence[] = {
 };
 
 static int
-dissect_qsig_mcm_MCMServiceInfo(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_mcm_MCMServiceInfo(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
                                    qsig_mcm_MCMServiceInfo_sequence, hf_index, ett_qsig_mcm_MCMServiceInfo);
 
@@ -11183,7 +11183,7 @@ static const ber_sequence_t qsig_mcm_SEQUENCE_OF_MCMServiceInfo_sequence_of[1] =
 };
 
 static int
-dissect_qsig_mcm_SEQUENCE_OF_MCMServiceInfo(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_mcm_SEQUENCE_OF_MCMServiceInfo(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_sequence_of(implicit_tag, actx, tree, tvb, offset,
                                       qsig_mcm_SEQUENCE_OF_MCMServiceInfo_sequence_of, hf_index, ett_qsig_mcm_SEQUENCE_OF_MCMServiceInfo);
 
@@ -11196,7 +11196,7 @@ static const ber_sequence_t qsig_mcm_SEQUENCE_OF_MessageType_sequence_of[1] = {
 };
 
 static int
-dissect_qsig_mcm_SEQUENCE_OF_MessageType(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_mcm_SEQUENCE_OF_MessageType(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_sequence_of(implicit_tag, actx, tree, tvb, offset,
                                       qsig_mcm_SEQUENCE_OF_MessageType_sequence_of, hf_index, ett_qsig_mcm_SEQUENCE_OF_MessageType);
 
@@ -11219,7 +11219,7 @@ static const ber_choice_t qsig_mcm_MCMChange_choice[] = {
 };
 
 static int
-dissect_qsig_mcm_MCMChange(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_mcm_MCMChange(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_choice(actx, tree, tvb, offset,
                                  qsig_mcm_MCMChange_choice, hf_index, ett_qsig_mcm_MCMChange,
                                  NULL);
@@ -11236,7 +11236,7 @@ static const ber_sequence_t qsig_mcm_MCMServiceArg_sequence[] = {
 };
 
 static int
-dissect_qsig_mcm_MCMServiceArg(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_mcm_MCMServiceArg(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
                                    qsig_mcm_MCMServiceArg_sequence, hf_index, ett_qsig_mcm_MCMServiceArg);
 
@@ -11252,7 +11252,7 @@ static const ber_sequence_t qsig_mcm_MCMInterrogateArg_sequence[] = {
 };
 
 static int
-dissect_qsig_mcm_MCMInterrogateArg(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_mcm_MCMInterrogateArg(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
                                    qsig_mcm_MCMInterrogateArg_sequence, hf_index, ett_qsig_mcm_MCMInterrogateArg);
 
@@ -11267,7 +11267,7 @@ static const ber_sequence_t qsig_mcm_MCMInterrogateRes_sequence[] = {
 };
 
 static int
-dissect_qsig_mcm_MCMInterrogateRes(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_mcm_MCMInterrogateRes(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
                                    qsig_mcm_MCMInterrogateRes_sequence, hf_index, ett_qsig_mcm_MCMInterrogateRes);
 
@@ -11277,7 +11277,7 @@ dissect_qsig_mcm_MCMInterrogateRes(gboolean implicit_tag _U_, tvbuff_t *tvb _U_,
 
 
 static int
-dissect_qsig_mcm_NrOfMessages(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_mcm_NrOfMessages(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_integer(implicit_tag, actx, tree, tvb, offset, hf_index,
                                                 NULL);
 
@@ -11287,7 +11287,7 @@ dissect_qsig_mcm_NrOfMessages(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int 
 
 
 static int
-dissect_qsig_mcm_TimeStamp(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_mcm_TimeStamp(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_GeneralizedTime(implicit_tag, actx, tree, tvb, offset, hf_index);
 
   return offset;
@@ -11296,7 +11296,7 @@ dissect_qsig_mcm_TimeStamp(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int off
 
 
 static int
-dissect_qsig_mcm_INTEGER_0_9(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_mcm_INTEGER_0_9(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_integer(implicit_tag, actx, tree, tvb, offset, hf_index,
                                                 NULL);
 
@@ -11317,7 +11317,7 @@ static const ber_choice_t qsig_mcm_MCMNewArgumentExt_choice[] = {
 };
 
 static int
-dissect_qsig_mcm_MCMNewArgumentExt(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_mcm_MCMNewArgumentExt(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_choice(actx, tree, tvb, offset,
                                  qsig_mcm_MCMNewArgumentExt_choice, hf_index, ett_qsig_mcm_MCMNewArgumentExt,
                                  NULL);
@@ -11339,7 +11339,7 @@ static const ber_sequence_t qsig_mcm_MCMNewMsgArg_sequence[] = {
 };
 
 static int
-dissect_qsig_mcm_MCMNewMsgArg(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_mcm_MCMNewMsgArg(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
                                    qsig_mcm_MCMNewMsgArg_sequence, hf_index, ett_qsig_mcm_MCMNewMsgArg);
 
@@ -11360,7 +11360,7 @@ static const ber_choice_t qsig_mcm_MCMNoNewArgumentExt_choice[] = {
 };
 
 static int
-dissect_qsig_mcm_MCMNoNewArgumentExt(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_mcm_MCMNoNewArgumentExt(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_choice(actx, tree, tvb, offset,
                                  qsig_mcm_MCMNoNewArgumentExt_choice, hf_index, ett_qsig_mcm_MCMNoNewArgumentExt,
                                  NULL);
@@ -11378,7 +11378,7 @@ static const ber_sequence_t qsig_mcm_MCMNoNewMsgArg_sequence[] = {
 };
 
 static int
-dissect_qsig_mcm_MCMNoNewMsgArg(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_mcm_MCMNoNewMsgArg(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
                                    qsig_mcm_MCMNoNewMsgArg_sequence, hf_index, ett_qsig_mcm_MCMNoNewMsgArg);
 
@@ -11388,7 +11388,7 @@ dissect_qsig_mcm_MCMNoNewMsgArg(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, in
 
 
 static int
-dissect_qsig_mcm_Priority(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_mcm_Priority(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_integer(implicit_tag, actx, tree, tvb, offset, hf_index,
                                                 NULL);
 
@@ -11404,7 +11404,7 @@ static const ber_sequence_t qsig_mcm_AddressHeader_sequence[] = {
 };
 
 static int
-dissect_qsig_mcm_AddressHeader(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_mcm_AddressHeader(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
                                    qsig_mcm_AddressHeader_sequence, hf_index, ett_qsig_mcm_AddressHeader);
 
@@ -11417,7 +11417,7 @@ static const ber_sequence_t qsig_mcm_CompleteInfo_sequence_of[1] = {
 };
 
 static int
-dissect_qsig_mcm_CompleteInfo(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_mcm_CompleteInfo(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_sequence_of(implicit_tag, actx, tree, tvb, offset,
                                       qsig_mcm_CompleteInfo_sequence_of, hf_index, ett_qsig_mcm_CompleteInfo);
 
@@ -11433,7 +11433,7 @@ static const ber_sequence_t qsig_mcm_CompressedInfo_sequence[] = {
 };
 
 static int
-dissect_qsig_mcm_CompressedInfo(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_mcm_CompressedInfo(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
                                    qsig_mcm_CompressedInfo_sequence, hf_index, ett_qsig_mcm_CompressedInfo);
 
@@ -11456,7 +11456,7 @@ static const ber_choice_t qsig_mcm_MessageInfo_choice[] = {
 };
 
 static int
-dissect_qsig_mcm_MessageInfo(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_mcm_MessageInfo(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_choice(actx, tree, tvb, offset,
                                  qsig_mcm_MessageInfo_choice, hf_index, ett_qsig_mcm_MessageInfo,
                                  NULL);
@@ -11472,7 +11472,7 @@ static const ber_sequence_t qsig_mcm_AllMsgInfo_sequence[] = {
 };
 
 static int
-dissect_qsig_mcm_AllMsgInfo(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_mcm_AllMsgInfo(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
                                    qsig_mcm_AllMsgInfo_sequence, hf_index, ett_qsig_mcm_AllMsgInfo);
 
@@ -11495,7 +11495,7 @@ static const ber_choice_t qsig_mcm_UpdateInfo_choice[] = {
 };
 
 static int
-dissect_qsig_mcm_UpdateInfo(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_mcm_UpdateInfo(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_choice(actx, tree, tvb, offset,
                                  qsig_mcm_UpdateInfo_choice, hf_index, ett_qsig_mcm_UpdateInfo,
                                  NULL);
@@ -11506,7 +11506,7 @@ dissect_qsig_mcm_UpdateInfo(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int of
 
 
 static int
-dissect_qsig_mcm_BOOLEAN(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_mcm_BOOLEAN(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_boolean(implicit_tag, actx, tree, tvb, offset, hf_index, NULL);
 
   return offset;
@@ -11523,7 +11523,7 @@ static const ber_sequence_t qsig_mcm_MCMUpdateArg_sequence[] = {
 };
 
 static int
-dissect_qsig_mcm_MCMUpdateArg(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_mcm_MCMUpdateArg(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
                                    qsig_mcm_MCMUpdateArg_sequence, hf_index, ett_qsig_mcm_MCMUpdateArg);
 
@@ -11544,7 +11544,7 @@ static const ber_choice_t qsig_mcm_MCMUpdArgArgumentExt_choice[] = {
 };
 
 static int
-dissect_qsig_mcm_MCMUpdArgArgumentExt(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_mcm_MCMUpdArgArgumentExt(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_choice(actx, tree, tvb, offset,
                                  qsig_mcm_MCMUpdArgArgumentExt_choice, hf_index, ett_qsig_mcm_MCMUpdArgArgumentExt,
                                  NULL);
@@ -11562,7 +11562,7 @@ static const ber_sequence_t qsig_mcm_MCMUpdateReqArg_sequence[] = {
 };
 
 static int
-dissect_qsig_mcm_MCMUpdateReqArg(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_mcm_MCMUpdateReqArg(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
                                    qsig_mcm_MCMUpdateReqArg_sequence, hf_index, ett_qsig_mcm_MCMUpdateReqArg);
 
@@ -11583,7 +11583,7 @@ static const ber_choice_t qsig_mcm_MCMUpdResArgumentExt_choice[] = {
 };
 
 static int
-dissect_qsig_mcm_MCMUpdResArgumentExt(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_mcm_MCMUpdResArgumentExt(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_choice(actx, tree, tvb, offset,
                                  qsig_mcm_MCMUpdResArgumentExt_choice, hf_index, ett_qsig_mcm_MCMUpdResArgumentExt,
                                  NULL);
@@ -11604,7 +11604,7 @@ static const ber_sequence_t qsig_mcm_MCMUpdateReqResElt_sequence[] = {
 };
 
 static int
-dissect_qsig_mcm_MCMUpdateReqResElt(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_mcm_MCMUpdateReqResElt(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
                                    qsig_mcm_MCMUpdateReqResElt_sequence, hf_index, ett_qsig_mcm_MCMUpdateReqResElt);
 
@@ -11617,7 +11617,7 @@ static const ber_sequence_t qsig_mcm_MCMUpdateReqRes_sequence_of[1] = {
 };
 
 static int
-dissect_qsig_mcm_MCMUpdateReqRes(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_mcm_MCMUpdateReqRes(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_sequence_of(implicit_tag, actx, tree, tvb, offset,
                                       qsig_mcm_MCMUpdateReqRes_sequence_of, hf_index, ett_qsig_mcm_MCMUpdateReqRes);
 
@@ -11627,7 +11627,7 @@ dissect_qsig_mcm_MCMUpdateReqRes(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, i
 
 
 static int
-dissect_qsig_mcm_MCMDummyRes(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_mcm_MCMDummyRes(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_qsig_mcm_MCMExtensions(implicit_tag, tvb, offset, actx, tree, hf_index);
 
   return offset;
@@ -11638,78 +11638,78 @@ dissect_qsig_mcm_MCMDummyRes(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int o
 static int dissect_qsig_mcm_MCMNewMsgArg_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, TRUE, pinfo);
-  offset = dissect_qsig_mcm_MCMNewMsgArg(FALSE, tvb, offset, &asn1_ctx, tree, hf_qsig_mcm_qsig_mcm_MCMNewMsgArg_PDU);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, true, pinfo);
+  offset = dissect_qsig_mcm_MCMNewMsgArg(false, tvb, offset, &asn1_ctx, tree, hf_qsig_mcm_qsig_mcm_MCMNewMsgArg_PDU);
   return offset;
 }
 static int dissect_qsig_mcm_MCMDummyRes_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, TRUE, pinfo);
-  offset = dissect_qsig_mcm_MCMDummyRes(FALSE, tvb, offset, &asn1_ctx, tree, hf_qsig_mcm_qsig_mcm_MCMDummyRes_PDU);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, true, pinfo);
+  offset = dissect_qsig_mcm_MCMDummyRes(false, tvb, offset, &asn1_ctx, tree, hf_qsig_mcm_qsig_mcm_MCMDummyRes_PDU);
   return offset;
 }
 static int dissect_qsig_mcm_MCMNoNewMsgArg_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, TRUE, pinfo);
-  offset = dissect_qsig_mcm_MCMNoNewMsgArg(FALSE, tvb, offset, &asn1_ctx, tree, hf_qsig_mcm_qsig_mcm_MCMNoNewMsgArg_PDU);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, true, pinfo);
+  offset = dissect_qsig_mcm_MCMNoNewMsgArg(false, tvb, offset, &asn1_ctx, tree, hf_qsig_mcm_qsig_mcm_MCMNoNewMsgArg_PDU);
   return offset;
 }
 static int dissect_qsig_mcm_MCMUpdateArg_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, TRUE, pinfo);
-  offset = dissect_qsig_mcm_MCMUpdateArg(FALSE, tvb, offset, &asn1_ctx, tree, hf_qsig_mcm_qsig_mcm_MCMUpdateArg_PDU);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, true, pinfo);
+  offset = dissect_qsig_mcm_MCMUpdateArg(false, tvb, offset, &asn1_ctx, tree, hf_qsig_mcm_qsig_mcm_MCMUpdateArg_PDU);
   return offset;
 }
 static int dissect_qsig_mcm_MCMUpdateReqArg_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, TRUE, pinfo);
-  offset = dissect_qsig_mcm_MCMUpdateReqArg(FALSE, tvb, offset, &asn1_ctx, tree, hf_qsig_mcm_qsig_mcm_MCMUpdateReqArg_PDU);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, true, pinfo);
+  offset = dissect_qsig_mcm_MCMUpdateReqArg(false, tvb, offset, &asn1_ctx, tree, hf_qsig_mcm_qsig_mcm_MCMUpdateReqArg_PDU);
   return offset;
 }
 static int dissect_qsig_mcm_MCMUpdateReqRes_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, TRUE, pinfo);
-  offset = dissect_qsig_mcm_MCMUpdateReqRes(FALSE, tvb, offset, &asn1_ctx, tree, hf_qsig_mcm_qsig_mcm_MCMUpdateReqRes_PDU);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, true, pinfo);
+  offset = dissect_qsig_mcm_MCMUpdateReqRes(false, tvb, offset, &asn1_ctx, tree, hf_qsig_mcm_qsig_mcm_MCMUpdateReqRes_PDU);
   return offset;
 }
 static int dissect_qsig_mcm_MCMServiceArg_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, TRUE, pinfo);
-  offset = dissect_qsig_mcm_MCMServiceArg(FALSE, tvb, offset, &asn1_ctx, tree, hf_qsig_mcm_qsig_mcm_MCMServiceArg_PDU);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, true, pinfo);
+  offset = dissect_qsig_mcm_MCMServiceArg(false, tvb, offset, &asn1_ctx, tree, hf_qsig_mcm_qsig_mcm_MCMServiceArg_PDU);
   return offset;
 }
 static int dissect_qsig_mcm_MCMInterrogateArg_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, TRUE, pinfo);
-  offset = dissect_qsig_mcm_MCMInterrogateArg(FALSE, tvb, offset, &asn1_ctx, tree, hf_qsig_mcm_qsig_mcm_MCMInterrogateArg_PDU);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, true, pinfo);
+  offset = dissect_qsig_mcm_MCMInterrogateArg(false, tvb, offset, &asn1_ctx, tree, hf_qsig_mcm_qsig_mcm_MCMInterrogateArg_PDU);
   return offset;
 }
 static int dissect_qsig_mcm_MCMInterrogateRes_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, TRUE, pinfo);
-  offset = dissect_qsig_mcm_MCMInterrogateRes(FALSE, tvb, offset, &asn1_ctx, tree, hf_qsig_mcm_qsig_mcm_MCMInterrogateRes_PDU);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, true, pinfo);
+  offset = dissect_qsig_mcm_MCMInterrogateRes(false, tvb, offset, &asn1_ctx, tree, hf_qsig_mcm_qsig_mcm_MCMInterrogateRes_PDU);
   return offset;
 }
 static int dissect_qsig_mcm_MCMailboxFullArg_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, TRUE, pinfo);
-  offset = dissect_qsig_mcm_MCMailboxFullArg(FALSE, tvb, offset, &asn1_ctx, tree, hf_qsig_mcm_qsig_mcm_MCMailboxFullArg_PDU);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, true, pinfo);
+  offset = dissect_qsig_mcm_MCMailboxFullArg(false, tvb, offset, &asn1_ctx, tree, hf_qsig_mcm_qsig_mcm_MCMailboxFullArg_PDU);
   return offset;
 }
 static int dissect_qsig_mcm_Extension_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, TRUE, pinfo);
-  offset = dissect_qsig_Extension(FALSE, tvb, offset, &asn1_ctx, tree, hf_qsig_mcm_qsig_mcm_Extension_PDU);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, true, pinfo);
+  offset = dissect_qsig_Extension(false, tvb, offset, &asn1_ctx, tree, hf_qsig_mcm_qsig_mcm_Extension_PDU);
   return offset;
 }
 
@@ -11725,7 +11725,7 @@ static const ber_sequence_t qsig_mid_PartyInfo_sequence[] = {
 };
 
 static int
-dissect_qsig_mid_PartyInfo(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_mid_PartyInfo(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
                                    qsig_mid_PartyInfo_sequence, hf_index, ett_qsig_mid_PartyInfo);
 
@@ -11735,7 +11735,7 @@ dissect_qsig_mid_PartyInfo(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int off
 
 
 static int
-dissect_qsig_mid_BMPString(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_mid_BMPString(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_restricted_string(implicit_tag, BER_UNI_TAG_BMPString,
                                             actx, tree, tvb, offset, hf_index,
                                             NULL);
@@ -11746,7 +11746,7 @@ dissect_qsig_mid_BMPString(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int off
 
 
 static int
-dissect_qsig_mid_UTF8String(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_mid_UTF8String(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_restricted_string(implicit_tag, BER_UNI_TAG_UTF8String,
                                             actx, tree, tvb, offset, hf_index,
                                             NULL);
@@ -11768,7 +11768,7 @@ static const ber_choice_t qsig_mid_String_choice[] = {
 };
 
 static int
-dissect_qsig_mid_String(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_mid_String(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_choice(actx, tree, tvb, offset,
                                  qsig_mid_String_choice, hf_index, ett_qsig_mid_String,
                                  NULL);
@@ -11779,7 +11779,7 @@ dissect_qsig_mid_String(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset
 
 
 static int
-dissect_qsig_mid_NULL(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_mid_NULL(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_null(implicit_tag, actx, tree, tvb, offset, hf_index);
 
   return offset;
@@ -11791,7 +11791,7 @@ static const ber_sequence_t qsig_mid_SEQUENCE_OF_Extension_sequence_of[1] = {
 };
 
 static int
-dissect_qsig_mid_SEQUENCE_OF_Extension(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_mid_SEQUENCE_OF_Extension(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_sequence_of(implicit_tag, actx, tree, tvb, offset,
                                       qsig_mid_SEQUENCE_OF_Extension_sequence_of, hf_index, ett_qsig_mid_SEQUENCE_OF_Extension);
 
@@ -11814,7 +11814,7 @@ static const ber_choice_t qsig_mid_MIDExtensions_choice[] = {
 };
 
 static int
-dissect_qsig_mid_MIDExtensions(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_mid_MIDExtensions(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_choice(actx, tree, tvb, offset,
                                  qsig_mid_MIDExtensions_choice, hf_index, ett_qsig_mid_MIDExtensions,
                                  NULL);
@@ -11833,7 +11833,7 @@ static const ber_sequence_t qsig_mid_MIDMailboxAuthArg_sequence[] = {
 };
 
 static int
-dissect_qsig_mid_MIDMailboxAuthArg(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_mid_MIDMailboxAuthArg(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
                                    qsig_mid_MIDMailboxAuthArg_sequence, hf_index, ett_qsig_mid_MIDMailboxAuthArg);
 
@@ -11850,7 +11850,7 @@ static const ber_sequence_t qsig_mid_MIDMailboxIDArg_sequence[] = {
 };
 
 static int
-dissect_qsig_mid_MIDMailboxIDArg(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_mid_MIDMailboxIDArg(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
                                    qsig_mid_MIDMailboxIDArg_sequence, hf_index, ett_qsig_mid_MIDMailboxIDArg);
 
@@ -11860,7 +11860,7 @@ dissect_qsig_mid_MIDMailboxIDArg(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, i
 
 
 static int
-dissect_qsig_mid_MIDDummyRes(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_qsig_mid_MIDDummyRes(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_qsig_mid_MIDExtensions(implicit_tag, tvb, offset, actx, tree, hf_index);
 
   return offset;
@@ -11871,35 +11871,35 @@ dissect_qsig_mid_MIDDummyRes(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int o
 static int dissect_qsig_mid_MIDMailboxAuthArg_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, TRUE, pinfo);
-  offset = dissect_qsig_mid_MIDMailboxAuthArg(FALSE, tvb, offset, &asn1_ctx, tree, hf_qsig_mid_qsig_mid_MIDMailboxAuthArg_PDU);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, true, pinfo);
+  offset = dissect_qsig_mid_MIDMailboxAuthArg(false, tvb, offset, &asn1_ctx, tree, hf_qsig_mid_qsig_mid_MIDMailboxAuthArg_PDU);
   return offset;
 }
 static int dissect_qsig_mid_MIDDummyRes_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, TRUE, pinfo);
-  offset = dissect_qsig_mid_MIDDummyRes(FALSE, tvb, offset, &asn1_ctx, tree, hf_qsig_mid_qsig_mid_MIDDummyRes_PDU);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, true, pinfo);
+  offset = dissect_qsig_mid_MIDDummyRes(false, tvb, offset, &asn1_ctx, tree, hf_qsig_mid_qsig_mid_MIDDummyRes_PDU);
   return offset;
 }
 static int dissect_qsig_mid_MIDMailboxIDArg_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, TRUE, pinfo);
-  offset = dissect_qsig_mid_MIDMailboxIDArg(FALSE, tvb, offset, &asn1_ctx, tree, hf_qsig_mid_qsig_mid_MIDMailboxIDArg_PDU);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, true, pinfo);
+  offset = dissect_qsig_mid_MIDMailboxIDArg(false, tvb, offset, &asn1_ctx, tree, hf_qsig_mid_qsig_mid_MIDMailboxIDArg_PDU);
   return offset;
 }
 static int dissect_qsig_mid_Extension_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, TRUE, pinfo);
-  offset = dissect_qsig_Extension(FALSE, tvb, offset, &asn1_ctx, tree, hf_qsig_mid_qsig_mid_Extension_PDU);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, true, pinfo);
+  offset = dissect_qsig_Extension(false, tvb, offset, &asn1_ctx, tree, hf_qsig_mid_qsig_mid_Extension_PDU);
   return offset;
 }
 
 
 typedef struct _qsig_op_t {
-  gint32 opcode;
+  int32_t opcode;
   dissector_t arg_pdu;
   dissector_t res_pdu;
 } qsig_op_t;
@@ -12116,7 +12116,7 @@ static const qsig_op_t qsig_op_tab[] = {
 };
 
 typedef struct _qsig_err_t {
-  gint32 errcode;
+  int32_t errcode;
   dissector_t err_pdu;
 } qsig_err_t;
 
@@ -12305,7 +12305,7 @@ static const qsig_err_t qsig_err_tab[] = {
   /* unspecified              */ { 1008, dissect_qsig_mid_Extension_PDU },
 };
 
-static const qsig_op_t *get_op(gint32 opcode) {
+static const qsig_op_t *get_op(int32_t opcode) {
   int i;
 
   /* search from the end to get the last occurrence if the operation is redefined in some newer specification */
@@ -12315,13 +12315,13 @@ static const qsig_op_t *get_op(gint32 opcode) {
   return NULL;
 }
 
-static gint32 get_service(gint32 opcode) {
+static int32_t get_service(int32_t opcode) {
   if ((opcode < 0) || (opcode >= (int)array_length(op2srv_tab)))
     return NO_SRV;
   return op2srv_tab[opcode];
 }
 
-static const qsig_err_t *get_err(gint32 errcode) {
+static const qsig_err_t *get_err(int32_t errcode) {
   int i;
 
   /* search from the end to get the last occurrence if the operation is redefined in some newer specification */
@@ -12336,9 +12336,9 @@ static int
 dissect_qsig_arg(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree, void *data) {
   int offset = 0;
   rose_ctx_t *rctx;
-  gint32 opcode = 0, service, oid_num;
+  int32_t opcode = 0, service, oid_num;
   const qsig_op_t *op_ptr = NULL;
-  const gchar *p, *oid;
+  const char *p, *oid;
   proto_item *ti, *ti_tmp;
   proto_tree *qsig_tree;
 
@@ -12398,11 +12398,11 @@ dissect_qsig_arg(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree, void *data
 /*--- dissect_qsig_res -------------------------------------------------------*/
 static int
 dissect_qsig_res(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree, void *data) {
-  gint offset = 0;
+  int offset = 0;
   rose_ctx_t *rctx;
-  gint32 opcode, service;
+  int32_t opcode, service;
   const qsig_op_t *op_ptr;
-  const gchar *p;
+  const char *p;
   proto_item *ti, *ti_tmp;
   proto_tree *qsig_tree;
 
@@ -12454,9 +12454,9 @@ static int
 dissect_qsig_err(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree, void *data) {
   int offset = 0;
   rose_ctx_t *rctx;
-  gint32 errcode;
+  int32_t errcode;
   const qsig_err_t *err_ptr;
-  const gchar *p;
+  const char *p;
   proto_item *ti;
   proto_tree *qsig_tree;
 
@@ -12516,18 +12516,18 @@ dissect_qsig_party_category_ie(tvbuff_t *tvb, int offset, packet_info *pinfo  _U
 /*--- dissect_qsig_ie -------------------------------------------------------*/
 static void
 dissect_qsig_ie(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree, int codeset) {
-  gint offset;
+  int offset;
   proto_item *ti, *hidden_item;
   proto_tree *ie_tree;
-  guint8 ie_type, ie_len;
+  uint8_t ie_type, ie_len;
 
   offset = 0;
 
   ti = proto_tree_add_item(tree, proto_qsig, tvb, offset, -1, ENC_NA);
   proto_item_set_hidden(ti);
 
-  ie_type = tvb_get_guint8(tvb, offset);
-  ie_len = tvb_get_guint8(tvb, offset + 1);
+  ie_type = tvb_get_uint8(tvb, offset);
+  ie_len = tvb_get_uint8(tvb, offset + 1);
 
   ie_tree = proto_tree_add_subtree(tree, tvb, offset, -1, ett_qsig_ie, NULL,
             val_to_str(ie_type, VALS(qsig_str_ie_type[codeset]), "unknown (0x%02X)"));
@@ -12577,7 +12577,7 @@ void proto_register_qsig(void) {
                            FT_UINT16, BASE_DEC, VALS(qsig_str_service), 0x0,
                            "Supplementary Service", HFILL }},
     { &hf_qsig_error,     { "Error", "qsig.error",
-                           FT_UINT8, BASE_DEC, VALS(qsig_str_error), 0x0,
+                           FT_UINT16, BASE_DEC, VALS(qsig_str_error), 0x0,
                            NULL, HFILL }},
     { &hf_qsig_ie_type, { "Type", "qsig.ie.type",
                           FT_UINT8, BASE_HEX, NULL, 0x0,
@@ -15864,7 +15864,7 @@ void proto_register_qsig(void) {
   };
 
   /* List of subtrees */
-  static gint *ett[] = {
+  static int *ett[] = {
     &ett_qsig,
     &ett_qsig_ie,
     &ett_qsig_unknown_extension,
@@ -16343,7 +16343,7 @@ void proto_register_qsig(void) {
 /*--- proto_reg_handoff_qsig ------------------------------------------------*/
 void proto_reg_handoff_qsig(void) {
   int i;
-  gchar *oid;
+  char *oid;
   dissector_handle_t q931_handle;
 
   q931_handle = find_dissector_add_dependency("q931", proto_qsig);

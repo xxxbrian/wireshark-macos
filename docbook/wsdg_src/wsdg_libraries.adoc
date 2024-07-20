@@ -21,6 +21,7 @@ See <<ChSetupUNIXBuildEnvironmentSetup>> for details.
 On macOS, you can install pre-built packages using a third party package manager such as Homebrew or MacPorts.
 As with Linux, we provide `tools/macos-setup-brew.sh`, which will install the required Homebrew packages.
 We also provide `tools/macos-setup.sh`, which will download, build, and install required packages.
+Note that `tools/macos-setup.sh` installs into _/usr/local_ by default; you can change this with the `-p` flag.
 
 Windows doesn't have a good library package manager at the present time, so we provide our own pre-built libraries.
 They can be installed using `tools/win-setup.ps1` and are automatically installed when you run CMake.
@@ -299,6 +300,9 @@ https://dev-libs.wireshark.org/windows/packages/[].
 === Lua (Optional)
 
 The Lua library is used to add scripting support to Wireshark.
+Wireshark 4.2.x and earlier support Lua versions 5.1 and 5.2.
+Recent versions of Wireshark have added support for Lua 5.3 and 5.4
+as well.
 
 [#ChLibsUnixLua]
 
@@ -314,7 +318,7 @@ https://www.lua.org/download.html[].
 [discrete]
 ==== Windows
 
-We provide copies of the official packages at
+We provide packages for Windows, patched for UTF-8 support, at
 https://dev-libs.wireshark.org/windows/packages/[].
 
 [#ChLibsMaxMindDB]

@@ -14,7 +14,9 @@
 #include "ws_symbol_export.h"
 #include "ws_attributes.h"
 
-#include <glib.h>
+#include <stdbool.h>
+
+#include "wsutil/wmem/wmem_map.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -44,6 +46,7 @@ typedef struct codec_handle *codec_handle_t;
 typedef struct _codec_context_t {
     unsigned sample_rate;
     unsigned channels;
+    wmem_map_t *fmtp_map;
     void *priv; /* Private state set by the decoder */
 } codec_context_t;
 
@@ -113,10 +116,10 @@ typedef size_t (*codec_decode_fn)(codec_context_t *context,
 /* Codec registering interface */
 /*****************************************************************************/
 
-WS_DLL_PUBLIC gboolean register_codec(const char *name, codec_init_fn init_fn,
+WS_DLL_PUBLIC bool register_codec(const char *name, codec_init_fn init_fn,
         codec_release_fn release_fn, codec_get_channels_fn channels_fn,
         codec_get_frequency_fn frequency_fn, codec_decode_fn decode_fn);
-WS_DLL_PUBLIC gboolean deregister_codec(const char *name);
+WS_DLL_PUBLIC bool deregister_codec(const char *name);
 WS_DLL_PUBLIC codec_handle_t find_codec(const char *name);
 WS_DLL_PUBLIC void *codec_init(codec_handle_t codec, codec_context_t *context);
 WS_DLL_PUBLIC void codec_release(codec_handle_t codec, codec_context_t *context);

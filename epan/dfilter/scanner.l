@@ -6,6 +6,7 @@
 
 #include <stdlib.h>
 #include <errno.h>
+#include <math.h>
 
 #include <wsutil/str_util.h>
 
@@ -13,6 +14,7 @@
 #include "syntax-tree.h"
 #include "grammar.h"
 #include "dfunctions.h"
+#include "sttype-number.h"
 }
 
 /*
@@ -77,16 +79,19 @@ WS_WARN_UNUSED static int set_lval_simple(dfsyntax_t *dfs, int token, const char
 
 WS_WARN_UNUSED static int set_lval_literal(dfsyntax_t *dfs,  const char *value, const char *token_value);
 WS_WARN_UNUSED static int set_lval_identifier(dfsyntax_t *dfs,  const char *value, const char *token_value);
-WS_WARN_UNUSED static int set_lval_constant(dfsyntax_t *dfs,  const char *value, const char *token_value);
 WS_WARN_UNUSED static int set_lval_unparsed(dfsyntax_t *dfs, const char *value, const char *token_value);
 
 WS_WARN_UNUSED static int set_lval_field(dfsyntax_t *dfs, const header_field_info *hfinfo, const char *token_value);
 WS_WARN_UNUSED static int set_lval_quoted_string(dfsyntax_t *dfs, GString *quoted_string);
 WS_WARN_UNUSED static int set_lval_charconst(dfsyntax_t *dfs, GString *quoted_string);
+WS_WARN_UNUSED static int set_lval_integer(dfsyntax_t *dfs, const char *value, const char *token_value);
+WS_WARN_UNUSED static int set_lval_float(dfsyntax_t *dfs, const char *value, const char *token_value);
 
-static gboolean append_escaped_char(dfsyntax_t *dfs, GString *str, char c);
-static gboolean append_universal_character_name(dfsyntax_t *dfs, GString *str, const char *ucn);
-static gboolean parse_charconst(dfsyntax_t *dfs, const char *s, unsigned long *valuep);
+static bool append_escaped_char(dfsyntax_t *dfs, GString *str, char c);
+static bool append_universal_character_name(dfsyntax_t *dfs, GString *str, const char *ucn);
+static bool parse_charconst(dfsyntax_t *dfs, const char *s, unsigned long *valuep);
+static bool parse_unsigned_long_long(dfsyntax_t *dfs, const char *s, unsigned long long *valuep, bool set_error);
+static bool parse_double(dfsyntax_t *dfs, const char *s, double *valuep);
 
 static void update_location(dfsyntax_t *dfs, const char *text);
 static void update_string_loc(dfsyntax_t *dfs, const char *text);
@@ -103,12 +108,13 @@ FunctionIdentifier	[[:alpha:]_][[:alnum:]_]*
 
 /*
  * Cannot start with '-'. * Some protocol name can contain '-', for example "mac-lte".
+ * Fields that contain '-' anywhere cannot start with a decimal digit.
  * Note that some protocol names start with a number, for example "9p". This is
  * handled as a special case for numeric patterns.
  * Some protocol names contain dots, e.g: _ws.expert
  * Protocol or protocol field cannot contain DOTDOT anywhere.
  */
-VarIdentifier		[[:alpha:]_][[:alnum:]_-]*
+VarIdentifier		[[:alnum:]_][[:alnum:]_-]*
 ProtoFieldIdentifier	{VarIdentifier}(\.{VarIdentifier})*
 
 hex2			[[:xdigit:]]{2}
@@ -135,7 +141,7 @@ V6CidrPrefix		\/[[:digit:]]{1,3}
 
 /* Catch all valid semantic values. Cannot contain DOT DOT or start with MINUS. */
 StartAlphabet		[[:alnum:]_:]
-Alphabet		[[:alnum:]_:/]
+Alphabet		[[:alnum:]_:/-]
 LiteralValue		{StartAlphabet}{Alphabet}*(\.{Alphabet}+)*
 
 Exponent		([eE][+-]?[[:digit:]]+)
@@ -172,10 +178,6 @@ HexExponent		([pP][+-]?[[:digit:]]+)
 "==="		return test(TOKEN_TEST_ALL_EQ);
 "all_eq"	return test(TOKEN_TEST_ALL_EQ);
 "!=="		return test(TOKEN_TEST_ANY_NE);
-"~="		{
-	add_deprecated_token(yyextra, "The operator \"~=\" is deprecated, use \"!==\" instead.");
-	return test(TOKEN_TEST_ANY_NE);
-}
 "any_ne"	return test(TOKEN_TEST_ANY_NE);
 ">"		return test(TOKEN_TEST_GT);
 "gt"		return test(TOKEN_TEST_GT);
@@ -204,6 +206,7 @@ HexExponent		([pP][+-]?[[:digit:]]+)
 "/"		return math(TOKEN_RSLASH);
 "%"		return math(TOKEN_PERCENT);
 "&"		return math(TOKEN_BITWISE_AND);
+"bitand"	return math(TOKEN_BITWISE_AND);
 "bitwise_and"	return math(TOKEN_BITWISE_AND);
 
 "#"				{
@@ -214,7 +217,7 @@ HexExponent		([pP][+-]?[[:digit:]]+)
 <LAYER>[[:digit:]]+		{
 	BEGIN(INITIAL);
 	update_location(yyextra, yytext);
-	return set_lval_simple(yyextra, TOKEN_INTEGER, yytext, STTYPE_UNINITIALIZED);
+	return set_lval_simple(yyextra, TOKEN_INDEX, yytext, STTYPE_UNINITIALIZED);
 }
 
 <LAYER>[^[:digit:][]			{
@@ -271,10 +274,10 @@ HexExponent		([pP][+-]?[[:digit:]]+)
 		 * Example: r"a\b\x12\"\\" is the string (including the implicit NUL terminator)
 		 * {'a', '\\', 'b', '\\', 'x', '1', '2', '\\', '"', '\\'. '\\', '\0'}
 		 */
-		yyextra->raw_string = TRUE;
+		yyextra->raw_string = true;
 	}
 	else {
-		yyextra->raw_string = FALSE;
+		yyextra->raw_string = false;
 	}
 }
 
@@ -312,7 +315,7 @@ HexExponent		([pP][+-]?[[:digit:]]+)
 			FAIL("%s is larger than 255.", yytext);
 			return SCAN_FAILED;
 		}
-		g_string_append_c(yyextra->quoted_string, (gchar) result);
+		g_string_append_c(yyextra->quoted_string, (char) result);
 	}
 }
 
@@ -329,7 +332,7 @@ HexExponent		([pP][+-]?[[:digit:]]+)
 	else {
 		unsigned long result;
 		result = strtoul(yytext + 2, NULL, 16);
-		g_string_append_c(yyextra->quoted_string, (gchar) result);
+		g_string_append_c(yyextra->quoted_string, (char) result);
 	}
 }
 
@@ -431,12 +434,6 @@ HexExponent		([pP][+-]?[[:digit:]]+)
 	return set_lval_literal(yyextra, yytext, yytext);
 }
 
-{DotMacAddress}|{DotQuadMacAddress}	{
-	/* MAC Address, can also be a field. */
-	update_location(yyextra, yytext);
-	return set_lval_unparsed(yyextra, yytext, yytext);
-}
-
 	/* IP address. */
 
 {IPv4Address}{V4CidrPrefix}?		{
@@ -458,22 +455,28 @@ HexExponent		([pP][+-]?[[:digit:]]+)
 	update_location(yyextra, yytext);
 	/* Check if we have a protocol or protocol field, otherwise assume a literal. */
 	/* It is only reasonable to assume a literal here, instead of a
-	 * (possibly non-existant) protocol field, because protocol field filter names
+	 * (possibly non-existent) protocol field, because protocol field filter names
 	 * should not start with a digit (the lexical syntax for numbers). */
-	header_field_info *hfinfo = dfilter_resolve_unparsed(yyextra, yytext);
+	header_field_info *hfinfo = dfilter_resolve_unparsed(yytext, yyextra->deprecated);
 	if (hfinfo != NULL) {
 		return set_lval_field(yyextra, hfinfo, yytext);
 	}
-	return set_lval_literal(yyextra, yytext, yytext);
+	return set_lval_integer(yyextra, yytext, yytext);
 }
 
 0[bBxX]?[[:xdigit:]]+	{
 	/* Binary or octal or hexadecimal. */
 	update_location(yyextra, yytext);
-	return set_lval_literal(yyextra, yytext, yytext);
+	return set_lval_integer(yyextra, yytext, yytext);
 }
 
 	/* Floating point. */
+
+[[:digit:]]+\.[[:digit:]]+	{
+	/* Decimal float. */
+	update_location(yyextra, yytext);
+	return set_lval_float(yyextra, yytext, yytext);
+}
 
 [[:digit:]]+{Exponent}|[[:digit:]]+\.[[:digit:]]+{Exponent}?	{
 	/* Decimal float with optional exponent. */
@@ -481,13 +484,13 @@ HexExponent		([pP][+-]?[[:digit:]]+)
 	update_location(yyextra, yytext);
 	/* Check if we have a protocol or protocol field, otherwise assume a literal. */
 	/* It is only reasonable to assume a literal here, instead of a
-	 * (possibly non-existant) protocol field, because protocol field filter names
+	 * (possibly non-existent) protocol field, because protocol field filter names
 	 * should not start with a digit (the lexical syntax for numbers). */
-	header_field_info *hfinfo = dfilter_resolve_unparsed(yyextra, yytext);
+	header_field_info *hfinfo = dfilter_resolve_unparsed(yytext, yyextra->deprecated);
 	if (hfinfo != NULL) {
 		return set_lval_field(yyextra, hfinfo, yytext);
 	}
-	return set_lval_literal(yyextra, yytext, yytext);
+	return set_lval_float(yyextra, yytext, yytext);
 }
 
 0[xX][[:xdigit:]]+{HexExponent}|0[xX][[:xdigit:]]+\.[[:xdigit:]]+{HexExponent}?	{
@@ -495,19 +498,13 @@ HexExponent		([pP][+-]?[[:digit:]]+)
 	 * field cannot beging with 0x. */
 	/* Significand cannot have any side omitted. */
 	update_location(yyextra, yytext);
-	return set_lval_literal(yyextra,  yytext, yytext);
+	return set_lval_float(yyextra, yytext, yytext);
 }
 
 :[[:xdigit:]]+	{
 	/* Numeric prefixed with ':'. */
 	update_location(yyextra, yytext);
 	return set_lval_literal(yyextra, yytext + 1, yytext);
-}
-
-[[:xdigit:]]+	{
-	/* Numeric or field. */
-	update_location(yyextra, yytext);
-	return set_lval_unparsed(yyextra, yytext, yytext);
 }
 
 	/* Bytes. */
@@ -520,46 +517,32 @@ HexExponent		([pP][+-]?[[:digit:]]+)
 	return set_lval_literal(yyextra, yytext, yytext);
 }
 
-:?{HyphenBytes}	{
+:{HyphenBytes}	{
 	/* Bytes. */
 	update_location(yyextra, yytext);
-	if (yytext[0] == ':')
-		return set_lval_literal(yyextra, yytext + 1, yytext);
-	return set_lval_literal(yyextra, yytext, yytext);
+	return set_lval_literal(yyextra, yytext + 1, yytext);
 }
 
-:?{DotBytes}	{
+:{DotBytes}	{
 	/* DotBytes, can be a field without ':' prefix. */
 	update_location(yyextra, yytext);
-	if (yytext[0] == ':')
-		return set_lval_literal(yyextra, yytext + 1, yytext);
-	return set_lval_unparsed(yyextra, yytext, yytext);
+	return set_lval_literal(yyextra, yytext + 1, yytext);
 }
 
 	/* Identifier (protocol/field/function name). */
 
 	/* This must come before FieldIdentifier to match function names. */
 {FunctionIdentifier}	{
-	/* Identifier (field or function) or constant (bytes without separator). */
-	/* We use CONSTANT instead of LITERAL because the difference is significant
-	 * in the syntactical grammar. */
+	/* Identifier (field or function) or literal (bytes without separator). */
 	update_location(yyextra, yytext);
-	header_field_info *hfinfo = dfilter_resolve_unparsed(yyextra, yytext);
-	if (hfinfo != NULL) {
-		return set_lval_identifier(yyextra, yytext, yytext);
-	}
-        df_func_def_t *def = df_func_lookup(yytext);
-	if (def != NULL) {
-		return set_lval_identifier(yyextra, yytext, yytext);
-	}
-	return set_lval_constant(yyextra, yytext, yytext);
+	return set_lval_identifier(yyextra, yytext, yytext);
 }
 
 \.{ProtoFieldIdentifier}	{
-	/* Identifier, prefixed with a '.'. */
+	/* Identifier, prefixed with a '.', must be a field, no ifs or buts. */
 	update_location(yyextra, yytext);
 	const char *name = yytext + 1;
-	header_field_info *hfinfo = dfilter_resolve_unparsed(yyextra, name);
+	header_field_info *hfinfo = dfilter_resolve_unparsed(name, yyextra->deprecated);
 	if (hfinfo == NULL) {
 		FAIL("\"%s\" is not a valid protocol or protocol field.", name);
 		return SCAN_FAILED;
@@ -570,7 +553,7 @@ HexExponent		([pP][+-]?[[:digit:]]+)
 {ProtoFieldIdentifier}	{
 	/* Catch-all for protocol values. Can also be a literal. */
 	update_location(yyextra, yytext);
-	return set_lval_identifier(yyextra, yytext, yytext);
+	return set_lval_unparsed(yyextra, yytext, yytext);
 }
 
 {LiteralValue}	{
@@ -636,36 +619,23 @@ set_lval_literal(dfsyntax_t *dfs, const char *value, const char *token_value)
 static int
 set_lval_identifier(dfsyntax_t *dfs, const char *value, const char *token_value)
 {
-	dfs->lval = stnode_new(STTYPE_LITERAL, g_strdup(value), g_strdup(token_value), dfs->location);
+	dfs->lval = stnode_new(STTYPE_UNPARSED, g_strdup(value), g_strdup(token_value), dfs->location);
+	stnode_set_flags(dfs->lval, STFLAG_UNPARSED);
 	return TOKEN_IDENTIFIER;
-}
-
-static int
-set_lval_constant(dfsyntax_t *dfs, const char *value, const char *token_value)
-{
-	dfs->lval = stnode_new(STTYPE_LITERAL, g_strdup(value), g_strdup(token_value), dfs->location);
-	return TOKEN_CONSTANT;
 }
 
 static int
 set_lval_unparsed(dfsyntax_t *dfs, const char *value, const char *token_value)
 {
-	int token;
-	const header_field_info *hfinfo = dfilter_resolve_unparsed(dfs, value);
-	if (hfinfo != NULL) {
-		token = set_lval_field(dfs, hfinfo, token_value);
-    	}
-	else {
-		token = set_lval_literal(dfs, value, token_value);
-	}
+	dfs->lval = stnode_new(STTYPE_UNPARSED, g_strdup(value), g_strdup(token_value), dfs->location);
 	stnode_set_flags(dfs->lval, STFLAG_UNPARSED);
-	return token;
+	return TOKEN_UNPARSED;
 }
 
 static int
 set_lval_field(dfsyntax_t *dfs, const header_field_info *hfinfo, const char *token_value)
 {
-	dfs->lval = stnode_new(STTYPE_FIELD, (gpointer)hfinfo, g_strdup(token_value), dfs->location);
+	dfs->lval = stnode_new(STTYPE_FIELD, (void *)hfinfo, g_strdup(token_value), dfs->location);
 	return TOKEN_FIELD;
 }
 
@@ -683,7 +653,7 @@ static int
 set_lval_charconst(dfsyntax_t *dfs, GString *quoted_string)
 {
 	unsigned long number;
-	gboolean ok;
+	bool ok;
 
 	char *token_value = g_string_free(quoted_string, FALSE);
 	ok = parse_charconst(dfs, token_value, &number);
@@ -695,7 +665,41 @@ set_lval_charconst(dfsyntax_t *dfs, GString *quoted_string)
 	return TOKEN_CHARCONST;
 }
 
-static gboolean
+static int
+set_lval_integer(dfsyntax_t *dfs, const char *value, const char *token_value)
+{
+	unsigned long long number;
+	bool ok;
+
+	ok = parse_unsigned_long_long(dfs, value, &number, false);
+	if (!ok) {
+		/* Instead of failing assume this is a literal such as
+		  "10f3deccc00d5c8f629fba7a0fff34aa" that can be interpreted
+		  as a literal bytes valid. */
+		dfs->lval = stnode_new(STTYPE_LITERAL, g_strdup(value), g_strdup(token_value), dfs->location);
+		return TOKEN_LITERAL;
+	}
+	dfs->lval = stnode_new(STTYPE_NUMBER, NULL, g_strdup(token_value), dfs->location);
+	sttype_number_set_unsigned(dfs->lval, number);
+	return TOKEN_NUMBER;
+}
+
+static int
+set_lval_float(dfsyntax_t *dfs, const char *value, const char *token_value)
+{
+	double number;
+	bool ok;
+
+	ok = parse_double(dfs, value, &number);
+	if (!ok) {
+		return SCAN_FAILED;
+	}
+	dfs->lval = stnode_new(STTYPE_NUMBER, NULL, g_strdup(token_value), dfs->location);
+	sttype_number_set_float(dfs->lval, number);
+	return TOKEN_NUMBER;
+}
+
+static bool
 append_escaped_char(dfsyntax_t *dfs, GString *str, char c)
 {
 	switch (c) {
@@ -727,41 +731,41 @@ append_escaped_char(dfsyntax_t *dfs, GString *str, char c)
 		default:
 			dfilter_fail(dfs, DF_ERROR_GENERIC, dfs->location,
 					"\\%c is not a valid character escape sequence", c);
-			return FALSE;
+			return false;
 	}
 
 	g_string_append_c(str, c);
-	return TRUE;
+	return true;
 }
 
-static gboolean
+static bool
 parse_universal_character_name(dfsyntax_t *dfs _U_, const char *str, char **ret_endptr, gunichar *valuep)
 {
-	guint64 val;
+	uint64_t val;
 	char *endptr;
 	int ndigits;
 
 	if (str[0] != '\\')
-		return FALSE;
+		return false;
 
 	if (str[1] == 'u')
 		ndigits = 4;
 	else if (str[1] == 'U')
 		ndigits = 8;
 	else
-		return FALSE;
+		return false;
 
 	for (int i = 2; i < ndigits + 2; i++) {
 		if (!g_ascii_isxdigit(str[i])) {
-			return FALSE;
+			return false;
 		}
 	}
 
 	errno = 0;
 	val = g_ascii_strtoull(str + 2, &endptr, 16); /* skip leading 'u' or 'U' */
 
-	if (errno != 0 || endptr == str || val > G_MAXUINT32) {
-		return FALSE;
+	if (errno != 0 || endptr == str || val > UINT32_MAX) {
+		return false;
 	}
 
 	/*
@@ -777,33 +781,33 @@ parse_universal_character_name(dfsyntax_t *dfs _U_, const char *str, char **ret_
 	 * 0x7F-0x9F) cannot be expressed in universal character names.
 	 */
 	if (val < 0xA0 && val != 0x24 && val != 0x40 && val != 0x60)
-		return FALSE;
+		return false;
 	else if (val >= 0xD800 && val <= 0xDFFF)
-		return FALSE;
+		return false;
 	else if (val > 0x10FFFF)
-		return FALSE;
+		return false;
 
 	*valuep = (gunichar)val;
 	if (ret_endptr)
 		*ret_endptr = endptr;
-	return TRUE;
+	return true;
 }
 
-static gboolean
+static bool
 append_universal_character_name(dfsyntax_t *dfs, GString *str, const char *ucn)
 {
 	gunichar val;
 
 	if (!parse_universal_character_name(dfs, ucn, NULL, &val)) {
 		dfilter_fail(dfs, DF_ERROR_GENERIC, dfs->location, "%s is not a valid universal character name", ucn);
-		return FALSE;
+		return false;
 	}
 
 	g_string_append_unichar(str, val);
-	return TRUE;
+	return true;
 }
 
-static gboolean
+static bool
 parse_charconst(dfsyntax_t *dfs, const char *s, unsigned long *valuep)
 {
 	const char *cp;
@@ -814,7 +818,7 @@ parse_charconst(dfsyntax_t *dfs, const char *s, unsigned long *valuep)
 	cp = s + 1;	/* skip the leading ' */
 	if (*cp == '\'') {
 		dfilter_fail(dfs, DF_ERROR_GENERIC, dfs->string_loc, "Empty character constant.");
-		return FALSE;
+		return false;
 	}
 
 	if (*cp == '\\') {
@@ -830,7 +834,7 @@ parse_charconst(dfsyntax_t *dfs, const char *s, unsigned long *valuep)
 
 		case '\0':
 			dfilter_fail(dfs, DF_ERROR_GENERIC, dfs->string_loc, "%s isn't a valid character constant.", s);
-			return FALSE;
+			return false;
 
 		case 'a':
 			value = '\a';
@@ -891,7 +895,7 @@ parse_charconst(dfsyntax_t *dfs, const char *s, unsigned long *valuep)
 				value = 10 + (*cp - 'a');
 			else {
 				dfilter_fail(dfs, DF_ERROR_GENERIC, dfs->string_loc, "%s isn't a valid character constant.", s);
-				return FALSE;
+				return false;
 			}
 			cp++;
 			if (*cp != '\'') {
@@ -904,17 +908,17 @@ parse_charconst(dfsyntax_t *dfs, const char *s, unsigned long *valuep)
 					value |= 10 + (*cp - 'a');
 				else {
 					dfilter_fail(dfs, DF_ERROR_GENERIC, dfs->string_loc, "%s isn't a valid character constant.", s);
-					return FALSE;
+					return false;
 				}
+				cp++;
 			}
-			cp++;
 			break;
 
 		case 'u':
 		case 'U':
 			if (!parse_universal_character_name(dfs, s+1, &endptr, &unival)) {
 				dfilter_fail(dfs, DF_ERROR_GENERIC, dfs->string_loc, "%s is not a valid universal character name", s);
-				return FALSE;
+				return false;
 			}
 			value = (unsigned long)unival;
 			cp = endptr;
@@ -926,7 +930,7 @@ parse_charconst(dfsyntax_t *dfs, const char *s, unsigned long *valuep)
 				value = *cp - '0';
 			else {
 				dfilter_fail(dfs, DF_ERROR_GENERIC, dfs->string_loc, "%s isn't a valid character constant.", s);
-				return FALSE;
+				return false;
 			}
 			if (*(cp + 1) != '\'') {
 				cp++;
@@ -935,7 +939,7 @@ parse_charconst(dfsyntax_t *dfs, const char *s, unsigned long *valuep)
 					value |= *cp - '0';
 				else {
 					dfilter_fail(dfs, DF_ERROR_GENERIC, dfs->string_loc, "%s isn't a valid character constant.", s);
-					return FALSE;
+					return false;
 				}
 				if (*(cp + 1) != '\'') {
 					cp++;
@@ -944,13 +948,13 @@ parse_charconst(dfsyntax_t *dfs, const char *s, unsigned long *valuep)
 						value |= *cp - '0';
 					else {
 						dfilter_fail(dfs, DF_ERROR_GENERIC, dfs->string_loc, "%s isn't a valid character constant.", s);
-						return FALSE;
+						return false;
 					}
 				}
 			}
 			if (value > 0xFF) {
 				dfilter_fail(dfs, DF_ERROR_GENERIC, dfs->string_loc, "%s is too large to be a valid character constant.", s);
-				return FALSE;
+				return false;
 			}
 			cp++;
 		}
@@ -958,15 +962,81 @@ parse_charconst(dfsyntax_t *dfs, const char *s, unsigned long *valuep)
 		value = *cp++;
 		if (!g_ascii_isprint(value)) {
 			dfilter_fail(dfs, DF_ERROR_GENERIC, dfs->string_loc, "Non-printable value '0x%02lx' in character constant.", value);
-			return FALSE;
+			return false;
 		}
 	}
 
 	if ((*cp != '\'') || (*(cp + 1) != '\0')){
 		dfilter_fail(dfs, DF_ERROR_GENERIC, dfs->string_loc, "%s is too long to be a valid character constant.", s);
-		return FALSE;
+		return false;
 	}
 
 	*valuep = value;
-	return TRUE;
+	return true;
+}
+
+static bool
+parse_unsigned_long_long(dfsyntax_t *dfs, const char *s, unsigned long long *valuep, bool set_error)
+{
+	char *endptr;
+
+	errno = 0;
+	if (s[0] == '0' && (s[1] == 'b' || s[1] == 'B')) {
+		*valuep = g_ascii_strtoull(s + 2, &endptr, 2);
+	}
+	else {
+		*valuep = g_ascii_strtoull(s, &endptr, 0);
+	}
+
+	if (errno == EINVAL || endptr == s || *endptr != '\0') {
+		/* This isn't a valid number. */
+		if (set_error)
+			dfilter_fail(dfs, DF_ERROR_GENERIC, dfs->string_loc, "\"%s\" is not a valid number.", s);
+		return false;
+	}
+	if (errno == ERANGE) {
+		if (set_error)
+			dfilter_fail(dfs, DF_ERROR_GENERIC, dfs->string_loc, "\"%s\" is too large to be represented as a 64-bit number.", s);
+		return false;
+	}
+	if (errno != 0) {
+		// Should not happen
+		if (set_error)
+			dfilter_fail(dfs, DF_ERROR_GENERIC, dfs->string_loc, "\"%s\" is not a valid number (%s).", s, g_strerror(errno));
+		return false;
+	}
+
+	return true;
+}
+
+static bool
+parse_double(dfsyntax_t *dfs, const char *s, double *valuep)
+{
+	char *endptr = NULL;
+
+	errno = 0;
+	*valuep = g_ascii_strtod(s, &endptr);
+
+	if (endptr == s || *endptr != '\0') {
+		dfilter_fail(dfs, DF_ERROR_GENERIC, dfs->string_loc, "\"%s\" is not a valid floating-point number.", s);
+		return false;
+	}
+	if (errno == ERANGE) {
+		if (*valuep == HUGE_VAL) {
+			dfilter_fail(dfs, DF_ERROR_GENERIC, dfs->string_loc, "\"%s\" causes floating-point overflow.", s);
+		}
+		else {
+			dfilter_fail(dfs, DF_ERROR_GENERIC, dfs->string_loc, "\"%s\" causes floating-point underflow.", s);
+		}
+		return false;
+	}
+	if (errno != 0) {
+		// Should not happen
+		dfilter_fail(dfs, DF_ERROR_GENERIC, dfs->string_loc,
+				"\"%s\" is not a valid floating-point number (%s).",
+				s, g_strerror(errno));
+		return false;
+	}
+
+	return true;
 }

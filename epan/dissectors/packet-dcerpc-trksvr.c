@@ -20,11 +20,11 @@
 void proto_register_dcerpc_trksvr(void);
 void proto_reg_handoff_dcerpc_trksvr(void);
 
-static int proto_dcerpc_trksvr = -1;
-static int hf_trksvr_opnum = -1;
-/* static int hf_trksvr_rc = -1; */
+static int proto_dcerpc_trksvr;
+static int hf_trksvr_opnum;
+/* static int hf_trksvr_rc; */
 
-static gint ett_dcerpc_trksvr = -1;
+static gint ett_dcerpc_trksvr;
 
 /*
   IDL [ uuid(4da1-943d-11d1-acae-00c0afc2aa3f),
@@ -40,7 +40,7 @@ static e_guid_t uuid_dcerpc_trksvr = {
 
 static guint16 ver_dcerpc_trksvr = 1;
 
-static dcerpc_sub_dissector dcerpc_trksvr_dissectors[] = {
+static const dcerpc_sub_dissector dcerpc_trksvr_dissectors[] = {
 	{ 0, "LnkSvrMessage",
 		NULL,
 		NULL },
@@ -65,8 +65,7 @@ static hf_register_info hf[] = {
 		&ett_dcerpc_trksvr
 	};
 
-	proto_dcerpc_trksvr = proto_register_protocol(
-		"Microsoft Distributed Link Tracking Server Service", "TRKSVR", "trksvr");
+	proto_dcerpc_trksvr = proto_register_protocol("Microsoft Distributed Link Tracking Server Service", "TRKSVR", "trksvr");
 
 	proto_register_field_array(proto_dcerpc_trksvr, hf,
 				   array_length(hf));

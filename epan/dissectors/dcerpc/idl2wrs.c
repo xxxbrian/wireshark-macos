@@ -368,7 +368,7 @@ register_hf_field(const char *hf_name, const char *title, const char *filter_nam
 	hfi->name=g_strdup(hf_name);
 	hfi->ft_type=g_strdup(ft_type);
 
-	FPRINTF(eth_hf, "static int %s = -1;\n", hf_name);
+	FPRINTF(eth_hf, "static int %s;\n", hf_name);
 	FPRINTF(eth_hfarr, "		{ &%s,\n", hf_name);
 	FPRINTF(eth_hfarr, "		  { \"%s\", \"%s\", %s, %s,\n", title, filter_name, ft_type, base_type);
 	FPRINTF(eth_hfarr, "		  %s, %s,\n", valsstring, mask);
@@ -892,9 +892,9 @@ static void parseheader(void)
 	/* status */
 	snprintf(hf_status, BASE_BUFFER_SIZE, "hf_%s_rc", ifname);
 	snprintf(filter_name, BASE_BUFFER_SIZE, "%s.rc", ifname);
-	register_hf_field(hf_status, "Return code", filter_name, "FT_UINT32", "BASE_HEX", "VALS(NT_errors)", "0", "");
+	register_hf_field(hf_status, "Return code", filter_name, "FT_UINT32", "BASE_HEX|BASE_EXT_STRING", "&NT_errors_ext", "0", "");
 
-	FPRINTF(eth_ett, "static gint ett_%s = -1;\n", ifname);
+	FPRINTF(eth_ett, "static gint ett_%s;\n", ifname);
 	FPRINTF(eth_ettarr, "		 &ett_%s,\n", ifname);
 
 	/* the body must start with { */
@@ -1336,7 +1336,7 @@ find_type(char *name)
 			FPRINTF(eth_code, "static int\n");
 			FPRINTF(eth_code, "%s(tvbuff_t *tvb, int offset, packet_info *pinfo, proto_tree *tree, dcerpc_info *di, guint8 *drep, int hf_index, guint32 param _U_)\n", dissectorname);
 			FPRINTF(eth_code, "{\n");
-			FPRINTF(eth_code, "    \n");
+			FPRINTF(eth_code, "\n");
 			FPRINTF(eth_code, "    offset=dissect_ndr_time_t(tvb, offset, pinfo, tree, di, drep, hf_index, NULL);\n");
 			FPRINTF(eth_code, "\n");
 			FPRINTF(eth_code, "    return offset;\n");
@@ -1350,9 +1350,7 @@ find_type(char *name)
 			FPRINTF(eth_code, "static int\n");
 			FPRINTF(eth_code, "%s(tvbuff_t *tvb, int offset, packet_info *pinfo, proto_tree *tree, dcerpc_info *di, guint8 *drep, int hf_index, guint32 param)\n", dissectorname);
 			FPRINTF(eth_code, "{\n");
-			FPRINTF(eth_code, "    di->hf_index=hf_index;\n");
-
-			FPRINTF(eth_code, "    offset=dissect_ndr_nt_SID_with_options(tvb, offset, pinfo, tree, di, drep, param);\n");
+			FPRINTF(eth_code, "    offset=dissect_ndr_nt_SID_with_options(tvb, offset, pinfo, tree, di, drep, param, hf_index);\n");
 			FPRINTF(eth_code, "    return offset;\n");
 			FPRINTF(eth_code, "}\n");
 			FPRINTF(eth_code, "\n");
@@ -1370,7 +1368,7 @@ find_type(char *name)
 			FPRINTF(eth_code, "    return offset;\n");
 			FPRINTF(eth_code, "}\n");
 			FPRINTF(eth_code, "\n");
-			tmptype=register_new_type("WERROR", dissectorname, "FT_UINT32", "BASE_DEC", "0", "VALS(NT_errors)", 4);
+			tmptype=register_new_type("WERROR", dissectorname, "FT_UINT32", "BASE_DEC|BASE_EXT_STRING", "0", "&WERR_errors_ext", 4);
 		}
 	}
 
@@ -1556,7 +1554,7 @@ static void parsetypedefstruct(int pass)
 	}
 	/* pass 1  generate header for the struct dissector */
 	if(pass==1){
-		FPRINTF(eth_ett, "static gint ett_%s_%s = -1;\n", ifname, struct_name);
+		FPRINTF(eth_ett, "static gint ett_%s_%s;\n", ifname, struct_name);
 		FPRINTF(eth_ettarr, "		 &ett_%s_%s,\n", ifname, struct_name);
 		FPRINTF(eth_hdr, "int %s(tvbuff_t *tvb, int offset, packet_info *pinfo, proto_tree *tree, dcerpc_info *di, guint8 *drep, int hf_index, guint32 param);\n", dissectorname);
 		FPRINTF(eth_code, "\n");
@@ -1637,7 +1635,7 @@ static void parsetypedefstruct(int pass)
 		/* count the levels of pointers */
 		for(num_pointers=0;!g_strcmp0(ti->str, "*");ti=ti->next){
 			num_pointers++;
-			/* poitners are aligned at 4 byte boundaries */
+			/* pointers are aligned at 4 byte boundaries */
 			if(alignment<4){
 				alignment=4;
 			}
@@ -1659,16 +1657,8 @@ static void parsetypedefstruct(int pass)
 		fixed_array_size=0;
 		is_array_of_pointers=0;
 		if(!g_strcmp0(ti->str, "[")){
-			char fss[BASE_BUFFER_SIZE];
-
 			/* this might be a fixed array */
 			ti=ti->next;
-
-			if (!ws_strtou32(ti->str, NULL, &fixed_array_size)) {
-				FPRINTF(stderr, "ERROR: invalid integer: %s\n", ti->str);
-				Exit(10);
-			}
-			snprintf(fss, BASE_BUFFER_SIZE, "%d", fixed_array_size);
 
 			if(!g_strcmp0("]", ti->str)){
 				/* this is just a normal [] array */
@@ -1678,9 +1668,8 @@ static void parsetypedefstruct(int pass)
 				fixed_array_size=0;
 				is_array_of_pointers=1;
 				ti=ti->next;
-			} else if(g_strcmp0(fss, ti->str)){
-				FPRINTF(stderr, "ERROR: typedefstruct (%s) fixed array size looks different to calculated one %s!=%s\n", struct_name, fss, ti->str);
-				ti=ti->next;
+			} else if (!ws_strtou32(ti->str, NULL, &fixed_array_size)) {
+				FPRINTF(stderr, "ERROR: invalid integer: %s\n", ti->str);
 				Exit(10);
 			} else {
 				ti=ti->next;
@@ -2005,7 +1994,7 @@ static void parsetypedefbitmap(int pass)
 
 	/* pass 1  generate header for the struct dissector */
 	if(pass==1){
-		FPRINTF(eth_ett, "static gint ett_%s_%s = -1;\n", ifname, bitmap_name);
+		FPRINTF(eth_ett, "static gint ett_%s_%s;\n", ifname, bitmap_name);
 		FPRINTF(eth_ettarr, "		 &ett_%s_%s,\n", ifname, bitmap_name);
 		FPRINTF(eth_hdr, "int %s(tvbuff_t *tvb, int offset, packet_info *pinfo, proto_tree *tree, dcerpc_info *di, guint8 *drep, int hf_index, guint32 param);\n", dissectorname);
 		FPRINTF(eth_code, "\n");
@@ -2267,7 +2256,7 @@ static void parsetypedefunion(int pass)
 
 	/* pass 1  generate header for the struct dissector */
 	if(pass==1){
-		FPRINTF(eth_ett, "static gint ett_%s_%s = -1;\n", ifname, union_name);
+		FPRINTF(eth_ett, "static gint ett_%s_%s;\n", ifname, union_name);
 		FPRINTF(eth_ettarr, "		 &ett_%s_%s,\n", ifname, union_name);
 		FPRINTF(eth_code, "\n");
 		FPRINTF(eth_code, "static int\n");

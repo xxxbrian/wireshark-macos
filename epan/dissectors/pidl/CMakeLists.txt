@@ -7,12 +7,13 @@
 # SPDX-License-Identifier: GPL-2.0-or-later
 #
 
-# TODO fix srvsvc wkssvc
 set(PIDL_DISSECTOR_NAMES
 	atsvc
+	browser
 	clusapi
 	dfs
 	dnsserver
+	drsuapi
 	dssetup
 	efs
 	eventlog
@@ -20,6 +21,10 @@ set(PIDL_DISSECTOR_NAMES
 	frstrans
 	fsrvp
 	initshutdown
+	iwbemlevel1login
+	iwbemloginclientid
+	iwbemloginclientidex
+	iwbemservices
 	lsa
 	mapi
 	mdssvc
@@ -27,19 +32,24 @@ set(PIDL_DISSECTOR_NAMES
 	nspi
 	rfr
 	samr
-	#srvsvc
+	srvsvc
 	svcctl
 	winreg
 	winspool
 	witness
-	#wkssvc
+	wkssvc
 	wzcsvc
 )
 
+set(PIDL_DISSECTOR_browser_EXTRA_DEPS
+	srvsvc/srvsvc.idl
+)
 set(PIDL_DISSECTOR_clusapi_EXTRA_DEPS
 	clusapi/clusapi.idl
 )
-
+set(PIDL_DISSECTOR_drsuapi_EXTRA_DEPS
+	misc/misc.idl
+)
 set(PIDL_DISSECTOR_dssetup_EXTRA_DEPS
 	misc/misc.idl
 )
@@ -59,6 +69,18 @@ set(PIDL_DISSECTOR_fsrvp_EXTRA_DEPS
 )
 set(PIDL_DISSECTOR_initshutdown_EXTRA_DEPS
 	lsa/lsa.idl
+	idl_types.h
+)
+set(PIDL_DISSECTOR_iwbemlevel1login_EXTRA_DEPS
+	idl_types.h
+)
+set(PIDL_DISSECTOR_iwbemloginclientid_EXTRA_DEPS
+	idl_types.h
+)
+set(PIDL_DISSECTOR_iwbemloginclientidex_EXTRA_DEPS
+	idl_types.h
+)
+set(PIDL_DISSECTOR_iwbemservices_EXTRA_DEPS
 	idl_types.h
 )
 set(PIDL_DISSECTOR_lsa_EXTRA_DEPS
@@ -86,6 +108,7 @@ set(PIDL_DISSECTOR_rfr_EXTRA_DEPS
 )
 set(PIDL_DISSECTOR_samr_EXTRA_DEPS
 	idl_types.h
+	lsa/lsa.idl
 )
 set(PIDL_DISSECTOR_srvsvc_EXTRA_DEPS
 	idl_types.h

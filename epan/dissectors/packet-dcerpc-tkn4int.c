@@ -21,18 +21,18 @@
 void proto_register_tkn4int (void);
 void proto_reg_handoff_tkn4int (void);
 
-static int proto_tkn4int = -1;
-static int hf_tkn4int_opnum = -1;
+static int proto_tkn4int;
+static int hf_tkn4int_opnum;
 
 
-static gint ett_tkn4int = -1;
+static gint ett_tkn4int;
 
 
 static e_guid_t uuid_tkn4int = { 0x4d37f2dd, 0xed96, 0x0000, { 0x02, 0xc0, 0x37, 0xcf, 0x1e, 0x00, 0x00, 0x00 } };
 static guint16  ver_tkn4int = 4;
 
 
-static dcerpc_sub_dissector tkn4int_dissectors[] = {
+static const dcerpc_sub_dissector tkn4int_dissectors[] = {
 	{ 0, "Probe",               NULL, NULL},
 	{ 1, "InitTokenState",      NULL, NULL},
 	{ 2, "TokenRevoke",         NULL, NULL},

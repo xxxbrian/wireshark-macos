@@ -27,7 +27,7 @@ class TestDumpcapOptions:
     # XXX Should we generate individual test functions instead of looping?
     def test_dumpcap_invalid_chars(self, cmd_dumpcap, base_env):
         '''Invalid dumpcap parameters'''
-        for char_arg in 'CEFGHJKNOQRTUVWXYejloxz':
+        for char_arg in 'CEFGHJKNORTUVWXYejloxz':
             process = subprocesstest.run((cmd_dumpcap, '-' + char_arg), env=base_env)
             assert process.returncode == ExitCodes.COMMAND_LINE
 
@@ -79,6 +79,12 @@ class TestBasicClopts:
         process = subprocesstest.run((cmd_tshark, '-r', capture_file('dhcp.pcap')), env=test_env)
         assert process.returncode == ExitCodes.OK
 
+    def test_existing_file_longopt(self, cmd_tshark, capture_file, test_env):
+        # $TSHARK -r "${CAPTURE_DIR}dhcp.pcap" > ./testout.txt 2>&1
+        process = subprocesstest.run((cmd_tshark, '--read-file', capture_file('dhcp.pcap'),
+            '--display-filter', 'dhcp'), env=test_env)
+        assert process.returncode == ExitCodes.OK
+
     def test_nonexistent_file(self, cmd_tshark, capture_file, test_env):
         # $TSHARK - r ThisFileDontExist.pcap > ./testout.txt 2 > &1
         process = subprocesstest.run((cmd_tshark, '-r', capture_file('__ceci_nest_pas_une.pcap')), env=test_env)
@@ -102,8 +108,9 @@ class TestTsharkOptions:
     # XXX Should we generate individual test functions instead of looping?
     def test_tshark_interface_chars(self, cmd_tshark, cmd_dumpcap, test_env):
         '''Valid tshark parameters requiring capture permissions'''
-        # These options require dumpcap
-        valid_returns = [ExitCodes.OK, ExitCodes.INVALID_CAPABILITY]
+        # These options require dumpcap, but may fail with a pacp error
+        # if WinPcap or Npcap are not present
+        valid_returns = [ExitCodes.OK, ExitCodes.PCAP_ERROR, ExitCodes.INVALID_CAPABILITY, ExitCodes.INVALID_INTERFACE]
         for char_arg in 'DL':
             process = subprocesstest.run((cmd_tshark, '-' + char_arg), env=test_env)
             assert process.returncode in valid_returns
@@ -218,37 +225,49 @@ class TestTsharkDumpGlossaries:
 class TestTsharkZExpert:
     def test_tshark_z_expert_all(self, cmd_tshark, capture_file, test_env):
         proc = subprocesstest.run((cmd_tshark, '-q', '-z', 'expert',
-            '-r', capture_file('http-ooo.pcap')), capture_output=True, env=test_env)
+            '-o', 'tcp.check_checksum:TRUE',
+            '-r', capture_file('http-ooo-fuzzed.pcapng')), capture_output=True, env=test_env)
+        # http2-data-reassembly.pcap has Errors, Warnings, Notes, and Chats
+        # when TCP checksum are verified.
         assert grep_output(proc.stdout, 'Errors')
         assert grep_output(proc.stdout, 'Warns')
+        assert grep_output(proc.stdout, 'Notes')
         assert grep_output(proc.stdout, 'Chats')
 
     def test_tshark_z_expert_error(self, cmd_tshark, capture_file, test_env):
         proc = subprocesstest.run((cmd_tshark, '-q', '-z', 'expert,error',
-            '-r', capture_file('http-ooo.pcap')), capture_output=True, env=test_env)
+            '-o', 'tcp.check_checksum:TRUE',
+            '-r', capture_file('http-ooo-fuzzed.pcapng')), capture_output=True, env=test_env)
         assert grep_output(proc.stdout, 'Errors')
         assert not grep_output(proc.stdout, 'Warns')
+        assert not grep_output(proc.stdout, 'Notes')
         assert not grep_output(proc.stdout, 'Chats')
 
     def test_tshark_z_expert_warn(self, cmd_tshark, capture_file, test_env):
         proc = subprocesstest.run((cmd_tshark, '-q', '-z', 'expert,warn',
-            '-r', capture_file('http-ooo.pcap')), capture_output=True, env=test_env)
+            '-o', 'tcp.check_checksum:TRUE',
+            '-r', capture_file('http-ooo-fuzzed.pcapng')), capture_output=True, env=test_env)
         assert grep_output(proc.stdout, 'Errors')
         assert grep_output(proc.stdout, 'Warns')
+        assert not grep_output(proc.stdout, 'Notes')
         assert not grep_output(proc.stdout, 'Chats')
 
     def test_tshark_z_expert_note(self, cmd_tshark, capture_file, test_env):
         proc = subprocesstest.run((cmd_tshark, '-q', '-z', 'expert,note',
-            '-r', capture_file('http2-data-reassembly.pcap')), capture_output=True, env=test_env)
+            '-o', 'tcp.check_checksum:TRUE',
+            '-r', capture_file('http-ooo-fuzzed.pcapng')), capture_output=True, env=test_env)
+        assert grep_output(proc.stdout, 'Errors')
         assert grep_output(proc.stdout, 'Warns')
         assert grep_output(proc.stdout, 'Notes')
         assert not grep_output(proc.stdout, 'Chats')
 
     def test_tshark_z_expert_chat(self, cmd_tshark, capture_file, test_env):
         proc = subprocesstest.run((cmd_tshark, '-q', '-z', 'expert,chat',
-            '-r', capture_file('http-ooo.pcap')), capture_output=True, env=test_env)
+            '-o', 'tcp.check_checksum:TRUE',
+            '-r', capture_file('http-ooo-fuzzed.pcapng')), capture_output=True, env=test_env)
         assert grep_output(proc.stdout, 'Errors')
         assert grep_output(proc.stdout, 'Warns')
+        assert grep_output(proc.stdout, 'Notes')
         assert grep_output(proc.stdout, 'Chats')
 
     def test_tshark_z_expert_comment(self, cmd_tshark, capture_file, test_env):
@@ -272,17 +291,26 @@ class TestTsharkZExpert:
         assert grep_output(proc.stdout, 'Filter "' + invalid_filter + '" is invalid')
 
     def test_tshark_z_expert_filter(self, cmd_tshark, capture_file, test_env):
-        proc = subprocesstest.run((cmd_tshark, '-q', '-z', 'expert,udp',  # udp is a filter
-            '-r', capture_file('http-ooo.pcap')), capture_output=True, env=test_env)
+        proc = subprocesstest.run((cmd_tshark, '-q', '-z', 'expert,udp',
+            '-o', 'tcp.check_checksum:TRUE',
+            '-r', capture_file('http-ooo-fuzzed.pcapng')), capture_output=True, env=test_env)
+        # Filtering for UDP should produce no expert infos.
         assert not grep_output(proc.stdout, 'Errors')
         assert not grep_output(proc.stdout, 'Warns')
+        assert not grep_output(proc.stdout, 'Notes')
         assert not grep_output(proc.stdout, 'Chats')
 
     def test_tshark_z_expert_error_filter(self, cmd_tshark, capture_file, test_env):
-        proc = subprocesstest.run((cmd_tshark, '-q', '-z', 'expert,error,udp',  # udp is a filter
-            '-r', capture_file('http-ooo.pcap')), capture_output=True, env=test_env)
-        assert not grep_output(proc.stdout, 'Errors')
-        assert not grep_output(proc.stdout, 'Warns')
+        proc = subprocesstest.run((cmd_tshark, '-q', '-z', 'expert,note,http',  # tls is a filter
+            '-o', 'tcp.check_checksum:TRUE',
+            '-r', capture_file('http-ooo-fuzzed.pcapng')), capture_output=True, env=test_env)
+        # Filtering for HTTP and Note level expert info should produce only
+        # Error and Warning level expert infos with checksumming turned on.
+        # The Note warnings on are packets with TCP but not HTTP, and we're
+        # filtering out the Chat level.
+        assert grep_output(proc.stdout, 'Errors')
+        assert grep_output(proc.stdout, 'Warns')
+        assert not grep_output(proc.stdout, 'Notes')
         assert not grep_output(proc.stdout, 'Chats')
 
 
@@ -298,7 +326,19 @@ class TestTsharkExtcap:
         os.makedirs(extcap_dir_path)
         test_env['WIRESHARK_EXTCAP_DIR'] = extcap_dir_path
         source_file = os.path.join(os.path.dirname(__file__), 'sampleif.py')
-        shutil.copy2(source_file, extcap_dir_path)
+        # We run our tests in a bare, reproducible home environment. This can result in an
+        # invalid or missing Python interpreter if our main environment has a wonky Python
+        # path, as is the case in the GitLab SaaS macOS runners which use `asdf`. Force
+        # sampleif.py to use our current Python executable.
+        with open(source_file, 'r') as sf:
+            sampleif_py = sf.read()
+            sampleif_py = sampleif_py.replace('/usr/bin/env python3', sys.executable)
+            sys.stderr.write(sampleif_py)
+            extcap_file = os.path.join(extcap_dir_path, 'sampleif.py')
+            with open(extcap_file, 'w') as ef:
+                ef.write(sampleif_py)
+                os.fchmod(ef.fileno(), os.fstat(sf.fileno()).st_mode)
+
         # Ensure the test extcap_tool is properly loaded
         proc = subprocesstest.run((cmd_tshark, '-D'), capture_output=True, env=test_env)
         assert count_output(proc.stdout, 'sampleif') == 1

@@ -34,6 +34,7 @@
 #include <wsutil/wslog.h>
 
 #include <wsutil/ws_getopt.h>
+#include <wsutil/version_info.h>
 
 #include "randpkt_core/randpkt_core.h"
 
@@ -47,7 +48,7 @@ list_capture_types(void) {
 
     cmdarg_err("The available capture file types for the \"-F\" flag are:\n");
     writable_type_subtypes = wtap_get_writable_file_types_subtypes(FT_SORT_BY_NAME);
-    for (guint i = 0; i < writable_type_subtypes->len; i++) {
+    for (unsigned i = 0; i < writable_type_subtypes->len; i++) {
         int ft = g_array_index(writable_type_subtypes, int, i);
         fprintf(stderr, "    %s - %s\n", wtap_file_type_subtype_name(ft),
             wtap_file_type_subtype_description(ft));
@@ -78,7 +79,7 @@ randpkt_cmdarg_err_cont(const char *msg_format, va_list ap)
 
 /* Print usage statement and exit program */
 static void
-usage(gboolean is_error)
+usage(bool is_error)
 {
     FILE *output;
     char** abbrev_list;
@@ -92,11 +93,17 @@ usage(gboolean is_error)
         output = stderr;
     }
 
-    fprintf(output, "Usage: randpkt [-b maxbytes] [-c count] [-t type] [-r] [-F output file type] filename\n");
-    fprintf(output, "Default max bytes (per packet) is 5000\n");
-    fprintf(output, "Default count is 1000.\n");
-    fprintf(output, "Default output file type is pcapng.\n");
-    fprintf(output, "-r: random packet type selection\n");
+    fprintf(output, "Usage: randpkt [options] <outfile>\n");
+    fprintf(output, "\n");
+    fprintf(output, "Options:\n");
+    fprintf(output, "  -b                maximum bytes per packet (default: 5000)\n");
+    fprintf(output, "  -c                packet count (default: 1000)\n");
+    fprintf(output, "  -F                output file type (default: pcapng)\n");
+    fprintf(output, "                    an empty \"-F\" option will list the file types\n");
+    fprintf(output, "  -r                select a different random type for each packet\n");
+    fprintf(output, "  -t                packet type\n");
+    fprintf(output, "  -h, --help        display this help and exit.\n");
+    fprintf(output, "  -v, --version     print version information and exit.\n");
     fprintf(output, "\n");
     fprintf(output, "Types:\n");
 
@@ -110,7 +117,7 @@ usage(gboolean is_error)
     g_strfreev(abbrev_list);
     g_strfreev(longname_list);
 
-    fprintf(output, "\nIf type is not specified, a random packet will be chosen\n\n");
+    fprintf(output, "\nIf type is not specified, a random packet type will be chosen\n\n");
 }
 
 int
@@ -136,12 +143,13 @@ main(int argc, char *argv[])
     int produce_count = 1000;
     int file_type_subtype = WTAP_FILE_TYPE_SUBTYPE_UNKNOWN;
     randpkt_example *example;
-    guint8* type = NULL;
-    int allrandom = FALSE;
+    uint8_t* type = NULL;
+    int allrandom = false;
     wtap_dumper *savedump;
     int ret = EXIT_SUCCESS;
     static const struct ws_option long_options[] = {
         {"help", ws_no_argument, NULL, 'h'},
+        {"version", ws_no_argument, NULL, 'v'},
         {0, 0, 0, 0 }
     };
 
@@ -174,13 +182,15 @@ main(int argc, char *argv[])
 
     init_report_message("randpkt", &randpkt_report_routines);
 
-    wtap_init(TRUE);
+    wtap_init(true);
 
 #ifdef _WIN32
     create_app_running_mutex();
 #endif /* _WIN32 */
 
-    while ((opt = ws_getopt_long(argc, argv, "b:c:F:ht:r", long_options, NULL)) != -1) {
+    ws_init_version_info("Randpkt", NULL, NULL);
+
+    while ((opt = ws_getopt_long(argc, argv, "b:c:F:ht:rv", long_options, NULL)) != -1) {
         switch (opt) {
             case 'b':	/* max bytes */
                 produce_max_bytes = get_positive_int(ws_optarg, "max bytes");
@@ -209,12 +219,18 @@ main(int argc, char *argv[])
                 break;
 
             case 'h':
-                usage(FALSE);
+                show_help_header(NULL);
+                usage(false);
                 goto clean_exit;
                 break;
 
             case 'r':
-                allrandom = TRUE;
+                allrandom = true;
+                break;
+
+            case 'v':
+                show_version();
+                goto clean_exit;
                 break;
 
             case '?':
@@ -222,12 +238,11 @@ main(int argc, char *argv[])
                     case 'F':
                         list_capture_types();
                         return WS_EXIT_INVALID_OPTION;
-                        break;
                 }
                 /* FALLTHROUGH */
 
             default:
-                usage(TRUE);
+                usage(true);
                 ret = WS_EXIT_INVALID_OPTION;
                 goto clean_exit;
                 break;
@@ -238,7 +253,7 @@ main(int argc, char *argv[])
     if (argc > ws_optind) {
         produce_filename = argv[ws_optind];
     } else {
-        usage(TRUE);
+        usage(true);
         ret = WS_EXIT_INVALID_OPTION;
         goto clean_exit;
     }

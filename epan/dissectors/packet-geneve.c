@@ -72,39 +72,39 @@ void proto_reg_handoff_geneve(void);
 
 static dissector_handle_t geneve_handle;
 
-static int proto_geneve = -1;
+static int proto_geneve;
 
-static int hf_geneve_version = -1;
-static int hf_geneve_flags = -1;
-static int hf_geneve_flag_oam = -1;
-static int hf_geneve_flag_critical = -1;
-static int hf_geneve_flag_reserved = -1;
-static int hf_geneve_proto_type = -1;
-static int hf_geneve_vni = -1;
-static int hf_geneve_reserved = -1;
-static int hf_geneve_options = -1;
-static int hf_geneve_option_class = -1;
-static int hf_geneve_option_type = -1;
-static int hf_geneve_option_type_critical = -1;
-static int hf_geneve_option_flags = -1;
-static int hf_geneve_option_flags_reserved = -1;
-static int hf_geneve_option_length = -1;
-static int hf_geneve_option = -1;
-static int hf_geneve_opt_gcp_vnid = -1;
-static int hf_geneve_opt_gcp_reserved = -1;
-static int hf_geneve_opt_gcp_direction = -1;
-static int hf_geneve_opt_gcp_endpoint = -1;
-static int hf_geneve_opt_gcp_profile = -1;
-static int hf_geneve_opt_unknown_data = -1;
+static int hf_geneve_version;
+static int hf_geneve_flags;
+static int hf_geneve_flag_oam;
+static int hf_geneve_flag_critical;
+static int hf_geneve_flag_reserved;
+static int hf_geneve_proto_type;
+static int hf_geneve_vni;
+static int hf_geneve_reserved;
+static int hf_geneve_options;
+static int hf_geneve_option_class;
+static int hf_geneve_option_type;
+static int hf_geneve_option_type_critical;
+static int hf_geneve_option_flags;
+static int hf_geneve_option_flags_reserved;
+static int hf_geneve_option_length;
+static int hf_geneve_option;
+static int hf_geneve_opt_gcp_vnid;
+static int hf_geneve_opt_gcp_reserved;
+static int hf_geneve_opt_gcp_direction;
+static int hf_geneve_opt_gcp_endpoint;
+static int hf_geneve_opt_gcp_profile;
+static int hf_geneve_opt_unknown_data;
 
-static int ett_geneve = -1;
-static int ett_geneve_flags = -1;
-static int ett_geneve_opt_flags = -1;
-static int ett_geneve_options = -1;
-static int ett_geneve_opt_data = -1;
+static int ett_geneve;
+static int ett_geneve_flags;
+static int ett_geneve_opt_flags;
+static int ett_geneve_options;
+static int ett_geneve_opt_data;
 
-static expert_field ei_geneve_ver_unknown = EI_INIT;
-static expert_field ei_geneve_opt_len_invalid = EI_INIT;
+static expert_field ei_geneve_ver_unknown;
+static expert_field ei_geneve_opt_len_invalid;
 
 static dissector_table_t ethertype_dissector_table;
 
@@ -114,13 +114,13 @@ static const struct true_false_string tfs_geneve_gcp_direction = {
 };
 
 static const char *
-format_option_name(guint16 opt_class, guint8 opt_type)
+format_option_name(wmem_allocator_t *scope, uint16_t opt_class, uint8_t opt_type)
 {
     const char *name;
 
-    name = wmem_strdup_printf(wmem_packet_scope(),
+    name = wmem_strdup_printf(scope,
                               "%s, Class: %s (0x%04x) Type: 0x%02x",
-                              val64_to_str_const(((guint64)opt_class << 8) | opt_type,
+                              val64_to_str_const(((uint64_t)opt_class << 8) | opt_type,
                                                  option_names, "Unknown"),
                               rval_to_str_const(opt_class, class_id_names, "Unknown"),
                               opt_class, opt_type);
@@ -129,20 +129,20 @@ format_option_name(guint16 opt_class, guint8 opt_type)
 }
 
 static void
-dissect_option(tvbuff_t *tvb, proto_tree *opts_tree, int offset,
-               guint16 opt_class, guint8 opt_type, int len)
+dissect_option(wmem_allocator_t *scope, tvbuff_t *tvb, proto_tree *opts_tree, int offset,
+               uint16_t opt_class, uint8_t opt_type, int len)
 {
     proto_item *opt_item, *type_item, *hidden_item, *flag_item;
     proto_tree *opt_tree, *flag_tree;
     const char *critical;
-    guint8 flags;
+    uint8_t flags;
 
     critical = opt_type & OPT_TYPE_CRITICAL ? "Critical" : "Non-critical";
 
     opt_item = proto_tree_add_item(opts_tree, hf_geneve_option,
                                    tvb, offset, len, ENC_NA);
     proto_item_set_text(opt_item, "%s (%s)",
-                        format_option_name(opt_class, opt_type),
+                        format_option_name(scope, opt_class, opt_type),
                         critical);
 
     opt_tree = proto_item_add_subtree(opt_item, ett_geneve_opt_data);
@@ -174,7 +174,7 @@ dissect_option(tvbuff_t *tvb, proto_tree *opts_tree, int offset,
     proto_tree_add_uint(opt_tree, hf_geneve_option_length, tvb, offset, 1, len);
     offset += 1;
 
-    switch (((guint64)opt_class << 8) | opt_type) {
+    switch (((uint64_t)opt_class << 8) | opt_type) {
         case GENEVE_GCP_VNID:
             proto_tree_add_bits_item(opt_tree, hf_geneve_opt_gcp_vnid, tvb, offset * 8,
                                      28, ENC_BIG_ENDIAN);
@@ -204,9 +204,9 @@ dissect_geneve_options(tvbuff_t *tvb, packet_info *pinfo,
 {
     proto_item *opts_item;
     proto_tree *opts_tree;
-    guint16 opt_class;
-    guint8 opt_type;
-    guint8 opt_len;
+    uint16_t opt_class;
+    uint8_t opt_type;
+    uint8_t opt_len;
 
     opts_item = proto_tree_add_item(geneve_tree, hf_geneve_options, tvb,
                                     offset, len, ENC_NA);
@@ -223,12 +223,12 @@ dissect_geneve_options(tvbuff_t *tvb, packet_info *pinfo,
                                          &ei_geneve_opt_len_invalid, tvb,
                                          offset + 3, 1,
                                          "%s (length of %u is past end of options)",
-                                         format_option_name(opt_class, opt_type),
+                                         format_option_name(pinfo->pool, opt_class, opt_type),
                                          opt_len);
             return;
         }
 
-        dissect_option(tvb, opts_tree, offset, opt_class, opt_type, opt_len);
+        dissect_option(pinfo->pool, tvb, opts_tree, offset, opt_class, opt_type, opt_len);
 
         offset += opt_len;
         len -= opt_len;
@@ -242,10 +242,10 @@ dissect_geneve(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree, void* data _
     proto_tree *geneve_tree;
     tvbuff_t *next_tvb;
     int offset = 0;
-    guint8 ver_opt;
-    guint8 ver;
-    guint8 flags;
-    guint16 proto_type;
+    uint8_t ver_opt;
+    uint8_t ver;
+    uint8_t flags;
+    uint16_t proto_type;
     int opts_len;
     static int * const flag_fields[] = {
         &hf_geneve_flag_oam,
@@ -441,7 +441,7 @@ proto_register_geneve(void)
         },
     };
 
-    static gint *ett[] = {
+    static int *ett[] = {
         &ett_geneve,
         &ett_geneve_flags,
         &ett_geneve_options,

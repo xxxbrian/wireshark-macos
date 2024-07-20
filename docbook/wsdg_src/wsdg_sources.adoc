@@ -25,7 +25,7 @@ such as where to find specific functionality. This is done in
 
 https://git-scm.com/[Git] is used to keep track of the changes made to the Wireshark source code.
 The official repository is hosted at {wireshark-gitlab-project-url}[GitLab], and incoming changes are evaluated and reviewed there.
-For more information on GitLab see https://docs.gitlab.com/ce/gitlab-basics/[their documentation].
+For more information on GitLab see https://docs.gitlab.com/ee/[their documentation].
 
 .Why Git?
 
@@ -233,25 +233,34 @@ CMake can compile Wireshark for several different build types:
 |Type |Compiler Flags |Description
 
 |`RelWithDebInfo`
-|`-O2 -g`
-|Default, mix of optimization and debug capabilities
+|`-O2 -g -DNDEBUG`
+|Build with optimizations and generate debug symbols.
+Disables assertions and disables debug level logs
 
 |`Debug`
-|`-O0 -g`
-|For debugging, no optimization
+|`-g -DWS_DEBUG`
+|For development, no optimization. Enables assertions and debug level logs
 
 |`Release`
 |`-O3 -DNDEBUG`
-|Optimized for speed, no debug symbols or debug level logs
+|Optimized for speed, no debug symbols or debug level logs or assertions
 
 |`MinSizeRel`
 |`-Os -DNDEBUG`
-|Optimized for size, no debug symbols or debug level logs
+|Optimized for size, no debug symbols or debug level logs or assertions
 |===
 
 The default is `RelWithDebInfo`, which provides a good compromise of
 some optimization (`-O2`) along with including debug symbols (`-g`)
-and enabling full <<ChSrcLogging,logging capabilities>>.
+for release builds. For normal development coding you probably want to be
+using `Debug` build type or set -DENABLE_DEBUG=On, to enable full
+<<ChSrcLogging,logging capabilities>> and debug code.
+
+CMake will automatically add the -DNDEBUG option to certain build
+types. This macro is used to disable assertions but it can be overruled
+using ENABLE_ASSERT, which can be used to unconditionally enable assertions
+if defined.
+
 To change the build type, set the CMake variable `CMAKE_BUILD_TYPE`, e.g.:
 
 [source,sh]
@@ -317,6 +326,17 @@ Optimization can make debugging a bit more difficult, e.g. by changing the
 execution order of statements. To disable optimization, set the
 <<ChSrcBuildType,build type>> to `Debug`.
 
+Full debug logs can be invaluable to investigate any issues with the code.
+By default debug level logs are only enabled with `Debug` build type. You
+can enable full debug logs and extra debugging code by configuring the
+ENABLE_DEBUG CMake option. This in turn will define the macro symbol
+`WS_DEBUG` and enable the full range of debugging code in Wireshark.
+
+There is an additional CMake knob called ENABLE_DEBUG_UTF_8 that can be used to
+control specifically the extra validation Wireshark performs internally
+for invalid UTF-8 encodings in internal strings, which should never happen
+and can be somewhat expensive to check during normal usage.
+
 Conversely, the `Release` or `MinSizeRel` build types can be used to optimize
 further for speed or size, but do not include debug symbols for use with
 debuggers, and completely disable <<ChSrcLoggingLevels,lower level logging>>
@@ -357,10 +377,10 @@ The following logging levels are defined from highest to lowest:
 
 By default logging output is generated for logging level "message" and above. If the logging level is lowered or raised
 all log output generated at or above this level is sent to the log output.
-Note that if the <<ChSrcBuildType,build type>> is set to `Release` or
-`MinSizeRel`, then by default all log output for the logging levels "debug" and
-"noisy" will be optimized away by the compiler and cannot be sent to the log
-output, regardless of the logging setings. To enable debugging for all build
+Note that if the <<ChSrcBuildType,build type>> is not set to `Debug`
+then by default all log output for the logging levels "debug" and
+"noisy" will be optimized away by the compiler and cannot be emitted to the log
+output, regardless of the logging settings. To enable debug logging for all build
 types, set the CMake variable `-DENABLE_DEBUG=ON`.
 
 There is also a special "echo" logging level used exclusively for temporary debugging print outs (usually
@@ -477,10 +497,11 @@ https://valgrind.org[Valgrind] and can be enabled as follows:
 $ export WIRESHARK_DEBUG_WMEM_OVERRIDE=simple
 ----
 
-For memory allocated without wmem but with GLib's GSlice memory allocator,
-there is a similar `G_SLICE` environment variable that can be set to
-`always-malloc` (similar to `simple`) or `debug-blocks` (similar to `strict`).
+Wireshark uses GLib's GSlice memory allocator, either indirectly via wmem or via various GLib API calls.
+GLib provides a `G_SLICE` environment variable that can be set to `always-malloc` (similar to `simple`) or `debug-blocks` (similar to `strict`).
 See https://developer-old.gnome.org/glib/stable/glib-running.html for details.
+The C libraries on FreeBSD, Linux, and macOS also support memory allocation debugging via various environment variables.
+You can enable many of them by running `source tools/debug-alloc.env` in a POSIX shell.
 
 If you're encountering memory safety bugs, you might want to build with
 https://github.com/google/sanitizers/wiki/AddressSanitizer[Address Sanitizer]
@@ -490,6 +511,8 @@ It works with GCC or Clang, provided that the appropriate libraries are installe
 [source,sh]
 ----
 $ cmake .. -G Ninja -DENABLE_ASAN=1
+$ source ../tools/debug-alloc.env
+$ ./run/tshark ...
 ----
 
 TIP: ASAN slows things down by a factor of 2 (or more), so having a different
@@ -613,7 +636,7 @@ For the steps below we’ll pretend that your username is “henry.perry”.
 
 . Sign in to {wireshark-gitlab-project-url} by clicking “Sign in / Register” in the upper right corner of the web page and following the login instructions.
 
-. https://docs.gitlab.com/ce/ssh/[Add an SSH key to your account] as described in the GitLab documentation.
+. https://docs.gitlab.com/ee/user/ssh.html[Add an SSH key to your account] as described in the GitLab documentation.
 
 . Make sure you have a clone of the main repository as described in <<ChSrcGit>>.
 
@@ -851,7 +874,6 @@ If that is not possible, it *must* use a compatible license.
 The following licenses are currently allowed:
 
 * BSD {spdx-license-url}BSD-1-Clause.html[1], {spdx-license-url}BSD-2-Clause.html[2], {spdx-license-url}BSD-3-Clause.html[3] clause
-* {spdx-license-url}GPL-3.0-or-later.html[GPL version 3 or later] *with* the https://www.gnu.org/software/bison/manual/html_node/Conditions.html[Bison parser exception]
 * {spdx-license-url}ISC.html[ISC]
 * {spdx-license-url}LGPL-2.0-or-later.html[LGPL v2 or later], including {spdx-license-url}LGPL-2.1-or-later.html[v2.1]
 * {spdx-license-url}MIT.html[MIT] / {spdx-license-url}X11.html[X11]
@@ -1060,6 +1082,12 @@ https://1.na.dl.wireshark.org/download/src/all-versions/wireshark-{wireshark-ver
 instead of
 
 https://1.na.dl.wireshark.org/download/src/wireshark-{wireshark-version}.tar.xz
+
+[discrete]
+===== Staying Current
+
+Wireshark releases are announced on the link:{wireshark-mailing-lists-url}[wireshark-announce] mailing list.
+A https://appvisor.com/pad/[PAD] file is also published at https://www.wireshark.org/wireshark-pad.xml which contains the current stable version and release date.
 
 [discrete]
 ===== Artwork

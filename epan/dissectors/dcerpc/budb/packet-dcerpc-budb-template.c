@@ -27,7 +27,7 @@
 void proto_register_budb(void);
 void proto_reg_handoff_budb(void);
 
-static int proto_budb = -1;
+static int proto_budb;
 ETH_HF
 
 ETH_ETT
@@ -53,14 +53,12 @@ ETH_HFARR
 ETH_ETTARR
         };
 
-        proto_budb = proto_register_protocol(
-                "DCE/DFS BUDB", 
-		"BUDB", "budb");
+        proto_budb = proto_register_protocol("DCE/DFS BUDB", "BUDB", "budb");
 	proto_register_field_array(proto_budb, hf, array_length(hf));
         proto_register_subtree_array(ett, array_length(ett));
 }
 
-static dcerpc_sub_dissector function_dissectors[] = {
+static const dcerpc_sub_dissector function_dissectors[] = {
 ETH_FT
 	{ 0, NULL, NULL, NULL },
 };

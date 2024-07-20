@@ -61,6 +61,7 @@ file(TO_NATIVE_PATH "${CMAKE_SOURCE_DIR}" TOP_SRC_DIR)
 # STAGING_DIR depends on the build configuration so we pass it
 # on the command line below.
 file(TO_NATIVE_PATH "${CMAKE_BINARY_DIR}/docbook" DOCBOOK_DIR)
+file(TO_NATIVE_PATH "${CMAKE_BINARY_DIR}/doc" DOC_DIR)
 
 # To do:
 # - Sync the various version names between CMake and Wix.
@@ -126,15 +127,16 @@ foreach(_dll ${GLIB2_DLLS_RELEASE})
 endforeach()
 file(APPEND "${_all_manifest_wix}" "      <?endif?>\n")
 SET(unique_component "")
-foreach(_dll ${CARES_DLL} ${PCRE2_DLL} ${GCRYPT_DLLS}
-		${GNUTLS_DLLS} ${KERBEROS_DLLS} ${LIBSSH_DLLS} ${LUA_DLL}
-		${LZ4_DLL} ${NGHTTP2_DLL} ${SBC_DLL} ${SMI_DLL} ${SNAPPY_DLL}
-		${SPANDSP_DLL} ${BCG729_DLL} ${LIBXML2_DLLS} ${WINSPARKLE_DLL}
-		${ZLIB_DLL} ${BROTLI_DLLS} ${ZSTD_DLL} ${ILBC_DLL} ${OPUS_DLL}
-		${SPEEXDSP_DLL}
-		# Required for mmdbresolve
-		${MAXMINDDB_DLL}
+set (_dll_list ${AMRNB_DLL} ${CARES_DLL} ${PCRE2_RELEASE_DLL} ${GCRYPT_DLLS}
+	${GNUTLS_DLLS} ${KERBEROS_DLLS} ${LIBSSH_DLLS} ${LUA_DLL}
+	${LZ4_DLL} ${MINIZIP_DLL} ${MINIZIPNG_DLLS} ${NGHTTP2_DLL} ${NGHTTP3_DLL} ${SBC_DLL} ${SMI_DLL}
+	${SNAPPY_DLL} ${SPANDSP_DLL} ${BCG729_DLL} ${LIBXML2_DLLS} ${WINSPARKLE_DLL}
+	${ZLIB_DLL} ${ZLIBNG_DLL} ${BROTLI_DLLS} ${ZSTD_DLL} ${ILBC_DLL} ${OPUS_DLL}
+	${SPEEXDSP_DLL}
+	# Required for mmdbresolve
+	${MAXMINDDB_DLL}
 	)
+foreach(_dll ${_dll_list})
 	#ensure uniqueness of files
 	IF(NOT "${unique_component}" MATCHES "(^|;)${_dll}(;|$)")
 		STRING(REGEX REPLACE "[-|\\.]" "_" _wix_name ${_dll})
@@ -143,12 +145,6 @@ foreach(_dll ${CARES_DLL} ${PCRE2_DLL} ${GCRYPT_DLLS}
 		file(APPEND "${_all_manifest_wix}" "      </Component>\n")
 		SET(unique_component ${unique_component} ${_dll})
 	ENDIF(NOT "${unique_component}" MATCHES "(^|;)${_dll}(;|$)")
-endforeach()
-foreach(_script "init.lua" "console.lua" "browser_sslkeylog.lua" "dtd_gen.lua")
-	STRING(REGEX REPLACE "[-|\\.]" "_" _wix_name ${_script})
-	file(APPEND "${_all_manifest_wix}" "      <Component Id=\"cmp${_wix_name}\" Guid=\"*\">\n")
-	file(APPEND "${_all_manifest_wix}" "        <File Id=\"fil${_wix_name}\" KeyPath=\"yes\" Source=\"$(var.Staging.Dir)\\${_script}\"/>\n")
-	file(APPEND "${_all_manifest_wix}" "      </Component>\n")
 endforeach()
 file(APPEND "${_all_manifest_wix}" "    </DirectoryRef>\n")
 file(APPEND "${_all_manifest_wix}" "  </Fragment>\n")
@@ -166,15 +162,7 @@ foreach(_dll ${GLIB2_DLLS_RELEASE})
 endforeach()
 file(APPEND "${_all_manifest_wix}" "      <?endif?>\n")
 SET(unique_file "")
-foreach(_dll ${CARES_DLL} ${PCRE2_DLL} ${GCRYPT_DLLS}
-		${GNUTLS_DLLS} ${KERBEROS_DLLS} ${LIBSSH_DLLS} ${LUA_DLL}
-		${LZ4_DLL} ${NGHTTP2_DLL} ${SBC_DLL} ${SMI_DLL} ${SNAPPY_DLL}
-		${SPANDSP_DLL} ${BCG729_DLL} ${LIBXML2_DLLS} ${WINSPARKLE_DLL}
-		${ZLIB_DLL} ${BROTLI_DLLS} ${ZSTD_DLL} ${ILBC_DLL} ${OPUS_DLL}
-		${SPEEXDSP_DLL}
-		# mmdbresolve
-		${MAXMINDDB_DLL}
-	)
+foreach(_dll ${_dll_list})
 	#ensure uniqueness of files
 	IF(NOT "${unique_file}" MATCHES "(^|;)${_dll}(;|$)")
 		STRING(REGEX REPLACE "[-|\\.]" "_" _wix_name ${_dll})
@@ -182,14 +170,9 @@ foreach(_dll ${CARES_DLL} ${PCRE2_DLL} ${GCRYPT_DLLS}
 		SET(unique_file ${unique_file} ${_dll})
 	ENDIF(NOT "${unique_file}" MATCHES "(^|;)${_dll}(;|$)")
 endforeach()
-foreach(_script "init.lua" "console.lua" "browser_sslkeylog.lua" "dtd_gen.lua")
-	STRING(REGEX REPLACE "[-|\\.]" "_" _wix_name ${_script})
-	file(APPEND "${_all_manifest_wix}" "      <ComponentRef Id=\"cmp${_wix_name}\" />\n")
-endforeach()
 file(APPEND "${_all_manifest_wix}" "    </ComponentGroup>\n")
 file(APPEND "${_all_manifest_wix}" "  </Fragment>\n")
 file(APPEND "${_all_manifest_wix}" "\n</Wix>\n")
-
 
 if(SMI_DIR)
 	set(d_smi_dir "-dSMI_DIR")

@@ -80,6 +80,7 @@ public:
 };
 REGISTER_PREFERENCE_TYPE(PREF_STRING, StringPreference)
 REGISTER_PREFERENCE_TYPE(PREF_CUSTOM, StringPreference)
+REGISTER_PREFERENCE_TYPE(PREF_DISSECTOR, StringPreference)
 
 class PasswordPreference : public StringPreference
 {
@@ -101,7 +102,6 @@ public:
     UIntPreference(QObject * parent = Q_NULLPTR) : StringPreference(parent) {}
 };
 REGISTER_PREFERENCE_TYPE(PREF_UINT, UIntPreference)
-REGISTER_PREFERENCE_TYPE(PREF_DECODE_AS_UINT, UIntPreference)
 
 class EnumPreference : public WiresharkPreference
 {

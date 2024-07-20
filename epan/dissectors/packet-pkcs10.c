@@ -1,7 +1,7 @@
 /* Do not modify this file. Changes will be overwritten.                      */
 /* Generated automatically by the ASN.1 to Wireshark dissector compiler       */
 /* packet-pkcs10.c                                                            */
-/* asn2wrs.py -b -L -p pkcs10 -c ./pkcs10.cnf -s ./packet-pkcs10-template -D . -O ../.. PKCS10.asn */
+/* asn2wrs.py -b -q -L -p pkcs10 -c ./pkcs10.cnf -s ./packet-pkcs10-template -D . -O ../.. PKCS10.asn */
 
 /* packet-p10.c
  *
@@ -48,27 +48,27 @@ void proto_register_pkcs10(void);
 static dissector_handle_t csr_handle;
 
 /* Initialize the protocol and registered fields */
-static int proto_pkcs10 = -1;
-static int hf_pkcs10_Attributes_PDU = -1;         /* Attributes */
-static int hf_pkcs10_CertificationRequest_PDU = -1;  /* CertificationRequest */
-static int hf_pkcs10_version = -1;                /* T_version */
-static int hf_pkcs10_subject = -1;                /* Name */
-static int hf_pkcs10_subjectPKInfo = -1;          /* SubjectPublicKeyInfo */
-static int hf_pkcs10_attributes = -1;             /* Attributes */
-static int hf_pkcs10_Attributes_item = -1;        /* Attribute */
-static int hf_pkcs10_type = -1;                   /* T_type */
-static int hf_pkcs10_values = -1;                 /* T_values */
-static int hf_pkcs10_values_item = -1;            /* T_values_item */
-static int hf_pkcs10_certificationRequestInfo = -1;  /* CertificationRequestInfo */
-static int hf_pkcs10_signatureAlgorithm = -1;     /* AlgorithmIdentifier */
-static int hf_pkcs10_signature = -1;              /* BIT_STRING */
+static int proto_pkcs10;
+static int hf_pkcs10_Attributes_PDU;              /* Attributes */
+static int hf_pkcs10_CertificationRequest_PDU;    /* CertificationRequest */
+static int hf_pkcs10_version;                     /* T_version */
+static int hf_pkcs10_subject;                     /* Name */
+static int hf_pkcs10_subjectPKInfo;               /* SubjectPublicKeyInfo */
+static int hf_pkcs10_attributes;                  /* Attributes */
+static int hf_pkcs10_Attributes_item;             /* Attribute */
+static int hf_pkcs10_type;                        /* T_type */
+static int hf_pkcs10_values;                      /* T_values */
+static int hf_pkcs10_values_item;                 /* T_values_item */
+static int hf_pkcs10_certificationRequestInfo;    /* CertificationRequestInfo */
+static int hf_pkcs10_signatureAlgorithm;          /* AlgorithmIdentifier */
+static int hf_pkcs10_signature;                   /* BIT_STRING */
 
 /* Initialize the subtree pointers */
-static gint ett_pkcs10_CertificationRequestInfo = -1;
-static gint ett_pkcs10_Attributes = -1;
-static gint ett_pkcs10_Attribute = -1;
-static gint ett_pkcs10_T_values = -1;
-static gint ett_pkcs10_CertificationRequest = -1;
+static int ett_pkcs10_CertificationRequestInfo;
+static int ett_pkcs10_Attributes;
+static int ett_pkcs10_Attribute;
+static int ett_pkcs10_T_values;
+static int ett_pkcs10_CertificationRequest;
 
 static const value_string pkcs10_T_version_vals[] = {
   {   0, "v1" },
@@ -77,7 +77,7 @@ static const value_string pkcs10_T_version_vals[] = {
 
 
 static int
-dissect_pkcs10_T_version(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_pkcs10_T_version(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_integer(implicit_tag, actx, tree, tvb, offset, hf_index,
                                                 NULL);
 
@@ -87,7 +87,7 @@ dissect_pkcs10_T_version(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offse
 
 
 static int
-dissect_pkcs10_T_type(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_pkcs10_T_type(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_object_identifier_str(implicit_tag, actx, tree, tvb, offset, hf_pkcs10_type, &actx->external.direct_reference);
 
   return offset;
@@ -96,7 +96,7 @@ dissect_pkcs10_T_type(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _
 
 
 static int
-dissect_pkcs10_T_values_item(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_pkcs10_T_values_item(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
     offset=call_ber_oid_callback(actx->external.direct_reference, tvb, offset, actx->pinfo, tree, NULL);
 
 
@@ -109,7 +109,7 @@ static const ber_sequence_t T_values_set_of[1] = {
 };
 
 static int
-dissect_pkcs10_T_values(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_pkcs10_T_values(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_set_of(implicit_tag, actx, tree, tvb, offset,
                                  T_values_set_of, hf_index, ett_pkcs10_T_values);
 
@@ -124,7 +124,7 @@ static const ber_sequence_t Attribute_sequence[] = {
 };
 
 static int
-dissect_pkcs10_Attribute(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_pkcs10_Attribute(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
                                    Attribute_sequence, hf_index, ett_pkcs10_Attribute);
 
@@ -137,7 +137,7 @@ static const ber_sequence_t Attributes_set_of[1] = {
 };
 
 static int
-dissect_pkcs10_Attributes(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_pkcs10_Attributes(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_set_of(implicit_tag, actx, tree, tvb, offset,
                                  Attributes_set_of, hf_index, ett_pkcs10_Attributes);
 
@@ -154,7 +154,7 @@ static const ber_sequence_t CertificationRequestInfo_sequence[] = {
 };
 
 static int
-dissect_pkcs10_CertificationRequestInfo(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_pkcs10_CertificationRequestInfo(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
                                    CertificationRequestInfo_sequence, hf_index, ett_pkcs10_CertificationRequestInfo);
 
@@ -164,7 +164,7 @@ dissect_pkcs10_CertificationRequestInfo(gboolean implicit_tag _U_, tvbuff_t *tvb
 
 
 static int
-dissect_pkcs10_BIT_STRING(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_pkcs10_BIT_STRING(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_bitstring(implicit_tag, actx, tree, tvb, offset,
                                     NULL, 0, hf_index, -1,
                                     NULL);
@@ -181,7 +181,7 @@ static const ber_sequence_t CertificationRequest_sequence[] = {
 };
 
 int
-dissect_pkcs10_CertificationRequest(gboolean implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
+dissect_pkcs10_CertificationRequest(bool implicit_tag _U_, tvbuff_t *tvb _U_, int offset _U_, asn1_ctx_t *actx _U_, proto_tree *tree _U_, int hf_index _U_) {
   offset = dissect_ber_sequence(implicit_tag, actx, tree, tvb, offset,
                                    CertificationRequest_sequence, hf_index, ett_pkcs10_CertificationRequest);
 
@@ -193,15 +193,15 @@ dissect_pkcs10_CertificationRequest(gboolean implicit_tag _U_, tvbuff_t *tvb _U_
 static int dissect_Attributes_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, TRUE, pinfo);
-  offset = dissect_pkcs10_Attributes(FALSE, tvb, offset, &asn1_ctx, tree, hf_pkcs10_Attributes_PDU);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, true, pinfo);
+  offset = dissect_pkcs10_Attributes(false, tvb, offset, &asn1_ctx, tree, hf_pkcs10_Attributes_PDU);
   return offset;
 }
 static int dissect_CertificationRequest_PDU(tvbuff_t *tvb _U_, packet_info *pinfo _U_, proto_tree *tree _U_, void *data _U_) {
   int offset = 0;
   asn1_ctx_t asn1_ctx;
-  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, TRUE, pinfo);
-  offset = dissect_pkcs10_CertificationRequest(FALSE, tvb, offset, &asn1_ctx, tree, hf_pkcs10_CertificationRequest_PDU);
+  asn1_ctx_init(&asn1_ctx, ASN1_ENC_BER, true, pinfo);
+  offset = dissect_pkcs10_CertificationRequest(false, tvb, offset, &asn1_ctx, tree, hf_pkcs10_CertificationRequest_PDU);
   return offset;
 }
 
@@ -266,7 +266,7 @@ void proto_register_pkcs10(void) {
 	};
 
 	/* List of subtrees */
-	static gint *ett[] = {
+	static int *ett[] = {
     &ett_pkcs10_CertificationRequestInfo,
     &ett_pkcs10_Attributes,
     &ett_pkcs10_Attribute,
@@ -295,5 +295,5 @@ void proto_reg_handoff_pkcs10(void) {
 
   dissector_add_string("media_type", "application/pkcs10", csr_handle); /* RFC 5967 */
   dissector_add_string("rfc7468.preeb_label", "CERTIFICATE REQUEST", csr_handle); /* RFC 7468 */
-  dissector_add_string("rfc7468.preeb_label", "NEW CERTIFICATE REQUEST", csr_handle); /* RFC 7468 Appendix A. Non-conforming expample*/
+  dissector_add_string("rfc7468.preeb_label", "NEW CERTIFICATE REQUEST", csr_handle); /* RFC 7468 Appendix A. Non-conforming example*/
 }

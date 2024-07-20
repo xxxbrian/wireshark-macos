@@ -169,6 +169,32 @@ typedef struct _dcerpc_info {
 	dcerpc_call_value *call_data;
     const char *dcerpc_procedure_name;	/* Used by PIDL to store the name of the current dcerpc procedure */
 	void *private_data;
+
+	/* ndr pointer handling */
+	struct {
+		/* Should we re-read the size of the list ?
+		 * Instead of re-calculating the size every time, use the stored value unless this
+		 * flag is set which means: re-read the size of the list
+		 */
+		gboolean must_check_size;
+		/*
+		 * List of pointers encountered so far in the current level. Points to an
+		 * element of list_ndr_pointer_list.
+		 */
+		GSList *list;
+		GHashTable *hash;
+		/*
+		 * List of pointer list, in order to avoid huge performance penalty
+		 * when dealing with list bigger than 100 elements due to the way we
+		 * try to insert in the list.
+		 * We instead maintain a stack of pointer list
+		 * To make it easier to manage we just use a list to materialize the stack
+		 */
+		GSList *list_list;
+
+		/* Boolean controlling whether pointers are top-level or embedded */
+		gboolean are_top_level;
+	} pointers;
 } dcerpc_info;
 
 #define PDU_REQ         0
@@ -390,17 +416,19 @@ typedef struct _dcerpc_sub_dissector {
 
 /* registration function for subdissectors */
 WS_DLL_PUBLIC
-void dcerpc_init_uuid (int proto, int ett, e_guid_t *uuid, guint16 ver, dcerpc_sub_dissector *procs, int opnum_hf);
+void dcerpc_init_uuid (int proto, int ett, e_guid_t *uuid, guint16 ver, const dcerpc_sub_dissector *procs, int opnum_hf);
+WS_DLL_PUBLIC
+void dcerpc_init_from_handle(int proto, e_guid_t *uuid, guint16 ver, dissector_handle_t guid_handle);
 WS_DLL_PUBLIC
 const char *dcerpc_get_proto_name(e_guid_t *uuid, guint16 ver);
 WS_DLL_PUBLIC
 int dcerpc_get_proto_hf_opnum(e_guid_t *uuid, guint16 ver);
 WS_DLL_PUBLIC
-dcerpc_sub_dissector *dcerpc_get_proto_sub_dissector(e_guid_t *uuid, guint16 ver);
+const dcerpc_sub_dissector *dcerpc_get_proto_sub_dissector(e_guid_t *uuid, guint16 ver);
 
 /* Create a opnum, name value_string from a subdissector list */
 
-value_string *value_string_from_subdissectors(dcerpc_sub_dissector *sd);
+value_string *value_string_from_subdissectors(const dcerpc_sub_dissector *sd);
 
 /* Decode As... functionality */
 /* remove all bindings */
@@ -422,7 +450,7 @@ typedef struct _dcerpc_uuid_value {
     int proto_id;
     int ett;
     const gchar *name;
-    dcerpc_sub_dissector *procs;
+    const dcerpc_sub_dissector *procs;
     int opnum_hf;
 } dcerpc_uuid_value;
 
@@ -504,6 +532,8 @@ WS_DLL_PUBLIC void dcerpc_set_transport_salt(guint64 dcetransportsalt, packet_in
 #define DCE_C_AUTHN_LEVEL_PKT_INTEGRITY	5
 #define DCE_C_AUTHN_LEVEL_PKT_PRIVACY	6
 
+void
+free_ndr_pointer_list(dcerpc_info *di);
 void
 init_ndr_pointer_list(dcerpc_info *di);
 

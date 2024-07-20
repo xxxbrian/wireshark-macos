@@ -12,9 +12,9 @@ import os
 import re
 import subprocess
 import sys
-import tempfile
 import types
 import pytest
+import shutil
 
 @pytest.fixture(scope='session')
 def capture_interface(request, cmd_dumpcap):
@@ -60,7 +60,8 @@ def program_path(request):
     '''
     curdir_run = os.path.join(os.curdir, 'run')
     if sys.platform == 'win32':
-        curdir_run_config = os.path.join(curdir_run, 'RelWithDebInfo')
+        build_type = request.config.getoption('--build-type')
+        curdir_run_config = os.path.join(curdir_run, build_type)
         if os.path.exists(curdir_run_config):
             curdir_run = curdir_run_config
     paths = (
@@ -151,7 +152,7 @@ def cmd_extcap(program):
         if sys.platform == 'darwin':
             return program(os.path.join('Wireshark.app/Contents/MacOS/extcap', name))
         else:
-            return program(os.path.join('extcap', name))
+            return program(os.path.join('extcap/wireshark', name))
     return extcap_name
 
 
@@ -176,10 +177,12 @@ def features(cmd_tshark, make_env):
         have_lua='with Lua' in tshark_v,
         have_lua_unicode='(with UfW patches)' in tshark_v,
         have_nghttp2='with nghttp2' in tshark_v,
+        have_nghttp3='with nghttp3' in tshark_v,
         have_kerberos='with Kerberos' in tshark_v,
         have_gnutls='with GnuTLS' in tshark_v,
         have_pkcs11='and PKCS #11 support' in tshark_v,
         have_brotli='with brotli' in tshark_v,
+        have_zstd='with Zstandard' in tshark_v,
         have_plugins='binary plugins supported' in tshark_v,
     )
 
@@ -196,6 +199,7 @@ def dirs():
         lua_dir=os.path.join(this_dir, 'lua'),
         protobuf_lang_files_dir=os.path.join(this_dir, 'protobuf_lang_files'),
         tools_dir=os.path.join(this_dir, '..', 'tools'),
+        dfilter_dir=os.path.join(this_dir, 'suite_dfilter'),
     )
 
 
@@ -214,11 +218,9 @@ def result_file(tmp_path):
     return result_file_real
 
 @pytest.fixture
-def home_path():
-    '''Per-test home directory, removed when finished.'''
-    with tempfile.TemporaryDirectory(prefix='wireshark-tests-home-') as dirname:
-        yield dirname
-
+def home_path(tmp_path):
+    '''Per-test home directory.'''
+    return str(tmp_path / 'test-home')
 
 @pytest.fixture
 def conf_path(home_path):
@@ -335,6 +337,16 @@ def test_env_80211_user_tk(base_env, conf_path, request, dirs):
         # Windows it unfortunately crashes (Qt 5.12.0).
         env['QT_QPA_PLATFORM'] = 'minimal'
 
+    return env
+
+@pytest.fixture
+def dfilter_env(base_env, conf_path, request, dirs):
+    '''A process environment with a populated configuration directory.'''
+    src_macro_path = os.path.join(dirs.dfilter_dir, 'test_dmacros')
+    dst_macro_path = os.path.join(conf_path, 'dmacros')
+    shutil.copy(src_macro_path, dst_macro_path)
+
+    env = base_env
     return env
 
 @pytest.fixture

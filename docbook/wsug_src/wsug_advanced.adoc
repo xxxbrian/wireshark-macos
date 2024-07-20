@@ -12,8 +12,10 @@ This chapter will describe some of Wireshark’s advanced features.
 
 // We switched from FollowTCP to FollowStream in June 2018.
 // This is apparently how you assign multiple anchors.
+// https://docs.asciidoctor.org/asciidoc/latest/attributes/id/#add-additional-anchors-to-a-section
 
-=== [[ChAdvFollowTCPSection]]Following Protocol Streams [[ChAdvFollowStreamSection]]
+[#ChAdvFollowStreamSection]
+=== [[ChAdvFollowTCPSection]]Following Protocol Streams
 
 It can be very helpful to see a protocol in the way that the application
 layer sees it. Perhaps you are looking for passwords in a Telnet stream,
@@ -145,7 +147,7 @@ peer1_0: !!binary |
 How the old format data can be found in the new format:
 [options="header"]
 |===
-|New YAML format |Old YAML format | 
+|New YAML format |Old YAML format |
 a|
 ----
 ...
@@ -170,8 +172,11 @@ a|
 |===
 
 menu:Raw[]:: This allows you to load the unaltered stream data into a different
-  program for further examination. The display will look the same as the ASCII
-  setting, but “Save As” will result in a binary file.
+  program for further examination. The display will show the data as strings
+  of hex characters with each frame on a separate line, but “Save As”
+  will result in a binary file without any added line separators.
+
+You can optionally show the delta time each time the direction changes (turns) or for every packet or event.
 
 You can switch between streams using the “Stream” selector.
 
@@ -204,8 +209,8 @@ If a selected packet field does not show all the bytes (i.e., they are truncated
 when displayed) or if they are shown as bytes rather than string or if they require
 more formatting because they contain an image or HTML then this dialog can be used.
 
-This dialog can also be used to decode field bytes from base64, zlib compressed
-or quoted-printable and show the decoded bytes as configurable output.
+This dialog can also be used to decode field bytes from base64, various compressed
+formats or quoted-printable and show the decoded bytes as configurable output.
 It’s also possible to select a subset of bytes setting the start byte and end byte.
 
 You can choose from the following actions:
@@ -224,11 +229,13 @@ You can choose to decode the data from one of the following formats:
 
 menu:None[]:: This is the default which does not decode anything.
 
-menu:Base64[]:: This will decode from Base64.
+menu:Base64[]:: This will decode from Base64 or Base64Url.
 
-menu:Compressed[]:: This will decompress the buffer using zlib.
+menu:Compressed[]:: This will decompress the buffer using lz77, lz77huff, lznt1, snappy, zlib or zstd.
 
 menu:Hex Digits[]:: This will decode from a string of hex digits. Non-hex characters are skipped.
+
+menu:Percent-Encoding[]:: This will decode from a Percent-Encoded string.
 
 menu:Quoted-Printable[]:: This will decode from a Quoted-Printable string.
 
@@ -257,7 +264,7 @@ menu:Image[]:: This will try to convert the bytes into an image.
 
 menu:ISO 8859-1[]:: In this view you see the bytes as ISO 8859-1.
 
-menu:Raw[]:: This allows you to load the unaltered stream data into a different
+menu:Raw[]:: This allows you to load the bytes into a different
   program for further examination. The display will show HEX data, but
   “Save As” will result in a binary file.
 
@@ -508,10 +515,6 @@ Next expected acknowledgment number:: The last-seen sequence number for
 segments. Set when there are no analysis flags and for zero window probes.
 
 // tcp_analyze_seq_info->lastack
-Last-seen acknowledgment number:: Always set. Note that this is not the
-same as the next expected acknowledgment number.
-
-// tcp_analyze_seq_info->lastack
 Last-seen acknowledgment number:: Always updated for each packet. Note
 that this is not the same as the next expected acknowledgment number.
 
@@ -529,7 +532,7 @@ direction and it’s less than the current acknowledgment number.
 Set when all of the following are true:
 
 * The segment size is zero.
-* The window size is non-zero and hasn’t changed.
+* The window size is non-zero and hasn’t changed, or there is valid SACK data.
 * The next expected sequence number and last-seen acknowledgment number are non-zero (i.e., the connection has been established).
 * SYN, FIN, and RST are not set.
 
@@ -542,7 +545,7 @@ Set when all of the following are true:
 * This is not a keepalive packet.
 * In the forward direction, the segment size is greater than zero or the SYN or FIN is set.
 * The next expected sequence number is greater than the current sequence number.
-* We have more than two duplicate ACKs in the reverse direction.
+* We have at least two duplicate ACKs in the reverse direction.
 * The current sequence number equals the next expected acknowledgment number.
 * We saw the last acknowledgment less than 20ms ago.
 
@@ -641,7 +644,7 @@ reverse direction.
 Set when the all of the following are true:
 
 * The segment size is zero.
-* The window size is non-zero and not equal to the last-seen window size.
+* The window size is non-zero and not equal to the last-seen window size, and there is no valid SACK data.
 * The sequence number is equal to the next expected sequence number.
 * The acknowledgment number is equal to the last-seen acknowledgment number,
 * or to the next expected sequence number when answering to a ZeroWindowProbe.
@@ -720,6 +723,13 @@ data transfer will be found with a longer filter as closing a connection can be
 associated with FIN or RST packets, or even both :
 'tcp.completeness==31 or tcp.completeness==47 or tcp.completeness==63'
 
+Another way to select specific conversation values is to filter on individual
+flags, the summary field, or a combination of them.
+Thus, '(tcp.completeness.fin==1 || tcp.completeness.rst==1) && tcp.completeness.str contains "DASS"'
+will find all 'Complete, WITH_DATA' conversations, while the 'Complete, NO_DATA'
+ones will be found with
+'(tcp.completeness.fin==1 || tcp.completeness.rst==1) && tcp.completeness.data==0 && tcp.completeness.str contains "ASS"'.
+
 [#ChAdvTimestamps]
 
 === Time Stamps
@@ -749,20 +759,28 @@ While reading or writing capture files, Wireshark converts the time stamp data
 between the capture file format and the internal format as required.
 
 While capturing, Wireshark uses the libpcap (Npcap) capture library which
-supports microsecond resolution. Unless you are working with specialized
-capturing hardware, this resolution should be adequate.
+supports nanosecond resolution for both pcapng and pcap files, though some
+devices may only provide microsecond resolution, in which case that will be
+used. Unless you are working with specialized capturing hardware, this
+resolution should be adequate.
 
 ==== Capture File Formats
 
-Every capture file format that Wireshark knows supports time stamps. The time
-stamp precision supported by a specific capture file format differs widely and
-varies from one second “0” to one nanosecond “0.123456789”. Most file
-formats store the time stamps with a fixed precision (e.g., microseconds), while
-some file formats are even capable of storing the time stamp precision itself
-(whatever the benefit may be).
+The vast majority of capture file formats that Wireshark knows support time
+stamps.  The time stamp precision supported by a specific capture file format
+differs widely and varies from one second “0” to one nanosecond “0.123456789”.
+Most file formats store the time stamps with a fixed precision (e.g., microseconds,
+“0.123456”), while some file formats are capable of storing the time stamp
+precision itself or even having a different precision for different records
+in the file (whatever the benefit may be).
 
-The common libpcap capture file format that is used by Wireshark (and a lot of
-other tools) supports a fixed microsecond resolution “0.123456” only.
+The pcapng capture file format supports a wide range of time stamp resolutions,
+which can be different for each interface in the file, as well as records without
+time stamps. The common libpcap capture file format, which is widely supported by
+many other tools, supports two possible fixed resolutions, microsecond or
+nanosecond, indicated by a magic number at the start of the file. Wireshark and
+tools like editcap can convert pcap files with nanosecond resolution to microsecond
+resolution for use with tools that only support the original time stamp precision.
 
 Writing data into a capture file format that doesn’t provide the capability to
 store the actual precision will lead to loss of information. For example, if you
@@ -905,7 +923,7 @@ represent time internally as UTC.  When Wireshark is capturing, no
 conversion is necessary.  However, if the system time zone is not set
 correctly, the system’s UTC time might not be correctly set even if
 the system clock appears to display correct local time.  When capturing,
-Npcap has to convert the time to UTC before supplying it to Wireshark. 
+Npcap has to convert the time to UTC before supplying it to Wireshark.
 If the system’s time zone is not set correctly, that conversion will
 not be done correctly.
 
@@ -1264,14 +1282,17 @@ calculation, also known as checksum offloading. The network driver won’t
 calculate the checksum itself but will simply hand over an empty (zero or
 garbage filled) checksum field to the hardware.
 
-
 [NOTE]
 ====
-Checksum offloading often causes confusion as the network packets to be
-transmitted are handed over to Wireshark before the checksums are actually
-calculated. Wireshark gets these “empty” checksums and displays them as
-invalid, even though the packets will contain valid checksums when they leave
-the network hardware later.
+Checksum offloading often causes confusion as network packets to be
+transmitted are given to Wireshark before they are handed over to the
+hardware. Wireshark gets these “empty” checksums and displays them as
+invalid, even though the packets will contain valid checksums when they
+transit the network.
+
+This only applies to packets that are locally generated by the capture
+point. Received packets will have traveled through network hardware
+and should have correct checksums.
 ====
 
 
@@ -1286,5 +1307,33 @@ You can do two things to avoid this checksum offloading problem:
 * Turn off checksum validation of the specific protocol in the Wireshark preferences.
   Recent releases of Wireshark disable checksum validation by default due to the
   prevalence of offloading in modern hardware and operating systems.
+
+==== Partial Checksums
+
+TCP and UDP checksums are calculated over both the payload and from selected
+elements from the IPv4 or IPv6 header, known as the pseudo header. Linux
+and Windows, when offloading checksums, will calculate the contribution from
+the pseudo header and place it in the checksum field. The driver then directs
+the hardware to calculate the checksum over the payload area, which will
+produce the correct result including the pseudo header's portion of the sum
+as a matter of mathematics.
+
+This precomputation speeds up the hardware checksum calculation later,
+allows the driver to direct the hardware to do checksums over encapsulated
+payloads (__Local Checksum Offload__), and allows applications to send
+the kernel large "superpacket" buffers that will be later divided by
+the hardware into multiple maximum size packets when sent on the network
+(__TCP Segmentation Offload (TSO)__ and __Generic Segmentation Offload (GSO)__).
+
+[NOTE]
+====
+Wireshark 4.2.0 and later can calculate the partial checksum contribution
+from the pseudo header, and when validating TCP and UDP checksums will
+mark partial checksums as valid but partial. The packets with partial
+checksums will not be colored as Bad Checksums by the default coloring rules,
+and will still be used for reassembly. This eliminates spurious checksum
+errors seen on packets transmitted from the capturing host on those platforms
+that use partial checksums when offloading.
+====
 
 // End of WSUG Chapter Advanced
